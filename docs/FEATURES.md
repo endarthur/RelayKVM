@@ -56,6 +56,54 @@ Submit to M5Stack's community app repository for M5Launcher:
 - [ ] Test with various host PCs (Windows/Mac/Linux)
 - [ ] Clean app icon and metadata
 
+### Web Interface Improvements 🌐
+
+#### Progressive Web App (PWA)
+**Status:** 🔲 TODO
+
+Make the web interface installable as a PWA:
+- Works offline (service worker caches assets)
+- "Install app" prompt in browser
+- Launches in its own window (no browser chrome)
+- Better permission persistence for Web Bluetooth
+- App icon on desktop/home screen
+
+**Requirements:**
+- `manifest.json` with app metadata and icons
+- Service worker for offline caching
+- HTTPS (already have via GitHub Pages)
+
+#### Super Key (Windows Key) Capture
+**Status:** 🔲 TODO - Investigate
+
+Windows intercepts Win key at OS level - browsers can't fully capture it.
+
+**Possible approaches:**
+- Document the limitation clearly
+- Provide on-screen Win key button (already have in Special Keys)
+- Investigate if `event.preventDefault()` works in any edge cases
+- Consider browser extensions (but defeats the "no install" benefit)
+
+**Current workaround:** Use the GUI button in Special Keys module
+
+#### Alternative Exit Capture Keys
+**Status:** 🔲 TODO
+
+Add more options for exiting capture mode:
+- **Browser Back button** - Useful for trackballs with dedicated back buttons (e.g., Kensington Expert)
+- **Double-tap Escape** - Less likely to be accidental
+- **Scroll click (middle mouse)** - Often unused
+
+```javascript
+// Browser back button detection
+window.addEventListener('popstate', (e) => {
+    if (isCapturing) {
+        stopCapture();
+        history.pushState(null, ''); // Stay on page
+    }
+});
+```
+
 ### Implemented ✅
 
 #### USB Wake (Remote Wakeup)
