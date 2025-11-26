@@ -60,7 +60,7 @@
         /* Main chassis */
         .chassis {
             width: 100%;
-            min-height: calc(100vh - 24px);
+            height: calc(100vh - 24px);
             display: flex;
             flex-direction: column;
             background: var(--panel-bg);
@@ -70,6 +70,7 @@
                 inset 0 1px 0 var(--bezel-light),
                 0 8px 32px rgba(0,0,0,0.6),
                 0 2px 4px rgba(0,0,0,0.4);
+            overflow: hidden;
         }
 
         /* Top bezel with branding */
@@ -180,6 +181,8 @@
             padding: 12px;
             gap: 12px;
             flex: 1;
+            min-height: 0;  /* Allow to shrink in flex container */
+            overflow: hidden;
         }
 
         @media (max-width: 1100px) {
@@ -209,6 +212,8 @@
                 "modifiers scripts log log";
             gap: 10px;
             flex: 1;
+            min-height: 0;  /* Allow grid to shrink */
+            overflow: hidden;  /* Prevent grid from growing beyond container */
         }
 
         .right-column .module {
@@ -225,7 +230,7 @@
         .area-scripts { grid-area: scripts; display: flex; flex-direction: column; }
         .area-modifiers { grid-area: modifiers; }
         .area-macros { grid-area: macros; }
-        .area-log { grid-area: log; display: flex; flex-direction: column; }
+        .area-log { grid-area: log; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 
         /* Extras row: quick actions in compact grid */
         .extras-row {
