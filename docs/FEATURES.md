@@ -104,6 +104,47 @@ window.addEventListener('popstate', (e) => {
 });
 ```
 
+#### Key Translation / Remapping
+**Status:** 🔲 TODO
+
+Translate keys on client side before sending to host. Perfect for QMK/VIA users:
+
+| Client Key | Host Key | Use Case |
+|------------|----------|----------|
+| F13 | Super/Win | QMK layer key → Windows key |
+| F14 | Menu | Context menu |
+| F15-F24 | Custom | User-defined macros |
+
+F13-F24 are valid USB HID codes but unused by most OSes - perfect "virtual" keys.
+
+```javascript
+const keyTranslations = {
+    'F13': 'MetaLeft',   // Super/Win
+    'F14': 'ContextMenu',
+    // User-configurable...
+};
+```
+
+**UI:** Settings panel to configure mappings, stored in localStorage.
+
+#### Global Hotkey to Launch/Connect
+**Status:** 🔲 TODO - Requires companion
+
+PWAs are sandboxed - can't register system-wide hotkeys. Options:
+
+**AutoHotkey (Windows) - Lightest option:**
+```autohotkey
+#k::  ; Win+K launches RelayKVM
+    Run, "chrome.exe" --app=https://endarthur.github.io/RelayKVM
+return
+```
+
+**Browser Extension** - Could register hotkey via chrome.commands API, communicate with page.
+
+**Companion App (Tauri/Electron)** - Full native access but defeats "no install" benefit.
+
+**Recommendation:** Document AutoHotkey/Hammerspoon snippets for power users.
+
 ### Implemented ✅
 
 #### USB Wake (Remote Wakeup)
