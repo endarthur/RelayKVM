@@ -6,6 +6,55 @@
 3. **Protocol Parser** - Full NanoKVM protocol support
 4. **Status Display** - Connection, battery, command count
 5. **Emergency Controls** - ESC key disconnect
+6. **Mass Storage Mode** - Hold 'M' at boot to access SD card
+7. **Display Control** - Remote brightness control (off/dim/on)
+8. **Web Interface** - Industrial-style control panel with capture mode
+
+### Distribution & Release 📦
+
+#### GitHub Actions CI/CD
+**Status:** 🔲 TODO
+
+Automatically compile firmware on release:
+- Trigger on version tags (e.g., `v1.0.0`)
+- Build with PlatformIO
+- Attach `RelayKVM.bin` to GitHub Release
+- Users can download pre-built firmware directly
+
+```yaml
+# .github/workflows/build.yml
+on:
+  release:
+    types: [published]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio
+      - run: pip install platformio
+      - run: cd firmware && pio run -e m5launcher
+      - uses: actions/upload-release-asset@v1
+        with:
+          asset_path: firmware/.pio/build/m5launcher/RelayKVM.bin
+```
+
+#### M5Launcher Community Repository
+**Status:** 🔲 TODO (after more testing)
+
+Submit to M5Stack's community app repository for M5Launcher:
+- Users can browse and install directly from Cardputer
+- No manual .bin download needed
+- Auto-updates when new versions released
+
+**Requirements before submission:**
+- [ ] Stable for 2+ weeks of daily use
+- [ ] Test on multiple Cardputer units
+- [ ] Test with various host PCs (Windows/Mac/Linux)
+- [ ] Clean app icon and metadata
 
 ### Implemented ✅
 
