@@ -13,7 +13,7 @@
 ### Distribution & Release 📦
 
 #### GitHub Actions CI/CD
-**Status:** 🔲 TODO
+**Status:** ✅ **IMPLEMENTED**
 
 Automatically compile firmware on release:
 - Trigger on version tags (e.g., `v1.0.0`)
