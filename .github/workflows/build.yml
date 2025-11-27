@@ -36,7 +36,12 @@ jobs:
 
       - name: Rename binary
         run: |
-          cp firmware/.pio/build/m5launcher/firmware.bin RelayKVM.bin
+          # Handle both possible output names
+          if [ -f firmware/.pio/build/m5launcher/RelayKVM.bin ]; then
+            cp firmware/.pio/build/m5launcher/RelayKVM.bin RelayKVM.bin
+          else
+            cp firmware/.pio/build/m5launcher/firmware.bin RelayKVM.bin
+          fi
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
