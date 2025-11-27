@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- "Relay" concept: two blocks overlapping at the fault -->
+
+  <!-- Teal block (upper-left, controller side) -->
+  <rect x="12" y="16" width="64" height="64" rx="8" fill="#00b894"/>
+
+  <!-- Orange block (lower-right, host side) -->
+  <rect x="52" y="48" width="64" height="64" rx="8" fill="#e17055"/>
+
+  <!-- White overlap zone - the "relay" connection point -->
+  <rect x="52" y="48" width="24" height="32" fill="#ffffff"/>
+</svg>

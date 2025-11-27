@@ -53,6 +53,8 @@ pio run -e m5launcher -t upload
 
 Or download pre-built `.bin` from [Releases](https://github.com/endarthur/RelayKVM/releases) and flash via M5Launcher.
 
+> **Important:** Always use the `m5launcher` environment (`-e m5launcher`). Do NOT use direct upload without specifying the environment. The m5launcher build includes the correct partition scheme and OTA support for returning to the M5Launcher menu.
+
 ### 2. Connect Hardware
 
 1. Plug Cardputer into **host PC** via USB-C

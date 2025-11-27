@@ -2,7 +2,7 @@
  * RelayKVM: Bluetooth-Controlled USB HID for M5Stack Cardputer
  *
  * Receives NanoKVM protocol commands via Bluetooth and translates them
- * to USB HID keyboard/mouse events for the host computer.
+ * to USB HID keyboard/mouse events for the target computer.
  *
  * Hardware: M5Stack Cardputer v1.1 (ESP32-S3FN8)
  * License: GNU GPL v3
@@ -22,7 +22,20 @@
 #include <SD.h>
 #include <SPI.h>
 #include <NimBLEDevice.h>
+#include "tusb.h"  // TinyUSB for USB state queries
 
+// Debug output - comment out to disable serial debug (reduces USB issues)
+// #define DEBUG
+
+#ifdef DEBUG
+  #define DEBUG_PRINT(x) USBSerial.print(x)
+  #define DEBUG_PRINTLN(x) USBSerial.println(x)
+  #define DEBUG_PRINTF(...) USBSerial.printf(__VA_ARGS__)
+#else
+  #define DEBUG_PRINT(x)
+  #define DEBUG_PRINTLN(x)
+  #define DEBUG_PRINTF(...)
+#endif
 
 // M5Launcher compatibility
 #ifdef M5LAUNCHER_COMPATIBLE
@@ -61,6 +74,8 @@ volatile bool connectionChanged = false;  // Flag to trigger display update in m
 #define CMD_DISPLAY_CONTROL 0x81      // Display off/dim/on
 #define CMD_DISPLAY_TIMEOUT 0x82      // Set display timeout (seconds)
 #define CMD_USB_WAKE 0x83             // Trigger USB wake signal
+#define CMD_USB_RECONNECT 0x84        // Soft USB reconnect (re-enumerate)
+#define CMD_DEVICE_RESET 0x85         // Full device reset
 
 // Display brightness levels
 #define DISPLAY_OFF 0
@@ -82,6 +97,15 @@ uint16_t displayTimeout = 30;          // Seconds, 0 = disabled
 uint32_t lastActivityTime = 0;         // For screen timeout
 bool displayAsleep = false;
 
+// USB keepalive to prevent Windows from suspending the device
+uint32_t lastUsbKeepalive = 0;
+#define USB_KEEPALIVE_INTERVAL 30000   // 30 seconds
+
+// USB state tracking (set by TinyUSB callbacks)
+volatile bool usbMounted = false;
+volatile bool usbSuspended = false;
+volatile bool usbStateChanged = false;  // Flag to trigger display update
+
 // Pending display operations (set in BLE callback, processed in main loop)
 volatile bool pendingDisplayChange = false;
 volatile uint8_t pendingBrightness = 0;
@@ -92,9 +116,9 @@ void updateDisplay();
 void handleKeyboardCommand(uint8_t* data, size_t len);
 void handleMouseAbsCommand(uint8_t* data, size_t len);
 void handleMouseRelCommand(uint8_t* data, size_t len);
-bool wakeHostComputer();
+bool wakeTargetComputer();
 void showWakeMenu();
-void returnToLauncher();
+void softReset();
 void sendReleaseCaptureNotification();
 void setDisplayBrightness(uint8_t brightness);
 void setDisplayTimeout(uint16_t seconds);
@@ -102,6 +126,10 @@ void wakeDisplay();
 void checkDisplayTimeout();
 void runMassStorageMode();
 bool checkMassStorageKey();
+void usbKeepalive();
+void checkUsbState();
+void handleUsbReconnect();
+void handleDeviceReset();
 
 /**
  * BLE Server Callbacks - With Windows-friendly connection parameters
@@ -113,20 +141,20 @@ class ServerCallbacks: public NimBLEServerCallbacks {
 
         // Don't update connection params immediately - let the connection settle
         // Log the negotiated parameters instead
-        USBSerial.printf("Client connected, handle: %d\n", desc->conn_handle);
-        USBSerial.printf("  Interval: %d, Latency: %d, Timeout: %d\n",
+        DEBUG_PRINTF("Client connected, handle: %d\n", desc->conn_handle);
+        DEBUG_PRINTF("  Interval: %d, Latency: %d, Timeout: %d\n",
             desc->conn_itvl, desc->conn_latency, desc->supervision_timeout);
     };
 
     void onDisconnect(NimBLEServer* pServer, ble_gap_conn_desc* desc) override {
         deviceConnected = false;
         connectionChanged = true;
-        USBSerial.printf("Client disconnected, handle: %d\n", desc->conn_handle);
+        DEBUG_PRINTF("Client disconnected, handle: %d\n", desc->conn_handle);
     }
 
     // Called when MTU is updated - important for Windows
     void onMTUChange(uint16_t MTU, ble_gap_conn_desc* desc) override {
-        USBSerial.printf("MTU updated: %d, handle: %d\n", MTU, desc->conn_handle);
+        DEBUG_PRINTF("MTU updated: %d, handle: %d\n", MTU, desc->conn_handle);
     }
 };
 
@@ -175,13 +203,15 @@ void setup() {
     // All USB devices must be initialized BEFORE USB.begin()
     Keyboard.begin();
     Mouse.begin();
-    USBSerial.begin();  // CDC Serial for debugging
+#ifdef DEBUG
+    USBSerial.begin();  // CDC Serial for debugging (only in debug mode)
+#endif
 
     // Configure USB identity
     USB.VID(0xFEED); // DIY keyboard community
     USB.PID(0xAE01); // Arthur Endlein initials
     USB.productName("RelayKVM Controller");
-    USB.manufacturerName("RelayKVM");
+    USB.manufacturerName("NanoKVM Project");
 
     // Start USB stack AFTER all USB devices are ready
     USB.begin();
@@ -189,7 +219,7 @@ void setup() {
     // Give USB time to enumerate properly
     delay(1500);
 
-    USBSerial.println("RelayKVM: Starting...");
+    DEBUG_PRINTLN("RelayKVM: Starting...");
     M5Cardputer.Display.println("USB HID ready!");
     M5Cardputer.Display.println("Initializing BLE...");
 
@@ -253,15 +283,15 @@ void setup() {
     // Start advertising
     pAdvertising->start();
 
-    USBSerial.println("BLE advertising started with Windows-compatible parameters");
+    DEBUG_PRINTLN("BLE advertising started with Windows-compatible parameters");
 
     M5Cardputer.Display.println("BLE ready!");
     M5Cardputer.Display.println("");
     M5Cardputer.Display.println("Waiting for connection...");
     M5Cardputer.Display.println("Device: RelayKVM");
 
-    USBSerial.println("RelayKVM: Ready!");
-    USBSerial.printf("VID:PID = 0x%04X:0x%04X\n", 0xFEED, 0xAE01);
+    DEBUG_PRINTLN("RelayKVM: Ready!");
+    DEBUG_PRINTF("VID:PID = 0x%04X:0x%04X\n", 0xFEED, 0xAE01);
 }
 
 void loop() {
@@ -272,10 +302,10 @@ void loop() {
         connectionChanged = false;
 
         if (deviceConnected) {
-            USBSerial.println("Loop: Connection established");
+            DEBUG_PRINTLN("Loop: Connection established");
             wakeDisplay();  // Wake display on connection
         } else {
-            USBSerial.println("Loop: Connection lost, restarting advertising");
+            DEBUG_PRINTLN("Loop: Connection lost, restarting advertising");
             delay(100);  // Brief delay before restart
             NimBLEDevice::startAdvertising();
         }
@@ -286,12 +316,26 @@ void loop() {
     if (pendingDisplayChange) {
         pendingDisplayChange = false;
         uint8_t brightness = pendingBrightness;
-        USBSerial.printf("Loop: Applying display brightness=%d\n", brightness);
+        DEBUG_PRINTF("Loop: Applying display brightness=%d\n", brightness);
         setDisplayBrightness(brightness);
+    }
+
+    // Handle USB state changes (from TinyUSB callbacks)
+    if (usbStateChanged) {
+        usbStateChanged = false;
+        DEBUG_PRINTF("USB state: mounted=%d suspended=%d\n", usbMounted, usbSuspended);
+        wakeDisplay();  // Wake display to show USB status change
+        updateDisplay();
     }
 
     // Check display timeout
     checkDisplayTimeout();
+
+    // USB keepalive to prevent Windows from suspending device
+    usbKeepalive();
+
+    // Check USB connection state
+    checkUsbState();
 
     // Update display periodically (only if not asleep)
     if (!displayAsleep && millis() - lastStatusUpdate > 1000) {
@@ -313,7 +357,7 @@ void loop() {
 
             // ESC = Emergency disconnect (check for ESC key code)
             if (M5Cardputer.Keyboard.keysState().del) {  // DEL/ESC key
-                USBSerial.println("Emergency disconnect requested");
+                DEBUG_PRINTLN("Emergency disconnect requested");
                 if (pServer && pServer->getConnectedCount() > 0) {
                     // Disconnect all clients
                     pServer->disconnect(0);
@@ -323,20 +367,20 @@ void loop() {
             // G = Release capture (G0 button alternative)
             // Send notification to web interface to exit capture mode
             if (key == 'g' || key == 'G') {
-                USBSerial.println("Release capture requested (G0)");
+                DEBUG_PRINTLN("Release capture requested (G0)");
                 sendReleaseCaptureNotification();
             }
 
-            // W = Wake host computer
+            // W = Wake target computer
             if (key == 'w' || key == 'W') {
-                USBSerial.println("Wake host requested");
+                DEBUG_PRINTLN("Wake target requested");
                 showWakeMenu();
             }
 
-            // L = Return to Launcher (M5Launcher compatible builds)
-            if (key == 'l' || key == 'L') {
-                USBSerial.println("Return to launcher requested");
-                returnToLauncher();
+            // R = Soft reset
+            if (key == 'r' || key == 'R') {
+                DEBUG_PRINTLN("Soft reset requested");
+                softReset();
             }
         }
     }
@@ -358,22 +402,32 @@ void updateDisplay() {
     M5Cardputer.Display.setTextSize(1);
     M5Cardputer.Display.setCursor(10, 40);
 
+    // Show USB status - prominent warning if disconnected
+    if (!usbMounted) {
+        M5Cardputer.Display.setTextColor(RED);
+        M5Cardputer.Display.println("USB: DISCONNECTED!");
+    } else if (usbSuspended) {
+        M5Cardputer.Display.setTextColor(ORANGE);
+        M5Cardputer.Display.println("USB: Suspended");
+    } else {
+        M5Cardputer.Display.setTextColor(GREEN);
+        M5Cardputer.Display.println("USB: Connected");
+    }
+
+    // Show BLE status
     if (deviceConnected) {
         M5Cardputer.Display.setTextColor(GREEN);
-        M5Cardputer.Display.println("Status: CONNECTED");
+        M5Cardputer.Display.println("BLE: CONNECTED");
         M5Cardputer.Display.printf("Commands: %d\n", commandCount);
         M5Cardputer.Display.printf("Battery: %d%%\n", M5Cardputer.Power.getBatteryLevel());
     } else {
         M5Cardputer.Display.setTextColor(YELLOW);
-        M5Cardputer.Display.println("Status: WAITING");
-        M5Cardputer.Display.println("Advertising as:");
-        M5Cardputer.Display.println("  RelayKVM");
+        M5Cardputer.Display.println("BLE: Waiting...");
     }
 
     M5Cardputer.Display.setTextColor(DARKGREY);
     M5Cardputer.Display.setCursor(10, 100);
-    M5Cardputer.Display.println("G=Release Capture");
-    M5Cardputer.Display.println("ESC=Disconnect W=Wake L=Menu");
+    M5Cardputer.Display.println("G=Release W=Wake R=Reset");
 }
 
 /**
@@ -382,13 +436,13 @@ void updateDisplay() {
 void processNanoKVMPacket(uint8_t* packet, size_t len) {
     // Validate minimum packet length
     if (len < 6) {
-        USBSerial.printf("Invalid packet: too short (%d bytes)\n", len);
+        DEBUG_PRINTF("Invalid packet: too short (%d bytes)\n", len);
         return;
     }
 
     // Validate header
     if (packet[0] != HEAD1 || packet[1] != HEAD2) {
-        USBSerial.printf("Invalid packet: bad header (0x%02X 0x%02X)\n", packet[0], packet[1]);
+        DEBUG_PRINTF("Invalid packet: bad header (0x%02X 0x%02X)\n", packet[0], packet[1]);
         return;
     }
 
@@ -398,7 +452,7 @@ void processNanoKVMPacket(uint8_t* packet, size_t len) {
 
     // Validate data length
     if (len < 6 + dataLen) {
-        USBSerial.printf("Invalid packet: data length mismatch\n");
+        DEBUG_PRINTF("Invalid packet: data length mismatch\n");
         return;
     }
 
@@ -417,7 +471,7 @@ void processNanoKVMPacket(uint8_t* packet, size_t len) {
             break;
 
         case CMD_GET_INFO:
-            USBSerial.println("CMD: GET_INFO (not implemented)");
+            DEBUG_PRINTLN("CMD: GET_INFO (not implemented)");
             break;
 
         case CMD_DISPLAY_CONTROL:
@@ -427,7 +481,7 @@ void processNanoKVMPacket(uint8_t* packet, size_t len) {
             if (dataLen >= 1) {
                 pendingBrightness = data[0];
                 pendingDisplayChange = true;
-                USBSerial.printf("Display: queued brightness=%d\n", data[0]);
+                DEBUG_PRINTF("Display: queued brightness=%d\n", data[0]);
             }
             break;
 
@@ -446,8 +500,18 @@ void processNanoKVMPacket(uint8_t* packet, size_t len) {
             handleUsbWakeCommand();
             break;
 
+        case CMD_USB_RECONNECT:
+            // Soft USB reconnect - re-enumerate without full reset
+            handleUsbReconnect();
+            break;
+
+        case CMD_DEVICE_RESET:
+            // Full device reset
+            handleDeviceReset();
+            break;
+
         default:
-            USBSerial.printf("Unknown command: 0x%02X\n", cmd);
+            DEBUG_PRINTF("Unknown command: 0x%02X\n", cmd);
             break;
     }
 }
@@ -475,7 +539,7 @@ static const uint8_t modifierKeys[] = {
 
 void handleKeyboardCommand(uint8_t* data, size_t len) {
     if (len < 8) {
-        USBSerial.println("KB: Invalid data length");
+        DEBUG_PRINTLN("KB: Invalid data length");
         return;
     }
 
@@ -531,7 +595,7 @@ void handleKeyboardCommand(uint8_t* data, size_t len) {
     // Save current state
     memcpy(prevKeys, keys, 6);
 
-    USBSerial.printf("KB: mod=0x%02X keys=[0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X]\n",
+    DEBUG_PRINTF("KB: mod=0x%02X keys=[0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X]\n",
                   modifier, keys[0], keys[1], keys[2], keys[3], keys[4], keys[5]);
 }
 
@@ -541,7 +605,7 @@ void handleKeyboardCommand(uint8_t* data, size_t len) {
  */
 void handleMouseAbsCommand(uint8_t* data, size_t len) {
     if (len < 7) {
-        USBSerial.println("MS_ABS: Invalid data length");
+        DEBUG_PRINTLN("MS_ABS: Invalid data length");
         return;
     }
 
@@ -558,7 +622,7 @@ void handleMouseAbsCommand(uint8_t* data, size_t len) {
         Mouse.move(0, 0, scroll);
     }
 
-    USBSerial.printf("MS_ABS: btn=0x%02X x=%d y=%d scroll=%d\n", buttons, x, y, scroll);
+    DEBUG_PRINTF("MS_ABS: btn=0x%02X x=%d y=%d scroll=%d\n", buttons, x, y, scroll);
 }
 
 /**
@@ -569,7 +633,7 @@ static uint8_t prevMouseButtons = 0;
 
 void handleMouseRelCommand(uint8_t* data, size_t len) {
     if (len < 5) {
-        USBSerial.println("MS_REL: Invalid data length");
+        DEBUG_PRINTLN("MS_REL: Invalid data length");
         return;
     }
 
@@ -604,14 +668,14 @@ void handleMouseRelCommand(uint8_t* data, size_t len) {
         Mouse.move(0, 0, scroll);
     }
 
-    USBSerial.printf("MS_REL: btn=0x%02X dx=%d dy=%d scroll=%d\n", buttons, dx, dy, scroll);
+    DEBUG_PRINTF("MS_REL: btn=0x%02X dx=%d dy=%d scroll=%d\n", buttons, dx, dy, scroll);
 }
 
 /**
- * Wake host computer via keyboard activity
+ * Wake target computer via keyboard activity
  * Works for Sleep (S3) - sends a harmless key combo to wake
  */
-bool wakeHostComputer() {
+bool wakeTargetComputer() {
     M5Cardputer.Display.clear();
     M5Cardputer.Display.setTextSize(2);
     M5Cardputer.Display.setCursor(10, 10);
@@ -619,7 +683,7 @@ bool wakeHostComputer() {
     M5Cardputer.Display.setTextSize(1);
     M5Cardputer.Display.setCursor(10, 40);
 
-    USBSerial.println("Sending wake signal via keyboard activity...");
+    DEBUG_PRINTLN("Sending wake signal via keyboard activity...");
     M5Cardputer.Display.println("Sending wake signal...");
     M5Cardputer.Display.println("");
 
@@ -636,15 +700,15 @@ bool wakeHostComputer() {
     delay(50);
     Mouse.move(-1, 0);
 
-    USBSerial.println("Wake signals sent");
+    DEBUG_PRINTLN("Wake signals sent");
     M5Cardputer.Display.println("Wake signal sent!");
     M5Cardputer.Display.println("");
-    M5Cardputer.Display.println("Host should wake up");
+    M5Cardputer.Display.println("Target should wake up");
     M5Cardputer.Display.println("in 1-3 seconds...");
     M5Cardputer.Display.println("");
     M5Cardputer.Display.setTextColor(DARKGREY);
     M5Cardputer.Display.println("Note: Only works if");
-    M5Cardputer.Display.println("host is in Sleep mode");
+    M5Cardputer.Display.println("target is in Sleep mode");
     M5Cardputer.Display.println("and USB wake is enabled");
 
     delay(3000);
@@ -660,13 +724,13 @@ void showWakeMenu() {
     M5Cardputer.Display.setTextColor(YELLOW);
     M5Cardputer.Display.setTextSize(2);
     M5Cardputer.Display.setCursor(10, 10);
-    M5Cardputer.Display.println("Wake Host");
+    M5Cardputer.Display.println("Wake Target");
 
     M5Cardputer.Display.setTextColor(WHITE);
     M5Cardputer.Display.setTextSize(1);
     M5Cardputer.Display.setCursor(10, 40);
     M5Cardputer.Display.println("U = USB Wake (Sleep/S3)");
-    M5Cardputer.Display.println("    Works if host is");
+    M5Cardputer.Display.println("    Works if target is");
     M5Cardputer.Display.println("    in sleep mode");
     M5Cardputer.Display.println("");
     M5Cardputer.Display.setTextColor(DARKGREY);
@@ -688,7 +752,7 @@ void showWakeMenu() {
                 char key = keys[0];
 
                 if (key == 'u' || key == 'U') {
-                    wakeHostComputer();
+                    wakeTargetComputer();
                     waiting = false;
                 }
                 else if (key == 'w' || key == 'W') {
@@ -717,50 +781,19 @@ void showWakeMenu() {
 }
 
 /**
- * Return to M5Launcher (if compiled with M5LAUNCHER_COMPATIBLE)
- * Fn+ESC = Return to launcher menu
+ * Soft reset the device
+ * R = Reset device
  */
-void returnToLauncher() {
-#ifdef M5LAUNCHER_COMPATIBLE
+void softReset() {
     M5Cardputer.Display.clear();
     M5Cardputer.Display.setTextColor(CYAN);
     M5Cardputer.Display.setTextSize(2);
     M5Cardputer.Display.setCursor(10, 10);
-    M5Cardputer.Display.println("Returning to");
-    M5Cardputer.Display.println("Launcher...");
+    M5Cardputer.Display.println("Resetting...");
 
-    USBSerial.println("Returning to M5Launcher...");
-    delay(1000);
-
-    // Set boot partition back to factory (M5Launcher)
-    const esp_partition_t* factory = esp_partition_find_first(
-        ESP_PARTITION_TYPE_APP,
-        ESP_PARTITION_SUBTYPE_APP_FACTORY,
-        NULL
-    );
-
-    if (factory != NULL) {
-        esp_ota_set_boot_partition(factory);
-        esp_restart();
-    } else {
-        // Fallback: just restart (will boot same firmware)
-        USBSerial.println("Factory partition not found, restarting...");
-        esp_restart();
-    }
-#else
-    // Not compiled with M5Launcher support
-    M5Cardputer.Display.clear();
-    M5Cardputer.Display.setTextSize(1);
-    M5Cardputer.Display.setCursor(10, 10);
-    M5Cardputer.Display.println("M5Launcher not enabled");
-    M5Cardputer.Display.println("");
-    M5Cardputer.Display.println("Recompile with:");
-    M5Cardputer.Display.println("-DM5LAUNCHER_COMPATIBLE=1");
-    M5Cardputer.Display.println("");
-    M5Cardputer.Display.println("Or use: pio run -e m5launcher");
-    delay(3000);
-    updateDisplay();
-#endif
+    DEBUG_PRINTLN("Soft reset...");
+    delay(500);
+    esp_restart();
 }
 
 /**
@@ -782,7 +815,7 @@ void sendReleaseCaptureNotification() {
     pTxCharacteristic->setValue(packet, sizeof(packet));
     pTxCharacteristic->notify();
 
-    USBSerial.println("Sent release capture notification");
+    DEBUG_PRINTLN("Sent release capture notification");
 
     // Visual feedback on display
     M5Cardputer.Display.setTextColor(YELLOW);
@@ -808,7 +841,7 @@ void setDisplayBrightness(uint8_t brightness) {
 
     M5Cardputer.Display.setBrightness(brightness);
 
-    USBSerial.printf("Display: brightness set to %d\n", brightness);
+    DEBUG_PRINTF("Display: brightness set to %d\n", brightness);
 }
 
 /**
@@ -817,7 +850,7 @@ void setDisplayBrightness(uint8_t brightness) {
 void setDisplayTimeout(uint16_t seconds) {
     displayTimeout = seconds;
     lastActivityTime = millis();
-    USBSerial.printf("Display timeout: %d seconds\n", seconds);
+    DEBUG_PRINTF("Display timeout: %d seconds\n", seconds);
 }
 
 /**
@@ -833,7 +866,7 @@ void wakeDisplay() {
         displayBrightness = newBrightness;
         M5Cardputer.Display.setBrightness(newBrightness);
         updateDisplay();
-        USBSerial.println("Display woke from timeout");
+        DEBUG_PRINTLN("Display woke from timeout");
     }
 }
 
@@ -849,7 +882,7 @@ void checkDisplayTimeout() {
         displayAsleep = true;
         M5Cardputer.Display.setBrightness(0);
         M5Cardputer.Display.fillScreen(BLACK);
-        USBSerial.println("Display off due to timeout");
+        DEBUG_PRINTLN("Display off due to timeout");
     }
 }
 
@@ -857,9 +890,126 @@ void checkDisplayTimeout() {
  * Handle USB wake command from web interface
  */
 void handleUsbWakeCommand() {
-    USBSerial.println("USB Wake command received from web");
+    DEBUG_PRINTLN("USB Wake command received from web");
     wakeDisplay();  // Also wake our display
-    wakeHostComputer();
+    wakeTargetComputer();
+}
+
+/**
+ * Handle USB Recovery - attempts to recover USB connection
+ *
+ * How it works:
+ * - If USB is just suspended: HID activity wakes it up
+ * - If USB stack is corrupted: HID calls may crash, triggering watchdog reset
+ *   which re-initializes everything and fixes USB
+ *
+ * Either way, USB should work again after this. May cause device reset if
+ * USB is in a bad state - this is expected and actually fixes the problem.
+ */
+void handleUsbReconnect() {
+    DEBUG_PRINTLN("USB Recovery requested");
+    wakeDisplay();
+
+    // Show status on display
+    M5Cardputer.Display.clear();
+    M5Cardputer.Display.setTextColor(YELLOW);
+    M5Cardputer.Display.setTextSize(2);
+    M5Cardputer.Display.setCursor(10, 10);
+    M5Cardputer.Display.println("USB Recovery");
+    M5Cardputer.Display.setTextSize(1);
+    M5Cardputer.Display.setCursor(10, 40);
+    M5Cardputer.Display.println("Attempting recovery...");
+    M5Cardputer.Display.setTextColor(DARKGREY);
+    M5Cardputer.Display.println("(may reset if needed)");
+    M5Cardputer.Display.setTextColor(WHITE);
+
+    delay(500);
+
+    // Send HID activity to wake suspended USB or trigger reset if corrupted
+    // If USB stack is broken, these calls may crash and trigger watchdog reset
+    for (int i = 0; i < 5; i++) {
+        Mouse.move(1, 0);
+        delay(20);
+        Mouse.move(-1, 0);
+        delay(20);
+    }
+
+    Keyboard.pressRaw(0xE1);  // Left Shift
+    delay(50);
+    Keyboard.releaseRaw(0xE1);
+
+    delay(500);
+
+    // If we get here, USB didn't crash - check if it's working
+    if (tud_mounted()) {
+        M5Cardputer.Display.setTextColor(GREEN);
+        M5Cardputer.Display.println("");
+        M5Cardputer.Display.println("USB Recovered!");
+    } else {
+        M5Cardputer.Display.setTextColor(ORANGE);
+        M5Cardputer.Display.println("");
+        M5Cardputer.Display.println("USB not responding");
+        M5Cardputer.Display.println("Try 'Reset Device'");
+    }
+
+    delay(2000);
+    updateDisplay();
+}
+
+/**
+ * Handle full device reset
+ * This will restart the ESP32 completely
+ */
+void handleDeviceReset() {
+    DEBUG_PRINTLN("Device reset requested");
+    wakeDisplay();
+
+    // Show status on display
+    M5Cardputer.Display.clear();
+    M5Cardputer.Display.setTextColor(RED);
+    M5Cardputer.Display.setTextSize(2);
+    M5Cardputer.Display.setCursor(10, 10);
+    M5Cardputer.Display.println("Resetting...");
+
+    delay(500);
+
+    // Perform software reset
+    esp_restart();
+}
+
+/**
+ * USB Keepalive - Prevents Windows from suspending the USB device
+ * Sends a zero-movement mouse report periodically to keep the device "active"
+ * This is invisible to the user but keeps Windows from thinking the device is idle
+ */
+void usbKeepalive() {
+    if (millis() - lastUsbKeepalive < USB_KEEPALIVE_INTERVAL) {
+        return;
+    }
+    lastUsbKeepalive = millis();
+
+    // Send a zero-movement mouse report - invisible but keeps USB active
+    // This prevents Windows USB Selective Suspend from disconnecting us
+    Mouse.move(0, 0, 0);
+
+    // Debug output (comment out for production)
+    // USBSerial.println("USB keepalive sent");
+}
+
+// ============================================
+// USB State Detection (polling-based)
+// ============================================
+
+// Check USB state and update flags if changed
+void checkUsbState() {
+    bool currentMounted = tud_mounted();
+    bool currentSuspended = tud_suspended();
+
+    if (currentMounted != usbMounted || currentSuspended != usbSuspended) {
+        usbMounted = currentMounted;
+        usbSuspended = currentSuspended;
+        usbStateChanged = true;
+    }
 }
 
 // ============================================
@@ -974,7 +1124,7 @@ void runMassStorageMode() {
     USB.VID(0xFEED);
     USB.PID(0xAE02);  // Different PID for MSC mode
     USB.productName("RelayKVM SD Card");
-    USB.manufacturerName("RelayKVM");
+    USB.manufacturerName("NanoKVM Project");
 
     // Start USB
     USB.begin();

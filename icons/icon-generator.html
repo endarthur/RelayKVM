@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Icon Generator</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #1a1a2e; color: white; }
+        .preview { display: flex; gap: 20px; flex-wrap: wrap; margin: 20px 0; }
+        .icon-box { text-align: center; }
+        canvas { border: 1px solid #444; background: #333; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>RelayKVM Icon Generator</h1>
+    <div class="preview">
+        <div class="icon-box"><canvas id="c16" width="16" height="16"></canvas><br>16px</div>
+        <div class="icon-box"><canvas id="c32" width="32" height="32"></canvas><br>32px</div>
+        <div class="icon-box"><canvas id="c48" width="48" height="48"></canvas><br>48px</div>
+        <div class="icon-box"><canvas id="c128" width="128" height="128"></canvas><br>128px</div>
+    </div>
+    <button onclick="downloadAll()">Download All PNGs</button>
+
+    <script>
+        const sizes = [16, 32, 48, 128];
+        const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <rect x="12" y="16" width="64" height="64" rx="8" fill="#00b894"/>
+  <rect x="52" y="48" width="64" height="64" rx="8" fill="#e17055"/>
+  <rect x="52" y="48" width="24" height="32" fill="#ffffff"/>
+</svg>`;
+
+        const img = new Image();
+        const blob = new Blob([svgContent], {type: 'image/svg+xml'});
+        const url = URL.createObjectURL(blob);
+
+        img.onload = () => {
+            sizes.forEach(size => {
+                const canvas = document.getElementById('c' + size);
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, size, size);
+            });
+        };
+        img.src = url;
+
+        function downloadAll() {
+            sizes.forEach(size => {
+                const canvas = document.getElementById('c' + size);
+                const link = document.createElement('a');
+                link.download = `icon-${size}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+    </script>
+</body>
+</html>

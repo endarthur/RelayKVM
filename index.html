@@ -4,19 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>RelayKVM</title>
+    <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* Industrial color palette */
-            --panel-bg: #1a1d21;
-            --panel-surface: #22262b;
-            --panel-raised: #2a2f35;
-            --panel-inset: #13161a;
-            --panel-border: #0d0f12;
+            /* === SURFACE COLORS === */
+            --surface-base: #0d0f12;      /* Page background */
+            --panel-bg: #1a1d21;          /* Main panel background */
+            --panel-surface: #22262b;     /* Raised surfaces */
+            --panel-raised: #2a2f35;      /* Higher elevation */
+            --panel-inset: #13161a;       /* Inset/pressed areas */
+            --panel-border: #0d0f12;      /* Panel borders */
 
-            /* Accent colors */
+            /* === STATUS LEDS === */
             --led-green: #00ff66;
             --led-green-dim: #004d1f;
             --led-red: #ff3333;
@@ -26,21 +30,716 @@
             --led-blue: #0099ff;
             --led-blue-dim: #003366;
 
-            /* Text */
+            /* === TEXT COLORS === */
             --text-bright: #e8eaed;
             --text-normal: #9aa0a6;
             --text-dim: #5f6368;
             --text-label: #80868b;
 
-            /* Display colors */
+            /* === DISPLAY/TERMINAL === */
             --display-bg: #0a0c0e;
             --display-text: #00ff66;
             --display-text-dim: #006633;
 
-            /* Bezels and borders */
+            /* === 3D EFFECTS === */
             --bezel-light: #3a4045;
             --bezel-dark: #101214;
             --screw-color: #2a2f35;
+
+            /* === PRIMARY ACTION (green) === */
+            --btn-primary-bg: #1a6040;
+            --btn-primary-border: #124030;
+            --btn-primary-text: #88ffaa;
+            --btn-primary-hover: #227850;
+
+            /* === DANGER ACTION (red) === */
+            --btn-danger-bg: #702020;
+            --btn-danger-border: #501515;
+            --btn-danger-text: #ffaaaa;
+            --btn-danger-hover: #882828;
+
+            /* === NEUTRAL BUTTONS === */
+            --btn-neutral-bg: #35393e;
+            --btn-neutral-hover: #45494f;
+            --btn-neutral-active: #282c30;
+
+            /* === COLORED ACTION BUTTONS === */
+            --action-red-bg: #7a2020;
+            --action-red-border: #501515;
+            --action-red-text: #ffcccc;
+            --action-amber-bg: #806500;
+            --action-amber-border: #584500;
+            --action-amber-text: #ffe088;
+            --action-green-bg: #256530;
+            --action-green-border: #184520;
+            --action-green-text: #aaffbb;
+            --action-blue-bg: #254a70;
+            --action-blue-border: #18354a;
+            --action-blue-text: #aaddff;
+
+            /* === FUNCTION KEY COLORS === */
+            --fnkey-red-bg: #8b2525;
+            --fnkey-red-border: #5c1818;
+            --fnkey-amber-bg: #9a7b00;
+            --fnkey-amber-border: #6b5500;
+            --fnkey-green-bg: #2a7a3a;
+            --fnkey-green-border: #1a5528;
+            --fnkey-blue-bg: #2a5a8a;
+            --fnkey-blue-border: #1a4060;
+
+            /* === SPECIAL STATES === */
+            --recording-color: #ff8800;
+            --accent-primary: #00b894;    /* Teal accent */
+            --accent-secondary: #e17055;  /* Coral accent */
+
+            /* === LOGO === */
+            --logo-block1: var(--accent-primary);
+            --logo-block2: var(--accent-secondary);
+            --logo-relay: #ffffff;
+        }
+
+        /* ============================================
+           THEME: Industrial (classic green/amber)
+           High contrast, machine-room aesthetic
+           ============================================ */
+        [data-theme="industrial"] {
+            /* Accents */
+            --accent-primary: #00ff66;
+            --accent-secondary: #ffaa00;
+            --logo-block1: #00ff66;
+            --logo-block2: #ffaa00;
+
+            /* Display */
+            --display-text: #00ff66;
+            --display-text-dim: #006633;
+
+            /* Primary buttons match green LED */
+            --btn-primary-bg: #1a5030;
+            --btn-primary-border: #103820;
+            --btn-primary-text: #66ff99;
+            --btn-primary-hover: #226840;
+
+            /* Action buttons - industrial palette */
+            --action-red-bg: #702020;
+            --action-red-border: #501515;
+            --action-red-text: #ff8888;
+            --action-amber-bg: #705020;
+            --action-amber-border: #503515;
+            --action-amber-text: #ffcc88;
+            --action-green-bg: #1a5030;
+            --action-green-border: #103820;
+            --action-green-text: #88ffaa;
+            --action-blue-bg: #204060;
+            --action-blue-border: #152840;
+            --action-blue-text: #88ccff;
+
+            /* Fnkeys */
+            --fnkey-red-bg: #702525;
+            --fnkey-red-border: #501818;
+            --fnkey-amber-bg: #705525;
+            --fnkey-amber-border: #503818;
+            --fnkey-green-bg: #1a5530;
+            --fnkey-green-border: #103a20;
+            --fnkey-blue-bg: #254565;
+            --fnkey-blue-border: #182a40;
+        }
+
+        /* ============================================
+           THEME: Signal (blue/red, alert-focused)
+           Emergency/control room aesthetic
+           ============================================ */
+        [data-theme="signal"] {
+            /* Accents */
+            --accent-primary: #0099ff;
+            --accent-secondary: #ff3333;
+            --logo-block1: #0099ff;
+            --logo-block2: #ff3333;
+
+            /* Display */
+            --display-text: #0099ff;
+            --display-text-dim: #004466;
+
+            /* Primary buttons - blue instead of green */
+            --btn-primary-bg: #1a4a70;
+            --btn-primary-border: #123050;
+            --btn-primary-text: #88ccff;
+            --btn-primary-hover: #225a80;
+
+            /* Action buttons - signal/alert palette */
+            --action-red-bg: #802020;
+            --action-red-border: #601515;
+            --action-red-text: #ff9999;
+            --action-amber-bg: #806020;
+            --action-amber-border: #604515;
+            --action-amber-text: #ffdd99;
+            --action-green-bg: #1a4a70;
+            --action-green-border: #123050;
+            --action-green-text: #88ccff;
+            --action-blue-bg: #1a4a70;
+            --action-blue-border: #123050;
+            --action-blue-text: #88ccff;
+
+            /* Fnkeys */
+            --fnkey-red-bg: #802525;
+            --fnkey-red-border: #601818;
+            --fnkey-amber-bg: #806525;
+            --fnkey-amber-border: #604818;
+            --fnkey-green-bg: #1a4a70;
+            --fnkey-green-border: #123050;
+            --fnkey-blue-bg: #1a4a70;
+            --fnkey-blue-border: #123050;
+        }
+
+        /* ============================================
+           THEME: Mono (grayscale, low contrast)
+           Subtle, eye-friendly
+           ============================================ */
+        [data-theme="mono"] {
+            /* Accents - grayscale */
+            --accent-primary: #9aa0a6;
+            --accent-secondary: #5f6368;
+            --logo-block1: #9aa0a6;
+            --logo-block2: #5f6368;
+            --logo-relay: #e8eaed;
+
+            /* LEDs - desaturated */
+            --led-green: #aabbaa;
+            --led-green-dim: #445544;
+            --led-red: #bb9999;
+            --led-red-dim: #554444;
+            --led-amber: #bbaa88;
+            --led-amber-dim: #554433;
+            --led-blue: #8899bb;
+            --led-blue-dim: #334455;
+
+            /* Display */
+            --display-text: #aabbaa;
+            --display-text-dim: #556655;
+
+            /* Primary buttons - gray */
+            --btn-primary-bg: #4a5058;
+            --btn-primary-border: #353a40;
+            --btn-primary-text: #d0d4d8;
+            --btn-primary-hover: #5a6068;
+
+            /* Action buttons - all gray tones */
+            --action-red-bg: #5a4a4a;
+            --action-red-border: #3a3030;
+            --action-amber-bg: #5a5545;
+            --action-amber-border: #3a3828;
+            --action-green-bg: #4a5a4a;
+            --action-green-border: #303a30;
+            --action-blue-bg: #4a4a5a;
+            --action-blue-border: #30303a;
+
+            /* Fnkeys - gray */
+            --fnkey-red-bg: #5a4545;
+            --fnkey-red-border: #3a2828;
+            --fnkey-amber-bg: #5a5540;
+            --fnkey-amber-border: #3a3525;
+            --fnkey-green-bg: #455a45;
+            --fnkey-green-border: #283a28;
+            --fnkey-blue-bg: #45455a;
+            --fnkey-blue-border: #28283a;
+        }
+
+        /* ============================================
+           THEME: Amber (warm CRT feel)
+           Retro terminal aesthetic
+           ============================================ */
+        [data-theme="amber"] {
+            /* Accents */
+            --accent-primary: #ffaa00;
+            --accent-secondary: #ff6600;
+            --logo-block1: #ffaa00;
+            --logo-block2: #ff6600;
+
+            /* Display - amber CRT */
+            --display-text: #ffaa00;
+            --display-text-dim: #664400;
+
+            /* LEDs - warm tones */
+            --led-green: #ffcc00;
+            --led-green-dim: #665500;
+            --led-blue: #ffaa44;
+            --led-blue-dim: #664422;
+
+            /* Primary buttons - warm */
+            --btn-primary-bg: #604a1a;
+            --btn-primary-border: #403012;
+            --btn-primary-text: #ffdd88;
+            --btn-primary-hover: #786020;
+
+            /* Recording */
+            --recording-color: #ff6600;
+
+            /* Action buttons - amber CRT palette */
+            --action-red-bg: #8b3000;
+            --action-red-border: #5c2000;
+            --action-red-text: #ffcc99;
+            --action-amber-bg: #8b6000;
+            --action-amber-border: #5c4000;
+            --action-amber-text: #ffee99;
+            --action-green-bg: #6b7000;
+            --action-green-border: #454a00;
+            --action-green-text: #eeff88;
+            --action-blue-bg: #555540;
+            --action-blue-border: #38382a;
+            --action-blue-text: #ddddaa;
+
+            /* Fnkeys - amber CRT */
+            --fnkey-red-bg: #8b3500;
+            --fnkey-red-border: #5c2200;
+            --fnkey-amber-bg: #8b6500;
+            --fnkey-amber-border: #5c4200;
+            --fnkey-green-bg: #6b7500;
+            --fnkey-green-border: #454c00;
+            --fnkey-blue-bg: #555845;
+            --fnkey-blue-border: #383a2d;
+        }
+
+        /* ============================================
+           THEME: Light (industrial beige/gray)
+           Daytime, paper-like aesthetic
+           ============================================ */
+        [data-theme="light"] {
+            /* Surfaces - light industrial */
+            --surface-base: #c8c8c8;
+            --panel-bg: #d8d8d8;
+            --panel-surface: #e4e4e4;
+            --panel-raised: #ececec;
+            --panel-inset: #c0c0c0;
+            --panel-border: #a0a0a0;
+
+            /* Text - dark on light */
+            --text-bright: #1a1a1a;
+            --text-normal: #404040;
+            --text-dim: #707070;
+            --text-label: #606060;
+
+            /* Bezels */
+            --bezel-light: #f0f0f0;
+            --bezel-dark: #909090;
+            --screw-color: #b0b0b0;
+
+            /* Display - inverted */
+            --display-bg: #1a2420;
+            --display-text: #00dd55;
+            --display-text-dim: #005522;
+
+            /* LEDs - darker for contrast */
+            --led-green: #00cc44;
+            --led-green-dim: #b8d8c0;
+            --led-red: #dd2222;
+            --led-red-dim: #d8b8b8;
+            --led-amber: #cc8800;
+            --led-amber-dim: #d8d0b8;
+            --led-blue: #0077cc;
+            --led-blue-dim: #b8c8d8;
+
+            /* Primary buttons */
+            --btn-primary-bg: #2a8050;
+            --btn-primary-border: #1a6040;
+            --btn-primary-text: #ffffff;
+            --btn-primary-hover: #3a9060;
+
+            /* Danger buttons */
+            --btn-danger-bg: #c03030;
+            --btn-danger-border: #902020;
+            --btn-danger-text: #ffffff;
+            --btn-danger-hover: #d04040;
+
+            /* Neutral buttons */
+            --btn-neutral-bg: #b8b8b8;
+            --btn-neutral-hover: #c8c8c8;
+            --btn-neutral-active: #a0a0a0;
+
+            /* Action buttons - saturated on light bg */
+            --action-red-bg: #c04040;
+            --action-red-border: #903030;
+            --action-red-text: #ffffff;
+            --action-amber-bg: #b89000;
+            --action-amber-border: #907000;
+            --action-amber-text: #ffffff;
+            --action-green-bg: #308040;
+            --action-green-border: #206030;
+            --action-green-text: #ffffff;
+            --action-blue-bg: #3060a0;
+            --action-blue-border: #204080;
+            --action-blue-text: #ffffff;
+
+            /* Fnkeys */
+            --fnkey-red-bg: #c04545;
+            --fnkey-red-border: #903535;
+            --fnkey-amber-bg: #b89500;
+            --fnkey-amber-border: #907500;
+            --fnkey-green-bg: #358545;
+            --fnkey-green-border: #256535;
+            --fnkey-blue-bg: #3565a5;
+            --fnkey-blue-border: #254585;
+
+            /* Accents */
+            --accent-primary: #00a080;
+            --accent-secondary: #d06040;
+            --logo-block1: #00a080;
+            --logo-block2: #d06040;
+            --logo-relay: #ffffff;
+
+            /* Recording */
+            --recording-color: #dd6600;
+        }
+
+        /* ============================================
+           THEME: Catppuccin Mocha (darkest)
+           Soothing pastel theme
+           ============================================ */
+        [data-theme="ctp-mocha"] {
+            /* Surfaces */
+            --surface-base: #11111b;
+            --panel-bg: #1e1e2e;
+            --panel-surface: #313244;
+            --panel-raised: #45475a;
+            --panel-inset: #181825;
+            --panel-border: #11111b;
+
+            /* Text */
+            --text-bright: #cdd6f4;
+            --text-normal: #bac2de;
+            --text-dim: #6c7086;
+            --text-label: #9399b2;
+
+            /* Bezels */
+            --bezel-light: #585b70;
+            --bezel-dark: #181825;
+            --screw-color: #45475a;
+
+            /* Display */
+            --display-bg: #11111b;
+            --display-text: #a6e3a1;
+            --display-text-dim: #40553e;
+
+            /* LEDs - Catppuccin accent colors */
+            --led-green: #a6e3a1;
+            --led-green-dim: #40553e;
+            --led-red: #f38ba8;
+            --led-red-dim: #5c3540;
+            --led-amber: #f9e2af;
+            --led-amber-dim: #5c5340;
+            --led-blue: #89b4fa;
+            --led-blue-dim: #35455c;
+
+            /* Primary - Teal */
+            --btn-primary-bg: #2a4a48;
+            --btn-primary-border: #1a3230;
+            --btn-primary-text: #94e2d5;
+            --btn-primary-hover: #3a5a58;
+
+            /* Danger - Red */
+            --btn-danger-bg: #5c3540;
+            --btn-danger-border: #3c2028;
+            --btn-danger-text: #f38ba8;
+            --btn-danger-hover: #6c4550;
+
+            /* Neutral */
+            --btn-neutral-bg: #45475a;
+            --btn-neutral-hover: #585b70;
+            --btn-neutral-active: #313244;
+
+            /* Action buttons */
+            --action-red-bg: #5c3540;
+            --action-red-border: #3c2028;
+            --action-red-text: #f38ba8;
+            --action-amber-bg: #5c5340;
+            --action-amber-border: #3c3528;
+            --action-amber-text: #f9e2af;
+            --action-green-bg: #40553e;
+            --action-green-border: #283528;
+            --action-green-text: #a6e3a1;
+            --action-blue-bg: #35455c;
+            --action-blue-border: #202838;
+            --action-blue-text: #89b4fa;
+
+            /* Fnkeys */
+            --fnkey-red-bg: #5c3540;
+            --fnkey-red-border: #3c2028;
+            --fnkey-amber-bg: #5c5340;
+            --fnkey-amber-border: #3c3528;
+            --fnkey-green-bg: #40553e;
+            --fnkey-green-border: #283528;
+            --fnkey-blue-bg: #35455c;
+            --fnkey-blue-border: #202838;
+
+            /* Accents - Mauve & Peach */
+            --accent-primary: #cba6f7;
+            --accent-secondary: #fab387;
+            --logo-block1: #cba6f7;
+            --logo-block2: #fab387;
+            --logo-relay: #cdd6f4;
+            --recording-color: #fab387;
+        }
+
+        /* ============================================
+           THEME: Catppuccin Macchiato
+           ============================================ */
+        [data-theme="ctp-macchiato"] {
+            /* Surfaces */
+            --surface-base: #181926;
+            --panel-bg: #24273a;
+            --panel-surface: #363a4f;
+            --panel-raised: #494d64;
+            --panel-inset: #1e2030;
+            --panel-border: #181926;
+
+            /* Text */
+            --text-bright: #cad3f5;
+            --text-normal: #b8c0e0;
+            --text-dim: #6e738d;
+            --text-label: #939ab7;
+
+            /* Bezels */
+            --bezel-light: #5b6078;
+            --bezel-dark: #1e2030;
+            --screw-color: #494d64;
+
+            /* Display */
+            --display-bg: #181926;
+            --display-text: #a6da95;
+            --display-text-dim: #405038;
+
+            /* LEDs */
+            --led-green: #a6da95;
+            --led-green-dim: #405038;
+            --led-red: #ed8796;
+            --led-red-dim: #583538;
+            --led-amber: #eed49f;
+            --led-amber-dim: #585038;
+            --led-blue: #8aadf4;
+            --led-blue-dim: #354258;
+
+            /* Primary - Teal */
+            --btn-primary-bg: #2a4845;
+            --btn-primary-border: #1a3230;
+            --btn-primary-text: #8bd5ca;
+            --btn-primary-hover: #3a5855;
+
+            /* Danger */
+            --btn-danger-bg: #583538;
+            --btn-danger-border: #382025;
+            --btn-danger-text: #ed8796;
+            --btn-danger-hover: #684548;
+
+            /* Neutral */
+            --btn-neutral-bg: #494d64;
+            --btn-neutral-hover: #5b6078;
+            --btn-neutral-active: #363a4f;
+
+            /* Action buttons */
+            --action-red-bg: #583538;
+            --action-red-border: #382025;
+            --action-red-text: #ed8796;
+            --action-amber-bg: #585038;
+            --action-amber-border: #383225;
+            --action-amber-text: #eed49f;
+            --action-green-bg: #405038;
+            --action-green-border: #283225;
+            --action-green-text: #a6da95;
+            --action-blue-bg: #354258;
+            --action-blue-border: #202835;
+            --action-blue-text: #8aadf4;
+
+            /* Fnkeys */
+            --fnkey-red-bg: #583538;
+            --fnkey-red-border: #382025;
+            --fnkey-amber-bg: #585038;
+            --fnkey-amber-border: #383225;
+            --fnkey-green-bg: #405038;
+            --fnkey-green-border: #283225;
+            --fnkey-blue-bg: #354258;
+            --fnkey-blue-border: #202835;
+
+            /* Accents - Mauve & Peach */
+            --accent-primary: #c6a0f6;
+            --accent-secondary: #f5a97f;
+            --logo-block1: #c6a0f6;
+            --logo-block2: #f5a97f;
+            --logo-relay: #cad3f5;
+            --recording-color: #f5a97f;
+        }
+
+        /* ============================================
+           THEME: Catppuccin Frappé
+           ============================================ */
+        [data-theme="ctp-frappe"] {
+            /* Surfaces */
+            --surface-base: #232634;
+            --panel-bg: #303446;
+            --panel-surface: #414559;
+            --panel-raised: #51576d;
+            --panel-inset: #292c3c;
+            --panel-border: #232634;
+
+            /* Text */
+            --text-bright: #c6d0f5;
+            --text-normal: #b5bfe2;
+            --text-dim: #737994;
+            --text-label: #949cbb;
+
+            /* Bezels */
+            --bezel-light: #626880;
+            --bezel-dark: #292c3c;
+            --screw-color: #51576d;
+
+            /* Display */
+            --display-bg: #232634;
+            --display-text: #a6d189;
+            --display-text-dim: #405035;
+
+            /* LEDs */
+            --led-green: #a6d189;
+            --led-green-dim: #405035;
+            --led-red: #e78284;
+            --led-red-dim: #553535;
+            --led-amber: #e5c890;
+            --led-amber-dim: #554a35;
+            --led-blue: #8caaee;
+            --led-blue-dim: #354055;
+
+            /* Primary - Teal */
+            --btn-primary-bg: #2a4542;
+            --btn-primary-border: #1a302e;
+            --btn-primary-text: #81c8be;
+            --btn-primary-hover: #3a5552;
+
+            /* Danger */
+            --btn-danger-bg: #553535;
+            --btn-danger-border: #352020;
+            --btn-danger-text: #e78284;
+            --btn-danger-hover: #654545;
+
+            /* Neutral */
+            --btn-neutral-bg: #51576d;
+            --btn-neutral-hover: #626880;
+            --btn-neutral-active: #414559;
+
+            /* Action buttons */
+            --action-red-bg: #553535;
+            --action-red-border: #352020;
+            --action-red-text: #e78284;
+            --action-amber-bg: #554a35;
+            --action-amber-border: #353020;
+            --action-amber-text: #e5c890;
+            --action-green-bg: #405035;
+            --action-green-border: #283020;
+            --action-green-text: #a6d189;
+            --action-blue-bg: #354055;
+            --action-blue-border: #202830;
+            --action-blue-text: #8caaee;
+
+            /* Fnkeys */
+            --fnkey-red-bg: #553535;
+            --fnkey-red-border: #352020;
+            --fnkey-amber-bg: #554a35;
+            --fnkey-amber-border: #353020;
+            --fnkey-green-bg: #405035;
+            --fnkey-green-border: #283020;
+            --fnkey-blue-bg: #354055;
+            --fnkey-blue-border: #202830;
+
+            /* Accents - Mauve & Peach */
+            --accent-primary: #ca9ee6;
+            --accent-secondary: #ef9f76;
+            --logo-block1: #ca9ee6;
+            --logo-block2: #ef9f76;
+            --logo-relay: #c6d0f5;
+            --recording-color: #ef9f76;
+        }
+
+        /* ============================================
+           THEME: Catppuccin Latte (light)
+           ============================================ */
+        [data-theme="ctp-latte"] {
+            /* Surfaces */
+            --surface-base: #dce0e8;
+            --panel-bg: #eff1f5;
+            --panel-surface: #e6e9ef;
+            --panel-raised: #ccd0da;
+            --panel-inset: #bcc0cc;
+            --panel-border: #acb0be;
+
+            /* Text */
+            --text-bright: #4c4f69;
+            --text-normal: #5c5f77;
+            --text-dim: #8c8fa1;
+            --text-label: #6c6f85;
+
+            /* Bezels */
+            --bezel-light: #eff1f5;
+            --bezel-dark: #9ca0b0;
+            --screw-color: #bcc0cc;
+
+            /* Display - keep dark for contrast */
+            --display-bg: #1e1e2e;
+            --display-text: #a6e3a1;
+            --display-text-dim: #40553e;
+
+            /* LEDs - saturated for light bg */
+            --led-green: #40a02b;
+            --led-green-dim: #c8e8c0;
+            --led-red: #d20f39;
+            --led-red-dim: #e8c0c8;
+            --led-amber: #df8e1d;
+            --led-amber-dim: #e8dcc0;
+            --led-blue: #1e66f5;
+            --led-blue-dim: #c0d0e8;
+
+            /* Primary - Teal */
+            --btn-primary-bg: #179299;
+            --btn-primary-border: #0e6065;
+            --btn-primary-text: #ffffff;
+            --btn-primary-hover: #20a5ad;
+
+            /* Danger */
+            --btn-danger-bg: #d20f39;
+            --btn-danger-border: #a00a2c;
+            --btn-danger-text: #ffffff;
+            --btn-danger-hover: #e52048;
+
+            /* Neutral */
+            --btn-neutral-bg: #ccd0da;
+            --btn-neutral-hover: #bcc0cc;
+            --btn-neutral-active: #acb0be;
+
+            /* Action buttons */
+            --action-red-bg: #d20f39;
+            --action-red-border: #a00a2c;
+            --action-red-text: #ffffff;
+            --action-amber-bg: #df8e1d;
+            --action-amber-border: #a86a15;
+            --action-amber-text: #ffffff;
+            --action-green-bg: #40a02b;
+            --action-green-border: #2e7820;
+            --action-green-text: #ffffff;
+            --action-blue-bg: #1e66f5;
+            --action-blue-border: #1550c0;
+            --action-blue-text: #ffffff;
+
+            /* Fnkeys */
+            --fnkey-red-bg: #d20f39;
+            --fnkey-red-border: #a00a2c;
+            --fnkey-amber-bg: #df8e1d;
+            --fnkey-amber-border: #a86a15;
+            --fnkey-green-bg: #40a02b;
+            --fnkey-green-border: #2e7820;
+            --fnkey-blue-bg: #1e66f5;
+            --fnkey-blue-border: #1550c0;
+
+            /* Accents - Mauve & Peach */
+            --accent-primary: #8839ef;
+            --accent-secondary: #fe640b;
+            --logo-block1: #8839ef;
+            --logo-block2: #fe640b;
+            --logo-relay: #eff1f5;
+            --recording-color: #fe640b;
         }
 
         * {
@@ -51,7 +750,7 @@
 
         body {
             font-family: 'IBM Plex Sans', -apple-system, sans-serif;
-            background: #0d0f12;
+            background: var(--surface-base);
             color: var(--text-normal);
             min-height: 100vh;
             padding: 12px;
@@ -110,76 +809,79 @@
         .status-cluster {
             display: flex;
             align-items: center;
-            gap: 24px;
+            gap: 16px;
         }
 
-        /* LED Indicators */
-        .led-group {
+        /* LED Indicators - Koma-style vertical bars */
+        .led-cluster {
             display: flex;
+            gap: 6px;
+            padding: 4px 8px;
+            background: var(--panel-inset);
+            border-radius: 3px;
+            border: 1px solid var(--panel-border);
+        }
+
+        .led-bar {
+            display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 8px;
+            gap: 3px;
         }
 
         .led-label {
             font-family: 'IBM Plex Mono', monospace;
-            font-size: 9px;
+            font-size: 8px;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 1px;
             color: var(--text-dim);
         }
 
         .led {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
+            width: 4px;
+            height: 20px;
+            border-radius: 2px;
             background: var(--led-green-dim);
-            border: 1px solid rgba(0,0,0,0.5);
-            box-shadow: inset 0 1px 2px rgba(0,0,0,0.5);
+            border: 1px solid rgba(0,0,0,0.3);
             transition: all 0.15s;
         }
 
         .led.on {
             background: var(--led-green);
-            box-shadow:
-                inset 0 1px 2px rgba(255,255,255,0.3),
-                0 0 8px var(--led-green),
-                0 0 16px rgba(0,255,102,0.4);
+            box-shadow: 0 0 6px var(--led-green);
         }
 
         .led.red { background: var(--led-red-dim); }
         .led.red.on {
             background: var(--led-red);
-            box-shadow:
-                inset 0 1px 2px rgba(255,255,255,0.3),
-                0 0 8px var(--led-red),
-                0 0 16px rgba(255,51,51,0.4);
+            box-shadow: 0 0 6px var(--led-red);
         }
 
         .led.amber { background: var(--led-amber-dim); }
         .led.amber.on {
             background: var(--led-amber);
-            box-shadow:
-                inset 0 1px 2px rgba(255,255,255,0.3),
-                0 0 8px var(--led-amber),
-                0 0 16px rgba(255,170,0,0.4);
+            box-shadow: 0 0 6px var(--led-amber);
         }
 
         .led.blue { background: var(--led-blue-dim); }
         .led.blue.on {
             background: var(--led-blue);
-            box-shadow:
-                inset 0 1px 2px rgba(255,255,255,0.3),
-                0 0 8px var(--led-blue),
-                0 0 16px rgba(0,153,255,0.4);
+            box-shadow: 0 0 6px var(--led-blue);
+        }
+
+        /* Circular LED style for non-header indicators */
+        .led.dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
         }
 
         /* Main panel area - horizontal layout */
         .main-panel {
             display: grid;
             grid-template-columns: minmax(350px, 1fr) minmax(600px, 1.5fr);
-            padding: 12px;
-            gap: 12px;
+            padding: 10px;
+            gap: 10px;
             flex: 1;
             min-height: 0;  /* Allow to shrink in flex container */
             overflow: hidden;
@@ -202,15 +904,14 @@
         .right-column {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr 1fr;
-            grid-template-rows: auto auto auto auto auto 1fr;
+            grid-template-rows: auto auto auto auto 1fr;
             grid-template-areas:
                 "tinput tinput tinput tinput"
                 "keys keys mouse mouse"
                 "jiggler settings log log"
                 "wakepower macros log log"
-                "cardputer scripts log log"
-                "modifiers scripts log log";
-            gap: 10px;
+                "cardputer scripts log log";
+            gap: 8px;
             flex: 1;
             min-height: 0;  /* Allow grid to shrink */
             overflow: hidden;  /* Prevent grid from growing beyond container */
@@ -228,7 +929,6 @@
         .area-wakepower { grid-area: wakepower; }
         .area-cardputer { grid-area: cardputer; }
         .area-scripts { grid-area: scripts; display: flex; flex-direction: column; }
-        .area-modifiers { grid-area: modifiers; }
         .area-macros { grid-area: macros; }
         .area-log { grid-area: log; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 
@@ -270,7 +970,9 @@
 
         .module-header {
             background: var(--panel-surface);
-            padding: 8px 12px;
+            padding: 5px 10px;
+            height: 24px;
+            box-sizing: content-box;
             border-bottom: 1px solid var(--panel-border);
             font-family: 'IBM Plex Mono', monospace;
             font-size: 10px;
@@ -284,7 +986,7 @@
         }
 
         .module-body {
-            padding: 10px;
+            padding: 8px;
         }
 
         /* Hardware buttons - industrial flat style */
@@ -294,9 +996,9 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            padding: 10px 16px;
-            background: #35393e;
-            border: 1px solid var(--panel-border);
+            padding: 8px 14px;
+            background: var(--btn-neutral-bg);
+            border: 1px solid var(--text-dim);
             border-radius: 3px;
             color: var(--text-normal);
             cursor: pointer;
@@ -304,12 +1006,12 @@
         }
 
         .hw-btn:hover {
-            background: #45494f;
+            background: var(--btn-neutral-hover);
             color: var(--text-bright);
         }
 
         .hw-btn:active {
-            background: #282c30;
+            background: var(--btn-neutral-active);
             transform: translateY(1px);
         }
 
@@ -320,23 +1022,38 @@
         }
 
         .hw-btn.primary {
-            background: #1a6040;
-            border-color: #124030;
-            color: #88ffaa;
+            background: var(--btn-primary-bg);
+            border-color: rgba(255, 255, 255, 0.25);
+            color: var(--btn-primary-text);
         }
 
         .hw-btn.primary:hover {
-            background: #227850;
+            background: var(--btn-primary-hover);
+        }
+
+        .theme-select {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10px;
+            padding: 4px 8px;
+            background: var(--panel-inset);
+            border: 1px solid var(--panel-border);
+            border-radius: 3px;
+            color: var(--text-dim);
+            cursor: pointer;
+        }
+
+        .theme-select:hover {
+            color: var(--text-normal);
         }
 
         .hw-btn.danger {
-            background: #702020;
-            border-color: #501515;
-            color: #ffaaaa;
+            background: var(--btn-danger-bg);
+            border-color: rgba(255, 255, 255, 0.25);
+            color: var(--btn-danger-text);
         }
 
         .hw-btn.danger:hover {
-            background: #882828;
+            background: var(--btn-danger-hover);
         }
 
         .hw-btn.large {
@@ -370,6 +1087,8 @@
 
         /* Capture panel - video area */
         .capture-panel {
+            position: relative;
+            overflow: hidden;
             background: var(--panel-inset);
             border: 2px solid var(--panel-border);
             border-radius: 4px;
@@ -380,10 +1099,69 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            position: relative;
-            overflow: hidden;
             flex: 1;
-            min-height: 250px;
+            min-height: 200px;
+        }
+
+        .capture-panel #videoFeed {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            z-index: 0;
+            display: none;
+            background: #000;
+        }
+
+        .capture-panel.streaming #videoFeed {
+            display: block;
+        }
+
+        .capture-panel.streaming .capture-title {
+            display: none;
+        }
+
+        .capture-panel.streaming::before,
+        .capture-panel.streaming::after {
+            display: none;
+        }
+
+        /* Hover overlay for controls when streaming */
+        .capture-panel.streaming .capture-btn-wrapper,
+        .capture-panel.streaming .capture-hint {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .capture-panel.streaming:hover .capture-btn-wrapper,
+        .capture-panel.streaming:hover .capture-hint {
+            opacity: 1;
+        }
+
+        .capture-panel.streaming .capture-btn {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+        }
+
+        .capture-panel.streaming .capture-hint {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 4px 8px;
+            border-radius: 3px;
+        }
+
+        /* When captured (jacked in), show video fullscreen over entire page */
+        .capture-panel.captured #videoFeed {
+            display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 999;
+            object-fit: cover;
+            background: #000;
         }
 
         /* Scanline effect for future video area */
@@ -448,10 +1226,10 @@
             text-transform: uppercase;
             letter-spacing: 2px;
             padding: 20px 48px;
-            background: #1a6040;
-            border: 2px solid #124030;
+            background: var(--btn-primary-bg);
+            border: 2px solid var(--btn-primary-border);
             border-radius: 4px;
-            color: #88ffaa;
+            color: var(--btn-primary-text);
             cursor: pointer;
             transition: all 0.15s;
             position: relative;
@@ -459,17 +1237,17 @@
         }
 
         .capture-btn:hover:not(:disabled) {
-            background: #228050;
-            color: #aaffcc;
+            background: var(--btn-primary-hover);
+            filter: brightness(1.1);
         }
 
         .capture-btn:active:not(:disabled) {
-            background: #145030;
+            background: var(--btn-primary-border);
             transform: translateY(2px);
         }
 
         .capture-btn:disabled {
-            background: #2a2f35;
+            background: var(--panel-raised);
             border-color: var(--panel-border);
             color: var(--text-dim);
             cursor: not-allowed;
@@ -505,34 +1283,44 @@
             box-shadow: inset 0 4px 12px rgba(0,0,0,0.6);
         }
 
-        .trackpad::before {
-            content: '';
+        .trackpad-center {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 20px;
-            height: 20px;
+            width: 24px;
+            height: 24px;
             border: 1px solid var(--text-dim);
             border-radius: 50%;
             opacity: 0.3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: var(--text-dim);
+            transition: all 0.15s;
+            pointer-events: none;
         }
 
-        .trackpad::after {
-            content: '+';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: var(--text-dim);
-            font-size: 20px;
-            opacity: 0.3;
+        .trackpad-center.drag-ready {
+            opacity: 0.6;
+            transform: translate(-50%, -50%) scale(1.3);
         }
+
+        .trackpad-center.drag-active {
+            opacity: 1;
+            border-width: 2px;
+            transform: translate(-50%, -50%) scale(1.2);
+        }
+
+        .trackpad-center.drag-active.left { border-color: var(--led-red); color: var(--led-red); }
+        .trackpad-center.drag-active.middle { border-color: var(--led-green); color: var(--led-green); }
+        .trackpad-center.drag-active.right { border-color: var(--led-blue); color: var(--led-blue); }
 
         /* Button grid */
         .btn-grid {
             display: grid;
-            gap: 4px;
+            gap: 3px;
         }
 
         .btn-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
@@ -544,9 +1332,9 @@
             font-family: 'IBM Plex Mono', monospace;
             font-size: 10px;
             font-weight: 600;
-            padding: 6px 4px;
-            background: var(--panel-surface);
-            border: 1px solid var(--panel-border);
+            padding: 5px 4px;
+            background: var(--panel-raised);
+            border: 1px solid var(--text-dim);
             border-radius: 2px;
             color: var(--text-normal);
             cursor: pointer;
@@ -563,28 +1351,28 @@
             transform: translateY(1px);
         }
 
-        /* Industrial membrane keypad style - flat colors */
+        /* Industrial membrane keypad style - raised look with bright borders */
         .fn-key.red {
-            background: #8b2525;
-            border-color: #5c1818;
+            background: var(--fnkey-red-bg);
+            border-color: rgba(255, 255, 255, 0.25);
             color: #fff;
         }
 
         .fn-key.amber {
-            background: #9a7b00;
-            border-color: #6b5500;
+            background: var(--fnkey-amber-bg);
+            border-color: rgba(255, 255, 255, 0.25);
             color: #fff;
         }
 
         .fn-key.green {
-            background: #2a7a3a;
-            border-color: #1a5528;
+            background: var(--fnkey-green-bg);
+            border-color: rgba(255, 255, 255, 0.25);
             color: #fff;
         }
 
         .fn-key.blue {
-            background: #2a5a8a;
-            border-color: #1a4060;
+            background: var(--fnkey-blue-bg);
+            border-color: rgba(255, 255, 255, 0.25);
             color: #fff;
         }
 
@@ -624,8 +1412,8 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             padding: 10px 8px;
-            background: var(--panel-surface);
-            border: 1px solid var(--panel-border);
+            background: var(--panel-raised);
+            border: 1px solid var(--text-dim);
             border-radius: 2px;
             color: var(--text-normal);
             cursor: pointer;
@@ -651,34 +1439,34 @@
             margin-top: 4px;
         }
 
-        /* Industrial flat colored action buttons */
+        /* Industrial raised colored action buttons */
         .action-btn.red {
-            background: #7a2020;
-            border-color: #501515;
+            background: var(--action-red-bg);
+            border-color: rgba(255, 255, 255, 0.25);
             color: #fff;
         }
-        .action-btn.red .shortcut { color: #ffcccc; }
+        .action-btn.red .shortcut { color: var(--action-red-text); }
 
         .action-btn.amber {
-            background: #806500;
-            border-color: #584500;
+            background: var(--action-amber-bg);
+            border-color: rgba(255, 255, 255, 0.25);
             color: #fff;
         }
-        .action-btn.amber .shortcut { color: #ffe088; }
+        .action-btn.amber .shortcut { color: var(--action-amber-text); }
 
         .action-btn.green {
-            background: #256530;
-            border-color: #184520;
+            background: var(--action-green-bg);
+            border-color: rgba(255, 255, 255, 0.25);
             color: #fff;
         }
-        .action-btn.green .shortcut { color: #aaffbb; }
+        .action-btn.green .shortcut { color: var(--action-green-text); }
 
         .action-btn.blue {
-            background: #254a70;
-            border-color: #18354a;
+            background: var(--action-blue-bg);
+            border-color: rgba(255, 255, 255, 0.25);
             color: #fff;
         }
-        .action-btn.blue .shortcut { color: #aaddff; }
+        .action-btn.blue .shortcut { color: var(--action-blue-text); }
 
         /* Log display */
         .log-display {
@@ -773,6 +1561,92 @@
 
         #captureOverlay.active {
             display: flex;
+        }
+
+        /* When video is streaming, minimize to broadcast-style single line */
+        #captureOverlay.video-active {
+            background: transparent;
+            justify-content: flex-start;
+            align-items: flex-start;
+            padding: 6px 8px;
+        }
+
+        #captureOverlay.video-active .overlay-content {
+            background: rgba(0, 0, 0, 0.75);
+            padding: 3px 8px;
+            border-radius: 2px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+        }
+
+        #captureOverlay.video-active .overlay-indicator,
+        #captureOverlay.video-active .overlay-title,
+        #captureOverlay.video-active .overlay-subtitle,
+        #captureOverlay.video-active .overlay-hint,
+        #captureOverlay.video-active .overlay-exit {
+            display: none;
+        }
+
+        #captureOverlay.video-active .overlay-stats {
+            display: contents;
+        }
+
+        #captureOverlay.video-active .stat-block {
+            display: flex;
+            flex-direction: row;
+            align-items: baseline;
+            margin-right: 8px;
+        }
+
+        #captureOverlay.video-active .stat-block:last-child {
+            margin-right: 0;
+        }
+
+        #captureOverlay.video-active .stat-block .stat-label {
+            font-size: 10px;
+            color: var(--text-dim);
+            letter-spacing: 0;
+            order: 0;
+        }
+
+        #captureOverlay.video-active .stat-block .stat-label::after {
+            content: ':';
+        }
+
+        #captureOverlay.video-active .stat-block .stat-value {
+            font-size: 10px;
+            min-width: auto;
+            order: 1;
+        }
+
+        #captureOverlay.video-active .overlay-content::before {
+            content: '●';
+            color: #f44;
+            margin-right: 6px;
+            font-size: 8px;
+        }
+
+        #captureOverlay.video-active .overlay-content::after {
+            content: 'ESC';
+            color: var(--text-dim);
+            margin-left: 8px;
+            padding: 1px 4px;
+            border: 1px solid var(--text-dim);
+            border-radius: 2px;
+            font-size: 8px;
+            order: 99;
+        }
+
+        /* Hide FPS stat when not in video mode */
+        .stat-fps {
+            display: none;
+        }
+
+        #captureOverlay.video-active .stat-fps {
+            display: contents;
         }
 
         .overlay-content {
@@ -877,6 +1751,49 @@
             font-size: 10px;
         }
 
+        /* Command mode banner */
+        .cmd-mode-banner {
+            display: none;
+            position: absolute;
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--fnkey-amber-bg);
+            border: 2px solid var(--led-amber);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            z-index: 10;
+            animation: cmdPulse 1.5s ease-in-out infinite;
+        }
+
+        .cmd-mode-banner.active {
+            display: block;
+        }
+
+        .cmd-mode-icon {
+            margin-right: 8px;
+        }
+
+        .cmd-mode-hint {
+            display: block;
+            font-size: 10px;
+            font-weight: 400;
+            letter-spacing: 1px;
+            margin-top: 4px;
+            opacity: 0.8;
+        }
+
+        @keyframes cmdPulse {
+            0%, 100% { box-shadow: 0 0 10px var(--led-amber); }
+            50% { box-shadow: 0 0 20px var(--led-amber), 0 0 30px var(--led-amber); }
+        }
+
         /* Sensitivity sliders */
         .sensitivity-slider {
             width: 100%;
@@ -895,7 +1812,7 @@
             appearance: none;
             width: 16px;
             height: 16px;
-            background: linear-gradient(180deg, #3a4045 0%, #2a2f35 50%, #22262b 100%);
+            background: linear-gradient(180deg, var(--bezel-light) 0%, var(--panel-raised) 50%, var(--panel-surface) 100%);
             border: 1px solid var(--panel-border);
             border-radius: 2px;
             cursor: pointer;
@@ -903,13 +1820,13 @@
         }
 
         .sensitivity-slider::-webkit-slider-thumb:hover {
-            background: linear-gradient(180deg, #454b52 0%, #353a40 50%, #2a2f35 100%);
+            background: linear-gradient(180deg, var(--btn-neutral-hover) 0%, var(--btn-neutral-bg) 50%, var(--panel-raised) 100%);
         }
 
         .sensitivity-slider::-moz-range-thumb {
             width: 16px;
             height: 16px;
-            background: linear-gradient(180deg, #3a4045 0%, #2a2f35 50%, #22262b 100%);
+            background: linear-gradient(180deg, var(--bezel-light) 0%, var(--panel-raised) 50%, var(--panel-surface) 100%);
             border: 1px solid var(--panel-border);
             border-radius: 2px;
             cursor: pointer;
@@ -942,8 +1859,8 @@
         }
 
         .radio-btn:has(input:checked) {
-            background: #2a5a8a;
-            border-color: #1a4060;
+            background: var(--fnkey-blue-bg);
+            border-color: var(--fnkey-blue-border);
             color: #fff;
         }
 
@@ -954,8 +1871,57 @@
 
         /* Off button gets amber when active */
         #radioOff:has(input:checked) {
-            background: #9a7b00;
-            border-color: #6b5500;
+            background: var(--fnkey-amber-bg);
+            border-color: var(--fnkey-amber-border);
+        }
+
+        /* Toggle switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 28px;
+            height: 14px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--panel-surface);
+            border: 1px solid var(--panel-border);
+            border-radius: 7px;
+            transition: 0.2s;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 10px;
+            width: 10px;
+            left: 1px;
+            bottom: 1px;
+            background: var(--text-dim);
+            border-radius: 50%;
+            transition: 0.2s;
+        }
+
+        .toggle-switch input:checked + .toggle-slider {
+            background: var(--fnkey-green-bg);
+            border-color: var(--fnkey-green-border);
+        }
+
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(14px);
+            background: #fff;
         }
 
         /* Video settings grid */
@@ -1036,7 +2002,7 @@
 
         .arm-btn.armed {
             background: var(--led-amber);
-            border-color: #ff8800;
+            border-color: var(--recording-color);
             color: #000;
             box-shadow: 0 0 8px rgba(255, 170, 0, 0.5);
         }
@@ -1051,7 +2017,7 @@
 
         .power-btn.armed {
             opacity: 1;
-            border: 2px solid #ff8800 !important;
+            border: 2px solid var(--recording-color) !important;
             box-shadow: 0 0 10px rgba(255, 0, 0, 0.4);
         }
 
@@ -1235,10 +2201,13 @@
 
     <!-- Capture Overlay -->
     <div id="captureOverlay">
+        <div class="cmd-mode-banner" id="cmdModeBanner">
+            <span class="cmd-mode-icon">⌨</span> COMMAND MODE <span class="cmd-mode-hint">Press key for action</span>
+        </div>
         <div class="overlay-content">
             <div class="overlay-indicator"></div>
             <div class="overlay-title">Jacked In</div>
-            <div class="overlay-subtitle">Direct control active</div>
+            <div class="overlay-subtitle" id="captureSubtitle">Direct control active</div>
             <div class="overlay-stats">
                 <div class="stat-block">
                     <div class="stat-value" id="statMouse">0</div>
@@ -1252,6 +2221,10 @@
                     <div class="stat-value" id="statKeys">0</div>
                     <div class="stat-label">Keys</div>
                 </div>
+                <div class="stat-block stat-fps" id="statFpsBlock">
+                    <div class="stat-value" id="statFps">--</div>
+                    <div class="stat-label">FPS</div>
+                </div>
             </div>
         </div>
         <div class="overlay-exit">
@@ -1264,24 +2237,43 @@
         <!-- Top Bezel -->
         <div class="top-bezel">
             <div class="brand">
+                <svg class="brand-icon" viewBox="0 0 128 128" width="28" height="28">
+                    <rect x="12" y="16" width="64" height="64" rx="8" fill="var(--logo-block1)"/>
+                    <rect x="52" y="48" width="64" height="64" rx="8" fill="var(--logo-block2)"/>
+                    <rect x="52" y="48" width="24" height="32" fill="var(--logo-relay)"/>
+                </svg>
                 <a href="https://github.com/endarthur/RelayKVM" target="_blank" style="text-decoration: none; color: inherit;" title="View on GitHub">
                     <span class="brand-logo">RelayKVM</span>
                 </a>
                 <span class="brand-model">BT-HID-01</span>
             </div>
             <div class="status-cluster">
-                <div class="led-group">
-                    <span class="led-label">Link</span>
-                    <div class="led" id="ledLink"></div>
+                <div class="led-cluster">
+                    <div class="led-bar">
+                        <span class="led-label">L</span>
+                        <div class="led" id="ledLink"></div>
+                    </div>
+                    <div class="led-bar">
+                        <span class="led-label">T</span>
+                        <div class="led blue" id="ledTx"></div>
+                    </div>
+                    <div class="led-bar">
+                        <span class="led-label">R</span>
+                        <div class="led amber" id="ledRx"></div>
+                    </div>
                 </div>
-                <div class="led-group">
-                    <span class="led-label">TX</span>
-                    <div class="led blue" id="ledTx"></div>
-                </div>
-                <div class="led-group">
-                    <span class="led-label">RX</span>
-                    <div class="led amber" id="ledRx"></div>
-                </div>
+                <select id="themeSelect" class="theme-select" onchange="setTheme(this.value)">
+                    <option value="">Default</option>
+                    <option value="industrial">Industrial</option>
+                    <option value="signal">Signal</option>
+                    <option value="amber">Amber</option>
+                    <option value="mono">Mono</option>
+                    <option value="light">Light</option>
+                    <option value="ctp-mocha">Catppuccin Mocha</option>
+                    <option value="ctp-macchiato">Catppuccin Macchiato</option>
+                    <option value="ctp-frappe">Catppuccin Frappé</option>
+                    <option value="ctp-latte">Catppuccin Latte</option>
+                </select>
                 <button class="hw-btn primary" id="connectBtn" onclick="toggleConnection()">Connect</button>
             </div>
         </div>
@@ -1291,8 +2283,9 @@
             <!-- Left Column: Video Panel + Quick Actions -->
             <div class="left-column">
                 <!-- Jack In Panel - video area -->
-                <div class="capture-panel">
-                    <div class="capture-title">No Signal</div>
+                <div class="capture-panel" id="capturePanel">
+                    <video id="videoFeed" autoplay playsinline muted></video>
+                    <div class="capture-title" id="captureTitle">No Signal</div>
                     <button class="capture-btn" id="captureBtn" onclick="startCapture()" disabled>
                         Jack In
                     </button>
@@ -1303,7 +2296,7 @@
                 <div class="module">
                     <div class="module-header">
                         <span>Video</span>
-                        <div class="led" id="ledVideo"></div>
+                        <div class="led dot" id="ledVideo"></div>
                     </div>
                     <div class="module-body">
                         <div class="video-grid">
@@ -1319,7 +2312,7 @@
                                 <span>USB</span>
                             </label>
                             <div style="display: flex; gap: 4px;">
-                                <select id="captureDevice" class="text-input" style="flex: 1; padding: 3px; font-size: 9px;" disabled>
+                                <select id="captureDevice" class="text-input" style="flex: 1; padding: 3px; font-size: 9px;" disabled onchange="queryDeviceCapabilities()">
                                     <option value="">Select device...</option>
                                 </select>
                                 <button class="fn-key green" id="startCaptureBtn" onclick="toggleCapture()" style="padding: 3px 8px; font-size: 9px;" disabled>Start</button>
@@ -1359,7 +2352,7 @@
                 <!-- Quick Actions below video -->
                 <div class="extras-row" style="grid-template-columns: repeat(2, 1fr);">
                     <div class="module">
-                        <div class="module-header">System</div>
+                        <div class="module-header"><span>System</span></div>
                         <div class="module-body">
                             <div class="btn-grid cols-2">
                                 <button class="action-btn red" onclick="sendCombo(['ctrl', 'alt', 'delete'])">
@@ -1391,7 +2384,7 @@
                     </div>
 
                     <div class="module">
-                        <div class="module-header">Clipboard</div>
+                        <div class="module-header"><span>Clipboard</span></div>
                         <div class="module-body">
                             <div class="btn-grid cols-2">
                                 <button class="action-btn green" onclick="sendCombo(['ctrl', 'c'])">
@@ -1428,7 +2421,7 @@
             <div class="right-column">
                 <!-- Text Input -->
                 <div class="module area-tinput">
-                    <div class="module-header">Text Input</div>
+                    <div class="module-header"><span>Text Input</span></div>
                     <div class="module-body">
                         <div class="text-input-row">
                             <input type="text" class="text-input" id="textInput" placeholder="Type to send...">
@@ -1437,51 +2430,58 @@
                     </div>
                 </div>
 
-                <!-- Function Keys -->
+                <!-- Keypad -->
                 <div class="module area-keys">
-                    <div class="module-header">Function Keys</div>
+                    <div class="module-header"><span>Keypad</span></div>
                     <div class="module-body">
                         <!-- F-keys block -->
-                        <div class="btn-grid" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 3px;">
+                        <div class="btn-grid" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 2px;">
                             <button class="fn-key red" onclick="sendKey('esc')">Esc</button>
                             <button class="fn-key amber" onclick="sendKey('f1')">F1</button>
                             <button class="fn-key amber" onclick="sendKey('f2')">F2</button>
                             <button class="fn-key amber" onclick="sendKey('f3')">F3</button>
                             <button class="fn-key amber" onclick="sendKey('f4')">F4</button>
                         </div>
-                        <div class="btn-grid" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 3px;">
+                        <div class="btn-grid" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 2px;">
                             <button class="fn-key red" onclick="sendKey('delete')">Del</button>
                             <button class="fn-key amber" onclick="sendKey('f5')">F5</button>
                             <button class="fn-key amber" onclick="sendKey('f6')">F6</button>
                             <button class="fn-key amber" onclick="sendKey('f7')">F7</button>
                             <button class="fn-key amber" onclick="sendKey('f8')">F8</button>
                         </div>
-                        <div class="btn-grid" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 12px;">
+                        <div class="btn-grid" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 4px;">
                             <button class="fn-key" onclick="sendKey('printscreen')">Prt</button>
                             <button class="fn-key amber" onclick="sendKey('f9')">F9</button>
                             <button class="fn-key amber" onclick="sendKey('f10')">F10</button>
                             <button class="fn-key amber" onclick="sendKey('f11')">F11</button>
                             <button class="fn-key amber" onclick="sendKey('f12')">F12</button>
                         </div>
-                        <!-- Navigation block -->
-                        <div class="btn-grid" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 3px;">
+                        <!-- Navigation keys -->
+                        <div class="btn-grid" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 2px;">
                             <button class="fn-key" onclick="sendKey('insert')">Ins</button>
                             <button class="fn-key blue" onclick="sendKey('home')">Home</button>
-                            <button class="fn-key blue" onclick="sendKey('up')">↑</button>
                             <button class="fn-key blue" onclick="sendKey('end')">End</button>
                             <button class="fn-key" onclick="sendKey('backspace')">Bksp</button>
-                        </div>
-                        <div class="btn-grid" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 12px;">
                             <button class="fn-key blue" onclick="sendKey('pageup')">PgUp</button>
+                        </div>
+                        <div class="btn-grid" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 4px;">
+                            <button class="fn-key green" onclick="sendKey('tab')">Tab</button>
+                            <button class="fn-key" onclick="sendKey('space')" style="grid-column: span 3;">Space</button>
+                            <button class="fn-key blue" onclick="sendKey('pagedown')">PgDn</button>
+                        </div>
+                        <!-- Arrows + Modifiers combined -->
+                        <div class="btn-grid" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 2px;">
+                            <button class="fn-key" id="modCtrl" onclick="toggleModifier('ctrl')">Ctrl</button>
+                            <button class="fn-key" id="modShift" onclick="toggleModifier('shift')">Shift</button>
+                            <button class="fn-key blue" onclick="sendKey('up')">↑</button>
+                            <button class="fn-key" id="modAlt" onclick="toggleModifier('alt')">Alt</button>
+                            <button class="fn-key" id="modGui" onclick="toggleModifier('gui')">Super</button>
+                        </div>
+                        <div class="btn-grid" style="grid-template-columns: repeat(5, 1fr);">
+                            <button class="fn-key" id="modHyper" onclick="toggleHyper()">Hyper</button>
                             <button class="fn-key blue" onclick="sendKey('left')">←</button>
                             <button class="fn-key blue" onclick="sendKey('down')">↓</button>
                             <button class="fn-key blue" onclick="sendKey('right')">→</button>
-                            <button class="fn-key blue" onclick="sendKey('pagedown')">PgDn</button>
-                        </div>
-                        <!-- Action keys -->
-                        <div class="btn-grid" style="grid-template-columns: 1fr 3fr 1fr;">
-                            <button class="fn-key green" onclick="sendKey('tab')">Tab</button>
-                            <button class="fn-key" onclick="sendKey('space')">Space</button>
                             <button class="fn-key green" onclick="sendKey('enter')">Enter</button>
                         </div>
                     </div>
@@ -1494,11 +2494,13 @@
                         <span class="seg-display dim" id="mouseCoords">0, 0</span>
                     </div>
                     <div class="module-body" style="flex: 1; display: flex; flex-direction: column;">
-                        <div class="trackpad" id="trackpad" style="flex: 1; height: auto; min-height: 120px;"></div>
+                        <div class="trackpad" id="trackpad" style="flex: 1; height: auto; min-height: 120px;">
+                            <div class="trackpad-center" id="trackpadCenter">+</div>
+                        </div>
                         <div class="btn-grid cols-3" style="margin-top: 8px;">
-                            <button class="hw-btn" onclick="mouseClick('left')">L</button>
-                            <button class="hw-btn" onclick="mouseClick('middle')">M</button>
-                            <button class="hw-btn" onclick="mouseClick('right')">R</button>
+                            <button class="hw-btn" id="mouseBtnL" data-button="left">L</button>
+                            <button class="hw-btn" id="mouseBtnM" data-button="middle">M</button>
+                            <button class="hw-btn" id="mouseBtnR" data-button="right">R</button>
                         </div>
                         <div class="btn-grid cols-2" style="margin-top: 4px;">
                             <button class="hw-btn" onclick="mouseScroll(scrollSensitivity)">▲</button>
@@ -1511,13 +2513,13 @@
                 <div class="module area-jiggler">
                     <div class="module-header">
                         <span>Jiggler</span>
-                        <div class="led" id="ledJiggler"></div>
+                        <div class="led dot" id="ledJiggler"></div>
                     </div>
                     <div class="module-body">
-                        <button class="hw-btn" id="jigglerBtn" onclick="toggleJiggler()" style="width: 100%; margin-bottom: 8px; padding: 6px;">
+                        <button class="hw-btn" id="jigglerBtn" onclick="toggleJiggler()" style="width: 100%; margin-bottom: 4px; padding: 5px;">
                             Start
                         </button>
-                        <div style="margin-bottom: 6px;">
+                        <div style="margin-bottom: 4px;">
                             <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
                                 <label class="led-label" style="font-size: 8px;">Range</label>
                                 <span class="seg-display" style="padding: 1px 4px; font-size: 9px;" id="jigglerRangeVal">5</span>
@@ -1536,23 +2538,23 @@
 
                 <!-- Settings -->
                 <div class="module area-settings">
-                    <div class="module-header">Settings</div>
+                    <div class="module-header"><span>Settings</span></div>
                     <div class="module-body">
-                        <div style="margin-bottom: 6px;">
+                        <div style="margin-bottom: 4px;">
                             <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
                                 <label class="led-label" style="font-size: 8px;">Mouse</label>
                                 <span class="seg-display" style="padding: 1px 4px; font-size: 9px;" id="mouseSpeedVal">2.0x</span>
                             </div>
                             <input type="range" id="mouseSpeed" min="0.5" max="5" step="0.5" value="2" class="sensitivity-slider">
                         </div>
-                        <div style="margin-bottom: 6px;">
+                        <div style="margin-bottom: 4px;">
                             <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
                                 <label class="led-label" style="font-size: 8px;">Scroll</label>
                                 <span class="seg-display" style="padding: 1px 4px; font-size: 9px;" id="scrollSpeedVal">3</span>
                             </div>
                             <input type="range" id="scrollSpeed" min="1" max="10" step="1" value="3" class="sensitivity-slider">
                         </div>
-                        <div style="display: flex; align-items: center; gap: 4px;">
+                        <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 4px;">
                             <label class="led-label" style="font-size: 8px;">Exit:</label>
                             <select id="exitKeySelect" class="text-input" style="padding: 2px 4px; font-size: 9px; flex: 1;">
                                 <option value="Escape">ESC</option>
@@ -1560,6 +2562,13 @@
                                 <option value="ScrollLock">ScrLk</option>
                                 <option value="Pause">Pause</option>
                             </select>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <label class="toggle-switch" style="margin-right: 4px;">
+                                <input type="checkbox" id="capsLockMode">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <label class="led-label" style="font-size: 8px; cursor: pointer;" for="capsLockMode">CapsLock Cmds</label>
                         </div>
                     </div>
                 </div>
@@ -1588,7 +2597,7 @@
                     </div>
                     <div class="module-body">
                         <!-- Connection row -->
-                        <div style="display: flex; gap: 4px; align-items: center; margin-bottom: 6px;">
+                        <div style="display: flex; gap: 4px; align-items: center; margin-bottom: 4px;">
                             <div class="signal-bars" id="signalBars">
                                 <div class="bar"></div>
                                 <div class="bar"></div>
@@ -1599,7 +2608,7 @@
                             <button class="fn-key" onclick="reconnect()" style="padding: 3px 6px; font-size: 8px;">Reconnect</button>
                         </div>
                         <!-- Display controls -->
-                        <div class="btn-grid cols-3" style="margin-bottom: 6px;">
+                        <div class="btn-grid cols-3" style="margin-bottom: 4px;">
                             <button class="fn-key" id="dispOff" onclick="setDisplay('off')">Off</button>
                             <button class="fn-key" id="dispDim" onclick="setDisplay('dim')">Dim</button>
                             <button class="fn-key blue" id="dispOn" onclick="setDisplay('on')">On</button>
@@ -1609,6 +2618,14 @@
                             <span class="seg-display" style="padding: 1px 4px; font-size: 9px;" id="dispTimeoutVal">30s</span>
                         </div>
                         <input type="range" id="dispTimeout" min="0" max="300" step="10" value="30" class="sensitivity-slider">
+                        <!-- Device recovery controls -->
+                        <div style="margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--panel-border);">
+                            <label class="led-label" style="font-size: 8px; margin-bottom: 2px; display: block;">Troubleshooting</label>
+                            <div class="btn-grid cols-2">
+                                <button class="fn-key" onclick="recoverUsb()" title="Attempt USB recovery (may reset device)">USB Recovery</button>
+                                <button class="fn-key red" onclick="resetDevice()" title="Full device restart">Reset Device</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -1635,21 +2652,6 @@
                     </div>
                 </div>
 
-                <!-- Modifiers -->
-                <div class="module area-modifiers">
-                    <div class="module-header">Modifiers</div>
-                    <div class="module-body">
-                        <div class="btn-grid cols-3" style="margin-bottom: 4px;">
-                            <button class="fn-key" id="modCtrl" onclick="toggleModifier('ctrl')">Ctrl</button>
-                            <button class="fn-key" id="modShift" onclick="toggleModifier('shift')">Shift</button>
-                            <button class="fn-key" id="modAlt" onclick="toggleModifier('alt')">Meta</button>
-                        </div>
-                        <div class="btn-grid cols-2">
-                            <button class="fn-key" id="modGui" onclick="toggleModifier('gui')">Super</button>
-                            <button class="fn-key" id="modHyper" onclick="toggleHyper()">Hyper</button>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- Macros -->
                 <div class="module area-macros">
@@ -1712,6 +2714,30 @@
         let isDragging = false;
         let lastX = 0, lastY = 0;
         let txTimeout = null, rxTimeout = null;
+
+        // Theme management
+        function setTheme(theme) {
+            if (theme) {
+                document.documentElement.setAttribute('data-theme', theme);
+                localStorage.setItem('relaykvm-theme', theme);
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+                localStorage.removeItem('relaykvm-theme');
+            }
+        }
+
+        // Restore saved theme
+        (function() {
+            const savedTheme = localStorage.getItem('relaykvm-theme');
+            if (savedTheme) {
+                document.documentElement.setAttribute('data-theme', savedTheme);
+                // Update dropdown after DOM loads
+                document.addEventListener('DOMContentLoaded', () => {
+                    const select = document.getElementById('themeSelect');
+                    if (select) select.value = savedTheme;
+                });
+            }
+        })();
 
         // Check browser support
         if (!RelayKVMAdapter.isSupported()) {
@@ -2016,6 +3042,170 @@
             }
         }
 
+        // Drag-to-trackpad functionality for L/M/R buttons
+        const trackpadCenter = document.getElementById('trackpadCenter');
+        let dragToTrackpad = {
+            active: false,
+            button: null,
+            dragging: false
+        };
+
+        ['mouseBtnL', 'mouseBtnM', 'mouseBtnR'].forEach(id => {
+            const btn = document.getElementById(id);
+            const buttonName = btn.dataset.button;
+
+            // Mouse events
+            btn.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                startDragToTrackpad(buttonName, e.clientX, e.clientY);
+            });
+
+            // Touch events
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                startDragToTrackpad(buttonName, touch.clientX, touch.clientY);
+            });
+        });
+
+        function startDragToTrackpad(button, x, y) {
+            if (!kvm.connected) {
+                mouseClick(button); // Just click if not connected
+                return;
+            }
+            dragToTrackpad.active = true;
+            dragToTrackpad.button = button;
+            dragToTrackpad.dragging = false;
+            dragToTrackpad.startX = x;
+            dragToTrackpad.startY = y;
+            dragToTrackpad.moved = 0;
+        }
+
+        function isOverTrackpadCenter(x, y) {
+            const rect = trackpadCenter.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const radius = 20; // Detection radius
+            const dist = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
+            return dist < radius;
+        }
+
+        function isOverTrackpad(x, y) {
+            const rect = trackpad.getBoundingClientRect();
+            return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+        }
+
+        // Global mouse/touch move for drag detection
+        document.addEventListener('mousemove', (e) => {
+            if (!dragToTrackpad.active) return;
+
+            dragToTrackpad.moved += Math.abs(e.clientX - dragToTrackpad.startX) + Math.abs(e.clientY - dragToTrackpad.startY);
+            dragToTrackpad.startX = e.clientX;
+            dragToTrackpad.startY = e.clientY;
+
+            if (!dragToTrackpad.dragging) {
+                // Check if over center to activate drag mode
+                if (isOverTrackpadCenter(e.clientX, e.clientY)) {
+                    activateDragMode();
+                } else if (isOverTrackpad(e.clientX, e.clientY)) {
+                    // Show ready state when over trackpad but not center
+                    trackpadCenter.classList.add('drag-ready');
+                } else {
+                    trackpadCenter.classList.remove('drag-ready');
+                }
+            } else {
+                // Already dragging - move mouse
+                const dx = e.movementX * mouseSensitivity;
+                const dy = e.movementY * mouseSensitivity;
+                if (dx !== 0 || dy !== 0) {
+                    kvm.moveMouse(Math.round(dx), Math.round(dy));
+                    totalX += dx; totalY += dy;
+                    mouseCoords.textContent = Math.round(totalX) + ', ' + Math.round(totalY);
+                    mouseCoords.classList.remove('dim');
+                    flashLed('ledTx');
+                }
+            }
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!dragToTrackpad.active) return;
+
+            const touch = e.touches[0];
+            const dx = touch.clientX - dragToTrackpad.startX;
+            const dy = touch.clientY - dragToTrackpad.startY;
+            dragToTrackpad.moved += Math.abs(dx) + Math.abs(dy);
+
+            if (!dragToTrackpad.dragging) {
+                if (isOverTrackpadCenter(touch.clientX, touch.clientY)) {
+                    activateDragMode();
+                    dragToTrackpad.startX = touch.clientX;
+                    dragToTrackpad.startY = touch.clientY;
+                } else if (isOverTrackpad(touch.clientX, touch.clientY)) {
+                    trackpadCenter.classList.add('drag-ready');
+                } else {
+                    trackpadCenter.classList.remove('drag-ready');
+                }
+            } else {
+                // Move mouse during drag
+                const moveDx = dx * mouseSensitivity;
+                const moveDy = dy * mouseSensitivity;
+                if (moveDx !== 0 || moveDy !== 0) {
+                    kvm.moveMouse(Math.round(moveDx), Math.round(moveDy));
+                    totalX += moveDx; totalY += moveDy;
+                    mouseCoords.textContent = Math.round(totalX) + ', ' + Math.round(totalY);
+                    mouseCoords.classList.remove('dim');
+                    flashLed('ledTx');
+                }
+                dragToTrackpad.startX = touch.clientX;
+                dragToTrackpad.startY = touch.clientY;
+            }
+        }, { passive: false });
+
+        function activateDragMode() {
+            dragToTrackpad.dragging = true;
+            trackpadCenter.classList.remove('drag-ready');
+            trackpadCenter.classList.add('drag-active', dragToTrackpad.button);
+
+            // Send mouse button down
+            const btnCode = { left: 1, middle: 4, right: 2 }[dragToTrackpad.button];
+            kvm.mouseDown(btnCode);
+            log('TX: Drag ' + dragToTrackpad.button, 'send');
+            flashLed('ledTx');
+
+            // Request pointer lock for smooth dragging
+            trackpad.requestPointerLock();
+        }
+
+        function endDragToTrackpad() {
+            if (!dragToTrackpad.active) return;
+
+            if (dragToTrackpad.dragging) {
+                // Release mouse button
+                const btnCode = { left: 1, middle: 4, right: 2 }[dragToTrackpad.button];
+                kvm.mouseUp(btnCode);
+                log('TX: Drop ' + dragToTrackpad.button, 'send');
+                flashLed('ledTx');
+
+                // Exit pointer lock
+                if (document.pointerLockElement === trackpad) {
+                    document.exitPointerLock();
+                }
+            } else if (dragToTrackpad.moved < 10) {
+                // Didn't drag far enough - treat as click
+                mouseClick(dragToTrackpad.button);
+            }
+
+            // Reset state
+            trackpadCenter.classList.remove('drag-ready', 'drag-active', 'left', 'middle', 'right');
+            dragToTrackpad.active = false;
+            dragToTrackpad.button = null;
+            dragToTrackpad.dragging = false;
+        }
+
+        document.addEventListener('mouseup', endDragToTrackpad);
+        document.addEventListener('touchend', endDragToTrackpad);
+        document.addEventListener('touchcancel', endDragToTrackpad);
+
         // Capture Mode
         let isCapturing = false;
         let captureStats = { mouse: 0, clicks: 0, keys: 0 };
@@ -2049,16 +3239,117 @@
             if (hintEl) hintEl.textContent = displayMap[exitKey] || exitKey;
         }
 
+        // CapsLock command mode
+        let capsLockCmdMode = localStorage.getItem('capsLockCmdMode') === 'true';
+        const capsLockModeToggle = document.getElementById('capsLockMode');
+        const cmdModeBanner = document.getElementById('cmdModeBanner');
+        const captureSubtitle = document.getElementById('captureSubtitle');
+        capsLockModeToggle.checked = capsLockCmdMode;
+
+        capsLockModeToggle.addEventListener('change', () => {
+            capsLockCmdMode = capsLockModeToggle.checked;
+            localStorage.setItem('capsLockCmdMode', capsLockCmdMode);
+            log('CapsLock commands: ' + (capsLockCmdMode ? 'ON' : 'OFF'), 'info');
+        });
+
+        // Command mode commands
+        const CMD_MODE_COMMANDS = {
+            'c': () => { toggleConnection(); return 'Connect/Disconnect'; },
+            'j': () => { toggleJiggler(); return 'Toggle Jiggler'; },
+            'q': () => { stopCapture(); return 'Jack Out'; },
+            'r': () => { resetDevice(); return 'Reset Device'; },
+            'w': () => { sendWake(); return 'Wake'; },
+            's': () => { sendSleep(); return 'Sleep'; },
+            'l': () => { sendCombo(['gui', 'l']); return 'Lock (Win+L)'; },
+            'd': () => { sendCombo(['gui', 'd']); return 'Desktop (Win+D)'; },
+            't': () => { sendCombo(['alt', 'tab']); return 'Alt+Tab'; },
+            'a': () => { sendCombo(['ctrl', 'alt', 'delete']); return 'Ctrl+Alt+Del'; },
+            'v': () => { toggleCapture(); return 'Toggle Video'; },
+            'f': () => { toggleFullscreen(); return 'Toggle Fullscreen'; },
+            '1': () => { playMacro(1); return 'Macro 1'; },
+            '2': () => { playMacro(2); return 'Macro 2'; },
+            '3': () => { playMacro(3); return 'Macro 3'; },
+            '4': () => { playMacro(4); return 'Macro 4'; },
+            'h': () => { showCmdModeHelp(); return 'Help'; },
+            '?': () => { showCmdModeHelp(); return 'Help'; },
+            'm': () => { return 'Mouse: ' + mouseSensitivity.toFixed(1) + 'x  Scroll: ' + scrollSensitivity; },
+            '+': () => { adjustMouseSensitivity(0.5); return 'Mouse: ' + mouseSensitivity.toFixed(1) + 'x'; },
+            '=': () => { adjustMouseSensitivity(0.5); return 'Mouse: ' + mouseSensitivity.toFixed(1) + 'x'; },
+            '-': () => { adjustMouseSensitivity(-0.5); return 'Mouse: ' + mouseSensitivity.toFixed(1) + 'x'; },
+            '[': () => { adjustScrollSensitivity(-1); return 'Scroll: ' + scrollSensitivity; },
+            ']': () => { adjustScrollSensitivity(1); return 'Scroll: ' + scrollSensitivity; },
+        };
+
+        function adjustMouseSensitivity(delta) {
+            mouseSensitivity = Math.max(0.5, Math.min(5, mouseSensitivity + delta));
+            document.getElementById('mouseSpeed').value = mouseSensitivity;
+            document.getElementById('mouseSpeedVal').textContent = mouseSensitivity.toFixed(1) + 'x';
+            localStorage.setItem('mouseSensitivity', mouseSensitivity);
+        }
+
+        function adjustScrollSensitivity(delta) {
+            scrollSensitivity = Math.max(1, Math.min(10, scrollSensitivity + delta));
+            document.getElementById('scrollSpeed').value = scrollSensitivity;
+            document.getElementById('scrollSpeedVal').textContent = scrollSensitivity;
+            localStorage.setItem('scrollSensitivity', scrollSensitivity);
+        }
+
+        function toggleFullscreen() {
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            } else {
+                document.documentElement.requestFullscreen();
+            }
+        }
+
+        function showCmdModeHelp() {
+            log('--- Command Mode ---', 'info');
+            log('C=Connect J=Jiggler Q=Jack Out', 'info');
+            log('R=Reset W=Wake S=Sleep', 'info');
+            log('L=Lock D=Desktop T=Alt+Tab', 'info');
+            log('A=Ctrl+Alt+Del V=Video F=Full', 'info');
+            log('1-4=Macros M=Sensitivity', 'info');
+            log('+/-=Mouse [/]=Scroll H/?=Help', 'info');
+        }
+
+        function updateCmdModeDisplay(active) {
+            if (active) {
+                cmdModeBanner.classList.add('active');
+                captureSubtitle.textContent = 'Command mode - keys are shortcuts';
+            } else {
+                cmdModeBanner.classList.remove('active');
+                captureSubtitle.textContent = 'Direct control active';
+            }
+        }
+
+        function handleCmdModeKey(key) {
+            const cmd = CMD_MODE_COMMANDS[key.toLowerCase()];
+            if (cmd) {
+                const desc = cmd();
+                log('CMD: ' + desc, 'info');
+                return true;
+            }
+            return false;
+        }
+
         function startCapture() {
             if (!kvm.connected) return;
             overlay.classList.add('active');
+            document.getElementById('capturePanel').classList.add('captured');
+            // If video is streaming, make overlay transparent
+            const videoEl = document.getElementById('videoFeed');
+            if (videoEl && videoEl.srcObject) {
+                overlay.classList.add('video-active');
+            }
             overlay.requestPointerLock();
         }
 
         function stopCapture() {
             if (!isCapturing) return; // Already stopped
             isCapturing = false;
-            overlay.classList.remove('active');
+            overlay.classList.remove('active', 'video-active');
+            document.getElementById('capturePanel').classList.remove('captured');
+            updateCmdModeDisplay(false); // Clear command mode display
             // Only exit pointer lock if overlay has it (not trackpad)
             if (document.pointerLockElement === overlay) document.exitPointerLock();
             resetCaptureKeyboardState();
@@ -2136,18 +3427,71 @@
             await kvm.sendKeyboardReport(heldModifiers, heldKeys);
         }
 
+        // Map e.code (physical key) to KEYCODE key names
+        const CODE_TO_KEY = {
+            // Letters
+            'KeyA': 'a', 'KeyB': 'b', 'KeyC': 'c', 'KeyD': 'd', 'KeyE': 'e', 'KeyF': 'f',
+            'KeyG': 'g', 'KeyH': 'h', 'KeyI': 'i', 'KeyJ': 'j', 'KeyK': 'k', 'KeyL': 'l',
+            'KeyM': 'm', 'KeyN': 'n', 'KeyO': 'o', 'KeyP': 'p', 'KeyQ': 'q', 'KeyR': 'r',
+            'KeyS': 's', 'KeyT': 't', 'KeyU': 'u', 'KeyV': 'v', 'KeyW': 'w', 'KeyX': 'x',
+            'KeyY': 'y', 'KeyZ': 'z',
+            // Numbers
+            'Digit1': '1', 'Digit2': '2', 'Digit3': '3', 'Digit4': '4', 'Digit5': '5',
+            'Digit6': '6', 'Digit7': '7', 'Digit8': '8', 'Digit9': '9', 'Digit0': '0',
+            // Punctuation
+            'Minus': '-', 'Equal': '=', 'BracketLeft': '[', 'BracketRight': ']', 'Backslash': '\\',
+            'Semicolon': ';', 'Quote': "'", 'Backquote': '`', 'Comma': ',', 'Period': '.', 'Slash': '/',
+            // Special keys
+            'Enter': 'enter', 'Escape': 'escape', 'Backspace': 'backspace', 'Tab': 'tab', 'Space': 'space',
+            // Function keys
+            'F1': 'f1', 'F2': 'f2', 'F3': 'f3', 'F4': 'f4', 'F5': 'f5', 'F6': 'f6',
+            'F7': 'f7', 'F8': 'f8', 'F9': 'f9', 'F10': 'f10', 'F11': 'f11', 'F12': 'f12',
+            // Control keys
+            'PrintScreen': 'printscreen', 'ScrollLock': 'scrolllock', 'Pause': 'pause',
+            'Insert': 'insert', 'Home': 'home', 'PageUp': 'pageup',
+            'Delete': 'delete', 'End': 'end', 'PageDown': 'pagedown',
+            // Arrow keys
+            'ArrowRight': 'right', 'ArrowLeft': 'left', 'ArrowDown': 'down', 'ArrowUp': 'up',
+            // Modifiers
+            'ControlLeft': 'ctrl', 'ControlRight': 'rctrl',
+            'ShiftLeft': 'shift', 'ShiftRight': 'rshift',
+            'AltLeft': 'alt', 'AltRight': 'ralt',
+            'MetaLeft': 'gui', 'MetaRight': 'rgui',
+            // Numpad
+            'NumLock': 'numlock', 'NumpadDivide': 'num/', 'NumpadMultiply': 'num*',
+            'NumpadSubtract': 'num-', 'NumpadAdd': 'num+', 'NumpadEnter': 'numenter',
+            'Numpad1': 'num1', 'Numpad2': 'num2', 'Numpad3': 'num3', 'Numpad4': 'num4', 'Numpad5': 'num5',
+            'Numpad6': 'num6', 'Numpad7': 'num7', 'Numpad8': 'num8', 'Numpad9': 'num9', 'Numpad0': 'num0',
+            'NumpadDecimal': 'num.'
+        };
+
         function onCaptureKeyDown(e) {
             if (!isCapturing || !kvm.connected) return;
-            // Check for configurable exit key
+            // Check for configurable exit key (use e.key for this since user expects character)
             if (e.key === exitKey) {
                 stopCapture();
                 return;
             }
             e.preventDefault();
 
-            let key = e.key.toLowerCase();
-            const map = { 'control': 'ctrl', 'meta': 'gui', ' ': 'space', 'arrowup': 'up', 'arrowdown': 'down', 'arrowleft': 'left', 'arrowright': 'right' };
-            key = map[key] || key;
+            // Check CapsLock command mode
+            const capsLockOn = e.getModifierState('CapsLock');
+            if (capsLockCmdMode && capsLockOn) {
+                // Update display on first key in command mode
+                updateCmdModeDisplay(true);
+
+                // Handle command - use e.key for the actual character
+                if (e.code !== 'CapsLock') {
+                    handleCmdModeKey(e.key);
+                }
+                return;
+            } else if (capsLockCmdMode) {
+                updateCmdModeDisplay(false);
+            }
+
+            // Use e.code for physical key mapping
+            const key = CODE_TO_KEY[e.code];
+            if (!key) return;
 
             const mod = RelayKVMAdapter.MODIFIER_MAP[key];
             if (mod) { heldModifiers |= mod; updateKeyboardState(); return; }
@@ -2165,9 +3509,15 @@
             if (!isCapturing || !kvm.connected) return;
             e.preventDefault();
 
-            let key = e.key.toLowerCase();
-            const map = { 'control': 'ctrl', 'meta': 'gui', ' ': 'space', 'arrowup': 'up', 'arrowdown': 'down', 'arrowleft': 'left', 'arrowright': 'right' };
-            key = map[key] || key;
+            // Update command mode display when CapsLock changes
+            if (capsLockCmdMode) {
+                const capsLockOn = e.getModifierState('CapsLock');
+                updateCmdModeDisplay(capsLockOn);
+                if (capsLockOn) return; // Don't process key releases in command mode
+            }
+
+            const key = CODE_TO_KEY[e.code];
+            if (!key) return;
 
             const mod = RelayKVMAdapter.MODIFIER_MAP[key];
             if (mod) { heldModifiers &= ~mod; updateKeyboardState(); return; }
@@ -2233,11 +3583,7 @@
             jigglerInterval = parseInt(jigglerIntervalSlider.value);
             jigglerIntervalVal.textContent = jigglerInterval;
             localStorage.setItem('jigglerInterval', jigglerInterval);
-            // Restart timer if active
-            if (jigglerActive) {
-                clearInterval(jigglerTimer);
-                jigglerTimer = setInterval(doJiggle, jigglerInterval * 1000);
-            }
+            // New interval takes effect on next scheduled jiggle
         });
 
         function toggleJiggler() {
@@ -2252,21 +3598,33 @@
                 jigglerBtn.textContent = 'Stop';
                 jigglerBtn.classList.add('danger');
                 ledJiggler.classList.add('on');
-                jigglerTimer = setInterval(doJiggle, jigglerInterval * 1000);
-                log('Jiggler: ' + jigglerRange + 'px/' + jigglerInterval + 's', 'info');
+                scheduleJiggle();
+                log('Jiggler: ' + jigglerRange + 'px/~' + jigglerInterval + 's', 'info');
             } else {
                 jigglerBtn.textContent = 'Start';
                 jigglerBtn.classList.remove('danger');
                 ledJiggler.classList.remove('on');
-                clearInterval(jigglerTimer);
+                clearTimeout(jigglerTimer);
                 jigglerTimer = null;
                 log('Jiggler off', 'info');
             }
         }
 
+        function getJitteredInterval() {
+            // Add ±30% jitter to interval
+            const jitter = 0.3;
+            const base = jigglerInterval * 1000;
+            const variance = base * jitter;
+            return base + (Math.random() * 2 - 1) * variance;
+        }
+
+        function scheduleJiggle() {
+            jigglerTimer = setTimeout(doJiggle, getJitteredInterval());
+        }
+
         function doJiggle() {
-            if (!kvm.connected) {
-                toggleJiggler(); // Stop if disconnected
+            if (!kvm.connected || !jigglerActive) {
+                if (jigglerActive) toggleJiggler(); // Stop if disconnected
                 return;
             }
             // Move in alternating directions
@@ -2274,6 +3632,8 @@
             kvm.moveMouse(move, move);
             jigglerDirection *= -1;
             flashLed('ledTx');
+            // Schedule next jiggle with jitter
+            scheduleJiggle();
         }
 
         // Modifier toggles
@@ -2403,7 +3763,7 @@
             }
         }
 
-        // Video module (UI only - not connected to functionality yet)
+        // Video module
         let videoMode = 'off';
         let videoStreaming = false;
 
@@ -2414,6 +3774,10 @@
                 stopVideoStream();
             }
             updateVideoUI();
+            // Re-enumerate devices when switching to USB
+            if (mode === 'usb') {
+                enumerateCaptureDevices();
+            }
             log('Video: ' + mode.toUpperCase(), 'info');
         }
 
@@ -2484,13 +3848,122 @@
             }
         }
 
-        function startVideoStream(type) {
-            videoStreaming = true;
-            updateVideoUI();
-            log(type.toUpperCase() + ': streaming (not implemented)', 'info');
+        let videoStream = null;
+        const videoFeed = document.getElementById('videoFeed');
+        const capturePanel = document.getElementById('capturePanel');
+        const captureTitle = document.getElementById('captureTitle');
+
+        // FPS tracking
+        let fpsFrameCount = 0;
+        let fpsLastTime = performance.now();
+        let fpsCallbackId = null;
+
+        function trackVideoFps() {
+            if (!videoFeed.srcObject) return;
+
+            fpsFrameCount++;
+            const now = performance.now();
+            const elapsed = now - fpsLastTime;
+
+            if (elapsed >= 1000) {
+                const fps = Math.round((fpsFrameCount * 1000) / elapsed);
+                document.getElementById('statFps').textContent = fps;
+                fpsFrameCount = 0;
+                fpsLastTime = now;
+            }
+
+            // Use requestVideoFrameCallback if available, else requestAnimationFrame
+            if ('requestVideoFrameCallback' in HTMLVideoElement.prototype) {
+                fpsCallbackId = videoFeed.requestVideoFrameCallback(trackVideoFps);
+            } else {
+                fpsCallbackId = requestAnimationFrame(trackVideoFps);
+            }
+        }
+
+        function startFpsTracking() {
+            fpsFrameCount = 0;
+            fpsLastTime = performance.now();
+            document.getElementById('statFps').textContent = '--';
+            trackVideoFps();
+        }
+
+        function stopFpsTracking() {
+            if (fpsCallbackId) {
+                if ('requestVideoFrameCallback' in HTMLVideoElement.prototype) {
+                    videoFeed.cancelVideoFrameCallback(fpsCallbackId);
+                } else {
+                    cancelAnimationFrame(fpsCallbackId);
+                }
+                fpsCallbackId = null;
+            }
+            document.getElementById('statFps').textContent = '--';
+        }
+
+        async function startVideoStream(type) {
+            if (type === 'usb') {
+                const deviceId = document.getElementById('captureDevice').value;
+                if (!deviceId) {
+                    log('Select a capture device first', 'error');
+                    return;
+                }
+
+                // Save as last used device and settings
+                localStorage.setItem('relayKvmCaptureDevice', deviceId);
+                localStorage.setItem('relayKvmVideoRes', document.getElementById('videoRes').value);
+                localStorage.setItem('relayKvmVideoFps', document.getElementById('videoFps').value);
+
+                // Get resolution and FPS settings
+                const resSelect = document.getElementById('videoRes');
+                const fpsSelect = document.getElementById('videoFps');
+                const height = parseInt(resSelect.value);
+                const fps = parseInt(fpsSelect.value);
+                const width = Math.round(height * 16 / 9); // Assume 16:9
+
+                try {
+                    log('Video: starting capture...', 'info');
+                    videoStream = await navigator.mediaDevices.getUserMedia({
+                        video: {
+                            deviceId: { exact: deviceId },
+                            width: { ideal: width },
+                            height: { ideal: height },
+                            frameRate: { ideal: fps }
+                        },
+                        audio: false
+                    });
+
+                    videoFeed.srcObject = videoStream;
+                    await videoFeed.play();
+
+                    // Get actual resolution
+                    const track = videoStream.getVideoTracks()[0];
+                    const settings = track.getSettings();
+                    log('Video: ' + settings.width + 'x' + settings.height + '@' + Math.round(settings.frameRate) + 'fps', 'info');
+
+                    videoStreaming = true;
+                    capturePanel.classList.add('streaming');
+                    startFpsTracking();
+                    updateVideoUI();
+                } catch (e) {
+                    log('Video error: ' + e.message, 'error');
+                    videoStreaming = false;
+                    updateVideoUI();
+                }
+            } else if (type === 'webrtc') {
+                // WebRTC implementation placeholder
+                log('WebRTC: not yet implemented', 'info');
+                videoStreaming = true;
+                updateVideoUI();
+            }
         }
 
         function stopVideoStream() {
+            stopFpsTracking();
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+                videoStream = null;
+            }
+            videoFeed.srcObject = null;
+            capturePanel.classList.remove('streaming');
             videoStreaming = false;
             updateVideoUI();
             log('Video: stopped', 'info');
@@ -2499,24 +3972,164 @@
         // Initialize video LED state (off = amber)
         document.getElementById('ledVideo').classList.add('amber');
 
-        // Enumerate USB capture devices (if available)
-        async function enumerateCaptureDevices() {
+        // Query device capabilities when a device is selected
+        async function queryDeviceCapabilities() {
+            const deviceId = document.getElementById('captureDevice').value;
+            const resSelect = document.getElementById('videoRes');
+            const fpsSelect = document.getElementById('videoFps');
+
+            if (!deviceId) {
+                // Reset to defaults
+                resSelect.innerHTML = `
+                    <option value="480">480p</option>
+                    <option value="720" selected>720p</option>
+                    <option value="1080">1080p</option>
+                    <option value="1440">1440p</option>
+                `;
+                return;
+            }
+
             try {
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                const videoDevices = devices.filter(d => d.kind === 'videoinput');
-                const select = document.getElementById('captureDevice');
-                select.innerHTML = '<option value="">Select capture device...</option>';
-                videoDevices.forEach(device => {
-                    const opt = document.createElement('option');
-                    opt.value = device.deviceId;
-                    opt.textContent = device.label || ('Camera ' + (select.options.length));
-                    select.appendChild(opt);
+                // Get temporary stream to query capabilities
+                const tempStream = await navigator.mediaDevices.getUserMedia({
+                    video: { deviceId: { exact: deviceId } }
                 });
+
+                const track = tempStream.getVideoTracks()[0];
+                const capabilities = track.getCapabilities();
+
+                // Stop the temporary stream
+                tempStream.getTracks().forEach(t => t.stop());
+
+                // Build resolution options based on capabilities
+                const maxHeight = capabilities.height?.max || 1080;
+                const maxWidth = capabilities.width?.max || 1920;
+                const maxFps = capabilities.frameRate?.max || 30;
+
+                // Standard resolutions to offer (if supported)
+                const standardRes = [
+                    { label: '480p', height: 480, width: 854 },
+                    { label: '720p', height: 720, width: 1280 },
+                    { label: '1080p', height: 1080, width: 1920 },
+                    { label: '1440p', height: 1440, width: 2560 },
+                    { label: '4K', height: 2160, width: 3840 }
+                ];
+
+                // Filter to supported resolutions
+                const supported = standardRes.filter(r => r.height <= maxHeight && r.width <= maxWidth);
+
+                // Get saved preferences
+                const savedRes = localStorage.getItem('relayKvmVideoRes');
+                const savedFps = localStorage.getItem('relayKvmVideoFps');
+
+                if (supported.length > 0) {
+                    resSelect.innerHTML = supported.map(r =>
+                        `<option value="${r.height}">${r.label}</option>`
+                    ).join('');
+
+                    // Restore saved resolution, or default to 720p, or highest supported
+                    if (savedRes && supported.find(r => r.height === parseInt(savedRes))) {
+                        resSelect.value = savedRes;
+                    } else if (supported.find(r => r.height === 720)) {
+                        resSelect.value = 720;
+                    } else {
+                        resSelect.value = supported[supported.length - 1].height;
+                    }
+                }
+
+                // Update FPS options
+                const standardFps = [15, 30, 60, 120];
+                const supportedFps = standardFps.filter(f => f <= maxFps);
+
+                if (supportedFps.length > 0) {
+                    fpsSelect.innerHTML = supportedFps.map(f =>
+                        `<option value="${f}">${f}</option>`
+                    ).join('');
+
+                    // Restore saved FPS, or default to 30, or highest supported
+                    if (savedFps && supportedFps.includes(parseInt(savedFps))) {
+                        fpsSelect.value = savedFps;
+                    } else if (supportedFps.includes(30)) {
+                        fpsSelect.value = 30;
+                    } else {
+                        fpsSelect.value = supportedFps[supportedFps.length - 1];
+                    }
+                }
+
+                log('Device: up to ' + maxWidth + 'x' + maxHeight + '@' + Math.round(maxFps) + 'fps', 'info');
+
             } catch (e) {
-                // Permission denied or not supported
+                log('Could not query device: ' + e.message, 'warn');
             }
         }
-        enumerateCaptureDevices();
+
+        // Enumerate USB capture devices (if available)
+        async function enumerateCaptureDevices() {
+            const select = document.getElementById('captureDevice');
+            try {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+                    select.innerHTML = '<option value="">Media API not available</option>';
+                    log('MediaDevices API not available', 'error');
+                    return;
+                }
+
+                // First try to enumerate - labels may be empty without permission
+                let devices = await navigator.mediaDevices.enumerateDevices();
+                let videoDevices = devices.filter(d => d.kind === 'videoinput');
+                log('Found ' + videoDevices.length + ' video device(s)', 'info');
+
+                // If labels are empty, we need to request permission first
+                if (videoDevices.length > 0 && !videoDevices[0].label) {
+                    try {
+                        log('Requesting camera permission...', 'info');
+                        // Request a temporary stream to get permission
+                        const tempStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                        tempStream.getTracks().forEach(t => t.stop());
+                        // Re-enumerate with labels now available
+                        devices = await navigator.mediaDevices.enumerateDevices();
+                        videoDevices = devices.filter(d => d.kind === 'videoinput');
+                        log('Got ' + videoDevices.length + ' device(s) with labels', 'info');
+                    } catch (e) {
+                        log('Camera permission denied: ' + e.message, 'error');
+                        // Continue with generic names
+                    }
+                }
+
+                select.innerHTML = '<option value="">Select capture device...</option>';
+                videoDevices.forEach((device, i) => {
+                    const opt = document.createElement('option');
+                    opt.value = device.deviceId;
+                    opt.textContent = device.label || ('Video Input ' + (i + 1));
+                    select.appendChild(opt);
+                });
+
+                // Auto-select last used device if available
+                const lastDevice = localStorage.getItem('relayKvmCaptureDevice');
+                if (lastDevice) {
+                    const option = select.querySelector(`option[value="${lastDevice}"]`);
+                    if (option) {
+                        select.value = lastDevice;
+                        log('Auto-selected: ' + option.textContent, 'info');
+                        queryDeviceCapabilities();
+                    }
+                }
+
+                if (videoDevices.length === 0) {
+                    select.innerHTML = '<option value="">No capture devices found</option>';
+                    log('No video capture devices found', 'warn');
+                }
+            } catch (e) {
+                select.innerHTML = '<option value="">Camera access denied</option>';
+                log('Device enumeration failed: ' + e.message, 'error');
+            }
+        }
+
+        // Re-enumerate when video mode is set to USB
+        function requestCaptureDevices() {
+            enumerateCaptureDevices();
+        }
+
+        // Note: Device enumeration happens when USB mode is selected (not on page load)
 
         // Wake/Power functions
         const powerArmBtn = document.getElementById('powerArm');
@@ -2832,6 +4445,39 @@
                     log('Display: ' + mode.toUpperCase(), 'send');
                 } catch (e) {
                     log('Display error: ' + e.message, 'error');
+                }
+            } else {
+                log('Connect first', 'error');
+            }
+        }
+
+        async function recoverUsb() {
+            if (kvm.connected) {
+                try {
+                    log('USB Recovery - attempting...', 'send');
+                    await kvm.recoverUsb();
+                    flashLed('ledTx');
+                    log('USB Recovery sent (may reset device)', 'info');
+                } catch (e) {
+                    log('USB Recovery error: ' + e.message, 'error');
+                }
+            } else {
+                log('Connect first', 'error');
+            }
+        }
+
+        async function resetDevice() {
+            if (kvm.connected) {
+                if (confirm('Reset the Cardputer device?\n\nBLE connection will be lost.')) {
+                    try {
+                        log('Resetting device...', 'send');
+                        await kvm.resetDevice();
+                        flashLed('ledTx');
+                        log('Reset command sent', 'info');
+                    } catch (e) {
+                        // Expected - connection will drop
+                        log('Device resetting...', 'info');
+                    }
                 }
             } else {
                 log('Connect first', 'error');

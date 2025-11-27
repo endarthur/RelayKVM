@@ -35,6 +35,8 @@ class RelayKVMAdapter {
     static CMD_DISPLAY_CONTROL = 0x81;
     static CMD_DISPLAY_TIMEOUT = 0x82;
     static CMD_USB_WAKE = 0x83;
+    static CMD_USB_RECONNECT = 0x84;
+    static CMD_DEVICE_RESET = 0x85;
 
     // Display brightness levels
     static DISPLAY_OFF = 0;
@@ -127,6 +129,13 @@ class RelayKVMAdapter {
         this.connected = false;
         this.onConnectionChange = null;
         this.onDataReceived = null;
+
+        // Write queue to prevent "GATT operation already in progress" errors
+        this._writeQueue = [];
+        this._writeInProgress = false;
+
+        // Mouse button state for drag operations
+        this._heldButtons = 0;
     }
 
     /**
@@ -290,6 +299,11 @@ class RelayKVMAdapter {
      * Disconnect from device
      */
     disconnect() {
+        // Clear write queue and held buttons
+        this._writeQueue = [];
+        this._writeInProgress = false;
+        this._heldButtons = 0;
+
         if (this.device && this.device.gatt.connected) {
             this.device.gatt.disconnect();
         }
@@ -319,15 +333,53 @@ class RelayKVMAdapter {
     }
 
     /**
-     * Send raw packet to device
+     * Send raw packet to device (queued to prevent GATT conflicts)
      */
     async sendPacket(packet) {
         if (!this.connected || !this.rxCharacteristic) {
             throw new Error('Not connected to device');
         }
 
-        console.log('Sending packet:', Array.from(packet).map(b => b.toString(16).padStart(2, '0')).join(' '));
-        await this.rxCharacteristic.writeValueWithoutResponse(packet);
+        // Queue the write operation
+        return new Promise((resolve, reject) => {
+            this._writeQueue.push({ packet, resolve, reject });
+            this._processWriteQueue();
+        });
+    }
+
+    /**
+     * Process queued write operations sequentially
+     */
+    async _processWriteQueue() {
+        if (this._writeInProgress || this._writeQueue.length === 0) {
+            return;
+        }
+
+        this._writeInProgress = true;
+
+        while (this._writeQueue.length > 0) {
+            // Check connection before each write
+            if (!this.connected || !this.rxCharacteristic) {
+                // Reject all remaining queued writes
+                while (this._writeQueue.length > 0) {
+                    const { reject } = this._writeQueue.shift();
+                    reject(new Error('Disconnected'));
+                }
+                break;
+            }
+
+            const { packet, resolve, reject } = this._writeQueue.shift();
+
+            try {
+                await this.rxCharacteristic.writeValueWithoutResponse(packet);
+                resolve();
+            } catch (error) {
+                console.error('BLE write error:', error);
+                reject(error);
+            }
+        }
+
+        this._writeInProgress = false;
     }
 
     /**
@@ -456,11 +508,16 @@ class RelayKVMAdapter {
      * @param {number} scroll - Scroll delta (-127 to 127)
      * @param {number} buttons - Button mask (1=left, 2=right, 4=middle)
      */
-    async moveMouse(dx, dy, scroll = 0, buttons = 0) {
+    async moveMouse(dx, dy, scroll = 0, buttons = null) {
         // Clamp values to int8 range
         dx = Math.max(-127, Math.min(127, Math.round(dx)));
         dy = Math.max(-127, Math.min(127, Math.round(dy)));
         scroll = Math.max(-127, Math.min(127, Math.round(scroll)));
+
+        // Use held buttons if not explicitly specified
+        if (buttons === null) {
+            buttons = this._heldButtons || 0;
+        }
 
         const data = new Uint8Array([
             0x01,  // Relative mode indicator
@@ -500,11 +557,29 @@ class RelayKVMAdapter {
     }
 
     /**
+     * Press and hold a mouse button
+     * @param {number} buttonBit - Button bit (1=left, 2=right, 4=middle)
+     */
+    async mouseDown(buttonBit) {
+        this._heldButtons = (this._heldButtons || 0) | buttonBit;
+        await this.moveMouse(0, 0, 0, this._heldButtons);
+    }
+
+    /**
+     * Release a mouse button
+     * @param {number} buttonBit - Button bit (1=left, 2=right, 4=middle)
+     */
+    async mouseUp(buttonBit) {
+        this._heldButtons = (this._heldButtons || 0) & ~buttonBit;
+        await this.moveMouse(0, 0, 0, this._heldButtons);
+    }
+
+    /**
      * Scroll the mouse wheel
      * @param {number} amount - Scroll amount (positive = up, negative = down)
      */
     async scroll(amount) {
-        await this.moveMouse(0, 0, amount, 0);
+        await this.moveMouse(0, 0, amount, this._heldButtons || 0);
     }
 
     /**
@@ -546,6 +621,40 @@ class RelayKVMAdapter {
     async sendUsbWake() {
         const data = new Uint8Array([]);
         const packet = this.buildPacket(RelayKVMAdapter.CMD_USB_WAKE, data);
+        await this.sendPacket(packet);
+    }
+
+    /**
+     * Trigger USB recovery on Cardputer
+     * Attempts to recover USB connection by sending HID activity.
+     *
+     * How it works:
+     * - If USB is suspended: HID activity wakes it up
+     * - If USB stack is corrupted: HID calls may crash, triggering device reset
+     *   which re-initializes everything and fixes USB
+     *
+     * Either way, USB should work again. May cause device reset if USB is
+     * in a bad state - this is expected and actually fixes the problem.
+     */
+    async recoverUsb() {
+        const data = new Uint8Array([]);
+        const packet = this.buildPacket(RelayKVMAdapter.CMD_USB_RECONNECT, data);
+        await this.sendPacket(packet);
+    }
+
+    // Alias for backwards compatibility
+    async reconnectUsb() {
+        return this.recoverUsb();
+    }
+
+    /**
+     * Reset the Cardputer device
+     * This performs a full ESP32 restart
+     * Note: BLE connection will be lost after this
+     */
+    async resetDevice() {
+        const data = new Uint8Array([]);
+        const packet = this.buildPacket(RelayKVMAdapter.CMD_DEVICE_RESET, data);
         await this.sendPacket(packet);
     }
 }

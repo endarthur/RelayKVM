@@ -58,6 +58,65 @@ Submit to M5Stack's community app repository for M5Launcher:
 
 ### Web Interface Improvements 🌐
 
+#### Video Capture (USB)
+**Status:** ✅ **IMPLEMENTED**
+
+Browser-based video capture using USB capture cards:
+- Device selection with auto-save last used
+- Resolution/FPS detection from device capabilities
+- Fullscreen video when jacked in
+- Broadcast-style status overlay (Mouse/Clicks/Keys/FPS)
+- Works with cheap HDMI-to-USB capture dongles (~$15)
+
+#### CapsLock Command Mode
+**Status:** ✅ **IMPLEMENTED**
+
+Use CapsLock as a command key during capture mode:
+- Toggle in Settings panel
+- 20+ shortcuts: Connect, Jiggler, Wake/Sleep, Lock, Alt+Tab, etc.
+- Mouse/scroll sensitivity adjustment (+/-/[/])
+- Help system (H or ?)
+
+#### Mobile/Responsive Design
+**Status:** 🔲 TODO
+
+Make web interface usable on phones/tablets:
+- Collapsible modules
+- Stack layout instead of grid on narrow screens
+- Larger touch targets
+- "Mobile mode" with essentials only (video, trackpad, basic keys)
+- Touch-friendly virtual keyboard
+
+#### Latency/Ping Indicator
+**Status:** 🔲 TODO
+
+Show connection quality in web interface:
+- Round-trip ping measurement to Cardputer
+- Display in header near LED indicators
+- Visual feedback (color-coded: green/yellow/red)
+
+#### Keyboard Layout Support (Web)
+**Status:** 🔲 TODO
+
+Support non-US keyboard layouts for Text Input feature:
+- Host layout selector (what layout the target machine uses)
+- Client layout selector (optional, for display purposes)
+- Translation layer: character → correct HID scancode for host layout
+- Layouts: US, UK, DE, FR, ES, BR-ABNT2, etc.
+- Could adapt layout files from Rubber Ducky / DuckyScript projects
+
+**Note:** Jack In mode (direct capture) is layout-agnostic - physical scancodes pass through and host interprets them. Layout support mainly needed for Text Input typing.
+
+#### Single-File Bundle Script
+**Status:** 🔲 TODO
+
+Create a build script to bundle the web interface into a single HTML file:
+- Inline `relaykvm-adapter.js` into `index.html`
+- Inline any other external resources (CSS, images as base64)
+- Output: single `RelayKVM.html` that works completely offline
+- Useful for SD card distribution and air-gapped environments
+- Could be a simple Node.js or Python script
+
 #### Progressive Web App (PWA)
 **Status:** 🔲 TODO
 
