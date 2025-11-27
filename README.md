@@ -23,11 +23,14 @@ Wireless KVM solution using ESP32-S3 (M5Stack Cardputer) as a Bluetooth-to-USB H
 - **Full keyboard support** - All keys including modifiers, media keys
 - **Mouse support** - Relative movement, scroll, all buttons
 - **Capture mode** - Lock mouse/keyboard to the host
+- **Video capture** - USB capture card support with fullscreen display
+- **CapsLock command mode** - 20+ shortcuts for quick actions while captured
 - **Macros** - Save and replay key sequences
 - **Scripts** - Multi-step automation (type, delay, key combos)
 - **Mouse jiggler** - Prevent screen lock
 - **Wake/Sleep** - USB wake signal + Windows sleep macro
 - **Display control** - Dim/off the Cardputer screen remotely
+- **Theming** - 10 themes including Catppuccin variants
 - **Mass Storage mode** - Hold 'M' at boot to access SD card
 
 ## Hardware
@@ -40,7 +43,7 @@ Wireless KVM solution using ESP32-S3 (M5Stack Cardputer) as a Bluetooth-to-USB H
 - MicroSD card - For storing web interface offline
 - USB HDMI capture card ($15) - For video feedback
 
-**Alternatives:** Any ESP32-S3 board with USB OTG should work, though we only tested with the M5Stack Cardputer v1.1. See [docs/PICOW.md](docs/PICOW.md) for Raspberry Pi Pico W option.
+**Alternatives:** Any ESP32-S3 board with USB OTG should work, though we only tested with the M5Stack Cardputer v1.1. See [docs/PICOW.md](docs/PICOW.md) for Raspberry Pi Pico W/2W option (cheaper, CircuitPython-based).
 
 ## Quick Start
 
@@ -77,11 +80,13 @@ The industrial-style control panel includes:
 | **Text Input** | Type text directly to host |
 | **Special Keys** | F-keys, navigation, media controls |
 | **Mouse** | Click-to-move pad, sensitivity control |
+| **Video** | USB capture card display, fullscreen mode |
 | **Jiggler** | Prevent screen timeout |
 | **Wake/Power** | Wake from sleep, sleep macro |
 | **Macros** | Quick key combinations |
 | **Scripts** | Multi-step automation |
 | **Cardputer** | Display brightness, connection status |
+| **Sensitivity** | Mouse and scroll speed sliders |
 
 ## SD Card Mode
 
@@ -101,9 +106,12 @@ RelayKVM/
 ├── firmware/               # ESP32-S3 Arduino firmware
 │   ├── RelayKVM/           # Main sketch
 │   └── platformio.ini      # Build config
+├── icons/                  # Project icons (SVG + PNGs)
+├── .github/workflows/      # CI/CD (auto-build on release)
 └── docs/                   # Documentation
     ├── SETUP.md            # Detailed setup guide
     ├── FEATURES.md         # Roadmap
+    ├── PICOW.md            # Raspberry Pi Pico W/2W guide
     └── ...
 ```
 

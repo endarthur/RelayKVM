@@ -1046,6 +1046,266 @@
             color: var(--text-normal);
         }
 
+        /* Settings Modal */
+        .settings-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            padding: 4px 8px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 3px;
+            transition: color 0.15s, background 0.15s;
+        }
+
+        .settings-btn:hover {
+            color: var(--text-normal);
+            background: var(--panel-surface);
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(2px);
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--panel-bg);
+            border: 3px solid var(--panel-border);
+            border-radius: 8px;
+            box-shadow:
+                inset 0 1px 0 rgba(255,255,255,0.05),
+                0 20px 60px rgba(0,0,0,0.5);
+            max-width: 400px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 2px solid var(--panel-border);
+            background: var(--panel-surface);
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-bright);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            font-size: 20px;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            color: var(--text-bright);
+        }
+
+        .modal-body {
+            padding: 16px;
+        }
+
+        .settings-section {
+            margin-bottom: 16px;
+        }
+
+        .settings-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .settings-section-title {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-dim);
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid var(--panel-border);
+        }
+
+        .theme-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+        }
+
+        .theme-btn {
+            aspect-ratio: 1;
+            border: 2px solid var(--panel-border);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.1s, border-color 0.15s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .theme-btn:hover {
+            transform: scale(1.05);
+            border-color: var(--text-dim);
+        }
+
+        .theme-btn.active {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 8px var(--accent-primary);
+        }
+
+        .theme-btn::before,
+        .theme-btn::after {
+            content: '';
+            position: absolute;
+            width: 60%;
+            height: 60%;
+        }
+
+        .theme-btn::before {
+            top: 10%;
+            left: 10%;
+            border-radius: 2px;
+        }
+
+        .theme-btn::after {
+            bottom: 10%;
+            right: 10%;
+            border-radius: 2px;
+        }
+
+        /* Theme button colors */
+        .theme-btn[data-theme=""] { background: #0d0f12; }
+        .theme-btn[data-theme=""]::before { background: #00b894; }
+        .theme-btn[data-theme=""]::after { background: #e17055; }
+
+        .theme-btn[data-theme="industrial"] { background: #0d0f12; }
+        .theme-btn[data-theme="industrial"]::before { background: #00ff66; }
+        .theme-btn[data-theme="industrial"]::after { background: #ffaa00; }
+
+        .theme-btn[data-theme="signal"] { background: #0d0f12; }
+        .theme-btn[data-theme="signal"]::before { background: #0099ff; }
+        .theme-btn[data-theme="signal"]::after { background: #ff3333; }
+
+        .theme-btn[data-theme="amber"] { background: #0d0f12; }
+        .theme-btn[data-theme="amber"]::before { background: #ffaa00; }
+        .theme-btn[data-theme="amber"]::after { background: #cc8800; }
+
+        .theme-btn[data-theme="mono"] { background: #0d0f12; }
+        .theme-btn[data-theme="mono"]::before { background: #9aa0a6; }
+        .theme-btn[data-theme="mono"]::after { background: #5f6368; }
+
+        .theme-btn[data-theme="light"] { background: #f0f0f0; }
+        .theme-btn[data-theme="light"]::before { background: #00897b; }
+        .theme-btn[data-theme="light"]::after { background: #d84315; }
+
+        .theme-btn[data-theme="ctp-mocha"] { background: #1e1e2e; }
+        .theme-btn[data-theme="ctp-mocha"]::before { background: #89b4fa; }
+        .theme-btn[data-theme="ctp-mocha"]::after { background: #f38ba8; }
+
+        .theme-btn[data-theme="ctp-macchiato"] { background: #24273a; }
+        .theme-btn[data-theme="ctp-macchiato"]::before { background: #8aadf4; }
+        .theme-btn[data-theme="ctp-macchiato"]::after { background: #ed8796; }
+
+        .theme-btn[data-theme="ctp-frappe"] { background: #303446; }
+        .theme-btn[data-theme="ctp-frappe"]::before { background: #8caaee; }
+        .theme-btn[data-theme="ctp-frappe"]::after { background: #e78284; }
+
+        .theme-btn[data-theme="ctp-latte"] { background: #eff1f5; }
+        .theme-btn[data-theme="ctp-latte"]::before { background: #1e66f5; }
+        .theme-btn[data-theme="ctp-latte"]::after { background: #d20f39; }
+
+        .theme-btn-label {
+            font-size: 7px;
+            text-align: center;
+            color: var(--text-dim);
+            margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .settings-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .settings-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .settings-label {
+            font-size: 11px;
+            color: var(--text-normal);
+        }
+
+        .settings-value {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .settings-slider {
+            width: 100px;
+        }
+
+        .settings-display {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10px;
+            background: var(--display-bg);
+            color: var(--display-text);
+            padding: 2px 6px;
+            border-radius: 2px;
+            min-width: 32px;
+            text-align: center;
+        }
+
+        .danger-zone {
+            padding-top: 12px;
+            margin-top: 12px;
+            border-top: 1px solid var(--btn-danger-border);
+        }
+
+        .btn-danger-sm {
+            background: var(--btn-danger-bg);
+            border: 1px solid var(--btn-danger-border);
+            color: var(--btn-danger-text);
+            padding: 6px 12px;
+            border-radius: 3px;
+            font-size: 10px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .btn-danger-sm:hover {
+            background: var(--btn-danger-hover);
+        }
+
         .hw-btn.danger {
             background: var(--btn-danger-bg);
             border-color: rgba(255, 255, 255, 0.25);
@@ -2262,19 +2522,116 @@
                         <div class="led amber" id="ledRx"></div>
                     </div>
                 </div>
-                <select id="themeSelect" class="theme-select" onchange="setTheme(this.value)">
-                    <option value="">Default</option>
-                    <option value="industrial">Industrial</option>
-                    <option value="signal">Signal</option>
-                    <option value="amber">Amber</option>
-                    <option value="mono">Mono</option>
-                    <option value="light">Light</option>
-                    <option value="ctp-mocha">Catppuccin Mocha</option>
-                    <option value="ctp-macchiato">Catppuccin Macchiato</option>
-                    <option value="ctp-frappe">Catppuccin Frappé</option>
-                    <option value="ctp-latte">Catppuccin Latte</option>
-                </select>
+                <button class="settings-btn" onclick="openSettingsModal()" title="Settings">&#9881;</button>
                 <button class="hw-btn primary" id="connectBtn" onclick="toggleConnection()">Connect</button>
+            </div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div class="modal-overlay" id="settingsModal" onclick="closeSettingsModal(event)">
+            <div class="modal" onclick="event.stopPropagation()">
+                <div class="modal-header">
+                    <h3>Settings</h3>
+                    <button class="modal-close" onclick="closeSettingsModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <!-- Theme Section -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">Theme</div>
+                        <div class="theme-grid" id="themeGrid">
+                            <div>
+                                <button class="theme-btn active" data-theme="" onclick="setThemeFromModal('')" title="Default"></button>
+                                <div class="theme-btn-label">Default</div>
+                            </div>
+                            <div>
+                                <button class="theme-btn" data-theme="industrial" onclick="setThemeFromModal('industrial')" title="Industrial"></button>
+                                <div class="theme-btn-label">Industrial</div>
+                            </div>
+                            <div>
+                                <button class="theme-btn" data-theme="signal" onclick="setThemeFromModal('signal')" title="Signal"></button>
+                                <div class="theme-btn-label">Signal</div>
+                            </div>
+                            <div>
+                                <button class="theme-btn" data-theme="amber" onclick="setThemeFromModal('amber')" title="Amber"></button>
+                                <div class="theme-btn-label">Amber</div>
+                            </div>
+                            <div>
+                                <button class="theme-btn" data-theme="mono" onclick="setThemeFromModal('mono')" title="Mono"></button>
+                                <div class="theme-btn-label">Mono</div>
+                            </div>
+                            <div>
+                                <button class="theme-btn" data-theme="light" onclick="setThemeFromModal('light')" title="Light"></button>
+                                <div class="theme-btn-label">Light</div>
+                            </div>
+                            <div>
+                                <button class="theme-btn" data-theme="ctp-mocha" onclick="setThemeFromModal('ctp-mocha')" title="Catppuccin Mocha"></button>
+                                <div class="theme-btn-label">Mocha</div>
+                            </div>
+                            <div>
+                                <button class="theme-btn" data-theme="ctp-macchiato" onclick="setThemeFromModal('ctp-macchiato')" title="Catppuccin Macchiato"></button>
+                                <div class="theme-btn-label">Macchiato</div>
+                            </div>
+                            <div>
+                                <button class="theme-btn" data-theme="ctp-frappe" onclick="setThemeFromModal('ctp-frappe')" title="Catppuccin Frappé"></button>
+                                <div class="theme-btn-label">Frappé</div>
+                            </div>
+                            <div>
+                                <button class="theme-btn" data-theme="ctp-latte" onclick="setThemeFromModal('ctp-latte')" title="Catppuccin Latte"></button>
+                                <div class="theme-btn-label">Latte</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Input Section -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">Input</div>
+                        <div class="settings-row">
+                            <span class="settings-label">Mouse Sensitivity</span>
+                            <div class="settings-value">
+                                <input type="range" id="modalMouseSpeed" class="sensitivity-slider settings-slider" min="0.5" max="5" step="0.5" value="2" oninput="updateMouseSpeedFromModal(this.value)">
+                                <span class="settings-display" id="modalMouseSpeedVal">2.0x</span>
+                            </div>
+                        </div>
+                        <div class="settings-row">
+                            <span class="settings-label">Scroll Sensitivity</span>
+                            <div class="settings-value">
+                                <input type="range" id="modalScrollSpeed" class="sensitivity-slider settings-slider" min="1" max="10" step="1" value="3" oninput="updateScrollSpeedFromModal(this.value)">
+                                <span class="settings-display" id="modalScrollSpeedVal">3</span>
+                            </div>
+                        </div>
+                        <div class="settings-row">
+                            <span class="settings-label">Exit Capture Key</span>
+                            <div class="settings-value">
+                                <select id="modalExitKey" class="text-input" style="padding: 4px 8px; font-size: 11px;" onchange="updateExitKeyFromModal(this.value)">
+                                    <option value="Escape">ESC</option>
+                                    <option value="F12">F12</option>
+                                    <option value="ScrollLock">ScrLk</option>
+                                    <option value="Pause">Pause</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="settings-row">
+                            <span class="settings-label">CapsLock Command Mode</span>
+                            <div class="settings-value">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="modalCapsLockMode" onchange="updateCapsLockModeFromModal(this.checked)">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Data Section -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">Data</div>
+                        <div class="danger-zone">
+                            <button class="btn-danger-sm" onclick="clearLocalStorage()">Clear All Saved Data</button>
+                            <div style="font-size: 9px; color: var(--text-dim); margin-top: 6px; text-align: center;">
+                                Resets theme, device preferences, macros, and scripts
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -2536,9 +2893,9 @@
                     </div>
                 </div>
 
-                <!-- Settings -->
+                <!-- Sensitivity -->
                 <div class="module area-settings">
-                    <div class="module-header"><span>Settings</span></div>
+                    <div class="module-header"><span>Sensitivity</span></div>
                     <div class="module-body">
                         <div style="margin-bottom: 4px;">
                             <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
@@ -2547,28 +2904,12 @@
                             </div>
                             <input type="range" id="mouseSpeed" min="0.5" max="5" step="0.5" value="2" class="sensitivity-slider">
                         </div>
-                        <div style="margin-bottom: 4px;">
+                        <div>
                             <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
                                 <label class="led-label" style="font-size: 8px;">Scroll</label>
                                 <span class="seg-display" style="padding: 1px 4px; font-size: 9px;" id="scrollSpeedVal">3</span>
                             </div>
                             <input type="range" id="scrollSpeed" min="1" max="10" step="1" value="3" class="sensitivity-slider">
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 4px;">
-                            <label class="led-label" style="font-size: 8px;">Exit:</label>
-                            <select id="exitKeySelect" class="text-input" style="padding: 2px 4px; font-size: 9px; flex: 1;">
-                                <option value="Escape">ESC</option>
-                                <option value="F12">F12</option>
-                                <option value="ScrollLock">ScrLk</option>
-                                <option value="Pause">Pause</option>
-                            </select>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 4px;">
-                            <label class="toggle-switch" style="margin-right: 4px;">
-                                <input type="checkbox" id="capsLockMode">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <label class="led-label" style="font-size: 8px; cursor: pointer;" for="capsLockMode">CapsLock Cmds</label>
                         </div>
                     </div>
                 </div>
@@ -2724,17 +3065,123 @@
                 document.documentElement.removeAttribute('data-theme');
                 localStorage.removeItem('relaykvm-theme');
             }
+            updateThemeButtons(theme);
         }
+
+        function setThemeFromModal(theme) {
+            setTheme(theme);
+        }
+
+        function updateThemeButtons(activeTheme) {
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                const btnTheme = btn.getAttribute('data-theme');
+                btn.classList.toggle('active', btnTheme === activeTheme);
+            });
+        }
+
+        // Settings Modal
+        function openSettingsModal() {
+            const modal = document.getElementById('settingsModal');
+            modal.classList.add('active');
+            syncSettingsModal();
+        }
+
+        function closeSettingsModal(event) {
+            if (event && event.target !== event.currentTarget) return;
+            document.getElementById('settingsModal').classList.remove('active');
+        }
+
+        function syncSettingsModal() {
+            // Sync theme buttons
+            const currentTheme = document.documentElement.getAttribute('data-theme') || '';
+            updateThemeButtons(currentTheme);
+
+            // Sync input settings - these reference variables defined later in the code
+            const savedMouse = parseFloat(localStorage.getItem('mouseSensitivity')) || 2;
+            const savedScroll = parseInt(localStorage.getItem('scrollSensitivity')) || 3;
+            const savedExitKey = localStorage.getItem('exitKey') || 'Escape';
+            const savedCapsLock = localStorage.getItem('capsLockCmdMode') === 'true';
+
+            document.getElementById('modalMouseSpeed').value = savedMouse;
+            document.getElementById('modalMouseSpeedVal').textContent = savedMouse.toFixed(1) + 'x';
+            document.getElementById('modalScrollSpeed').value = savedScroll;
+            document.getElementById('modalScrollSpeedVal').textContent = savedScroll;
+            document.getElementById('modalExitKey').value = savedExitKey;
+            document.getElementById('modalCapsLockMode').checked = savedCapsLock;
+        }
+
+        function updateMouseSpeedFromModal(value) {
+            const val = parseFloat(value);
+            localStorage.setItem('mouseSensitivity', val);
+            document.getElementById('modalMouseSpeedVal').textContent = val.toFixed(1) + 'x';
+            // Update global variable and panel slider if they exist
+            if (typeof mouseSensitivity !== 'undefined') mouseSensitivity = val;
+            const panelSlider = document.getElementById('mouseSpeed');
+            const panelVal = document.getElementById('mouseSpeedVal');
+            if (panelSlider) panelSlider.value = val;
+            if (panelVal) panelVal.textContent = val.toFixed(1) + 'x';
+        }
+
+        function updateScrollSpeedFromModal(value) {
+            const val = parseInt(value);
+            localStorage.setItem('scrollSensitivity', val);
+            document.getElementById('modalScrollSpeedVal').textContent = val;
+            // Update global variable and panel slider if they exist
+            if (typeof scrollSensitivity !== 'undefined') scrollSensitivity = val;
+            const panelSlider = document.getElementById('scrollSpeed');
+            const panelVal = document.getElementById('scrollSpeedVal');
+            if (panelSlider) panelSlider.value = val;
+            if (panelVal) panelVal.textContent = val;
+        }
+
+        function updateExitKeyFromModal(value) {
+            localStorage.setItem('exitKey', value);
+            // Update global variable if it exists
+            if (typeof exitKey !== 'undefined') exitKey = value;
+            const keyNames = { 'Escape': 'ESC', 'F12': 'F12', 'ScrollLock': 'ScrLk', 'Pause': 'Pause' };
+            const displayName = keyNames[value] || value;
+            // Update all hints
+            const hint = document.getElementById('exitKeyHint');
+            const display = document.getElementById('exitKeyDisplay');
+            if (hint) hint.textContent = displayName;
+            if (display) display.textContent = displayName;
+            // Also update panel select if it exists
+            const panelSelect = document.getElementById('exitKeySelect');
+            if (panelSelect) panelSelect.value = value;
+        }
+
+        function updateCapsLockModeFromModal(checked) {
+            localStorage.setItem('capsLockCmdMode', checked);
+            // Update global variable if it exists
+            if (typeof capsLockCmdMode !== 'undefined') capsLockCmdMode = checked;
+            // Also update panel checkbox if it exists
+            const panelCheckbox = document.getElementById('capsLockMode');
+            if (panelCheckbox) panelCheckbox.checked = checked;
+            log('CapsLock commands: ' + (checked ? 'ON' : 'OFF'), 'info');
+        }
+
+        function clearLocalStorage() {
+            if (confirm('Clear all saved data? This will reset theme, device preferences, macros, and scripts.')) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && document.getElementById('settingsModal').classList.contains('active')) {
+                closeSettingsModal();
+            }
+        });
 
         // Restore saved theme
         (function() {
             const savedTheme = localStorage.getItem('relaykvm-theme');
             if (savedTheme) {
                 document.documentElement.setAttribute('data-theme', savedTheme);
-                // Update dropdown after DOM loads
+                // Update theme buttons after DOM loads
                 document.addEventListener('DOMContentLoaded', () => {
-                    const select = document.getElementById('themeSelect');
-                    if (select) select.value = savedTheme;
+                    updateThemeButtons(savedTheme);
                 });
             }
         })();
@@ -3213,16 +3660,7 @@
 
         // Configurable exit key
         let exitKey = localStorage.getItem('exitKey') || 'Escape';
-        const exitKeySelect = document.getElementById('exitKeySelect');
-        exitKeySelect.value = exitKey;
         updateExitKeyDisplay();
-
-        exitKeySelect.addEventListener('change', () => {
-            exitKey = exitKeySelect.value;
-            localStorage.setItem('exitKey', exitKey);
-            updateExitKeyDisplay();
-            log('Exit key set to: ' + exitKey, 'info');
-        });
 
         function updateExitKeyDisplay() {
             const displayMap = {
@@ -3234,23 +3672,16 @@
                 'Pause': 'PAUSE'
             };
             // Update both overlay and main hint
-            document.getElementById('exitKeyDisplay').textContent = displayMap[exitKey] || exitKey;
+            const displayEl = document.getElementById('exitKeyDisplay');
+            if (displayEl) displayEl.textContent = displayMap[exitKey] || exitKey;
             const hintEl = document.getElementById('exitKeyHint');
             if (hintEl) hintEl.textContent = displayMap[exitKey] || exitKey;
         }
 
         // CapsLock command mode
         let capsLockCmdMode = localStorage.getItem('capsLockCmdMode') === 'true';
-        const capsLockModeToggle = document.getElementById('capsLockMode');
         const cmdModeBanner = document.getElementById('cmdModeBanner');
         const captureSubtitle = document.getElementById('captureSubtitle');
-        capsLockModeToggle.checked = capsLockCmdMode;
-
-        capsLockModeToggle.addEventListener('change', () => {
-            capsLockCmdMode = capsLockModeToggle.checked;
-            localStorage.setItem('capsLockCmdMode', capsLockCmdMode);
-            log('CapsLock commands: ' + (capsLockCmdMode ? 'ON' : 'OFF'), 'info');
-        });
 
         // Command mode commands
         const CMD_MODE_COMMANDS = {
