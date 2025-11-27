@@ -17,11 +17,13 @@
         <div class="icon-box"><canvas id="c32" width="32" height="32"></canvas><br>32px</div>
         <div class="icon-box"><canvas id="c48" width="48" height="48"></canvas><br>48px</div>
         <div class="icon-box"><canvas id="c128" width="128" height="128"></canvas><br>128px</div>
+        <div class="icon-box"><canvas id="c192" width="192" height="192"></canvas><br>192px (PWA)</div>
+        <div class="icon-box"><canvas id="c512" width="512" height="512"></canvas><br>512px (PWA)</div>
     </div>
     <button onclick="downloadAll()">Download All PNGs</button>
 
     <script>
-        const sizes = [16, 32, 48, 128];
+        const sizes = [16, 32, 48, 128, 192, 512];
         const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
   <rect x="12" y="16" width="64" height="64" rx="8" fill="#00b894"/>
   <rect x="52" y="48" width="64" height="64" rx="8" fill="#e17055"/>

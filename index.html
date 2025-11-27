@@ -7,6 +7,14 @@
     <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
     <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16.png">
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <meta name="theme-color" content="#00b894">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="RelayKVM">
+    <meta name="description" content="Wireless KVM using Bluetooth HID - control any PC from your browser">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -5918,6 +5926,13 @@
 
         checkKnownDevices();
         log('System ready', 'info');
+
+        // Register service worker for PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('SW registered:', reg.scope))
+                .catch(err => console.log('SW registration failed:', err));
+        }
     </script>
 </body>
 </html>
