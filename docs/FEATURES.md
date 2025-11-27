@@ -56,6 +56,7 @@
 - [ ] **Custom overlay layouts** - User-defined status displays
 
 ### Hardware Expansion
+- [ ] **3D printed cases** - Enclosures for Pico 2W and RP2040-PiZero (design or find existing)
 - [ ] **ESP32-S2 support** - Even cheaper option (no BLE, WiFi only)
 - [ ] **Absolute mouse mode** - For VNC-style control
 - [ ] **Consumer control** - Volume, brightness, transport keys
