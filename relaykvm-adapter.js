@@ -83,6 +83,8 @@ class RelayKVMAdapter {
         // Function keys
         'f1': 0x3A, 'f2': 0x3B, 'f3': 0x3C, 'f4': 0x3D, 'f5': 0x3E, 'f6': 0x3F,
         'f7': 0x40, 'f8': 0x41, 'f9': 0x42, 'f10': 0x43, 'f11': 0x44, 'f12': 0x45,
+        'f13': 0x68, 'f14': 0x69, 'f15': 0x6A, 'f16': 0x6B, 'f17': 0x6C, 'f18': 0x6D,
+        'f19': 0x6E, 'f20': 0x6F, 'f21': 0x70, 'f22': 0x71, 'f23': 0x72, 'f24': 0x73,
 
         // Control keys
         'printscreen': 0x46, 'scrolllock': 0x47, 'pause': 0x48,
@@ -472,6 +474,20 @@ class RelayKVMAdapter {
 
         // Release all
         await this.sendKeyboardReport(0, []);
+    }
+
+    /**
+     * Send a media/consumer control key
+     * @param {number} code - Consumer control code (e.g., 0xE9 for volume up)
+     */
+    async sendMediaKey(code) {
+        // Send as little-endian 16-bit value
+        const data = new Uint8Array([
+            code & 0xFF,         // Low byte
+            (code >> 8) & 0xFF   // High byte
+        ]);
+        const packet = this.buildPacket(RelayKVMAdapter.CMD_SEND_KB_MEDIA_DATA, data);
+        await this.sendPacket(packet);
     }
 
     /**

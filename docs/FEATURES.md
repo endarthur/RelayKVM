@@ -39,6 +39,7 @@
 ## Roadmap
 
 ### High Priority
+- [ ] **Anbernic RG34XX SP support** - Stock firmware BT HID relay, Python daemon ([docs](RG34XX.md)) ✨ *Proof of concept working!*
 - [ ] **Wired mode (RP2040-PiZero)** - Dual USB-C, WebSerial, no pairing needed ([docs](WIRED.md))
 - [ ] **Raspberry Pi Pico 2W support** - Cheaper wireless dongle option
 - [ ] **Android app** - Phone as BLE-to-BT HID bridge
@@ -59,7 +60,7 @@
 - [ ] **3D printed cases** - Enclosures for Pico 2W and RP2040-PiZero (design or find existing)
 - [ ] **ESP32-S2 support** - Even cheaper option (no BLE, WiFi only)
 - [ ] **Absolute mouse mode** - For VNC-style control
-- [ ] **Consumer control** - Volume, brightness, transport keys
+- [x] **Consumer control** - Volume, mute, play/pause, media keys ✅
 
 ### Long Term
 - [ ] **Multi-host switching** - Control multiple PCs

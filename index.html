@@ -3152,24 +3152,24 @@
                         <!-- F-keys block -->
                         <div class="btn-grid" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 2px;">
                             <button class="fn-key red" onclick="sendKey('esc')">Esc</button>
-                            <button class="fn-key amber" onclick="sendKey('f1')">F1</button>
-                            <button class="fn-key amber" onclick="sendKey('f2')">F2</button>
-                            <button class="fn-key amber" onclick="sendKey('f3')">F3</button>
-                            <button class="fn-key amber" onclick="sendKey('f4')">F4</button>
+                            <button class="fn-key amber fkey" data-base="1" onclick="sendFKey(1)">F1</button>
+                            <button class="fn-key amber fkey" data-base="2" onclick="sendFKey(2)">F2</button>
+                            <button class="fn-key amber fkey" data-base="3" onclick="sendFKey(3)">F3</button>
+                            <button class="fn-key amber fkey" data-base="4" onclick="sendFKey(4)">F4</button>
                         </div>
                         <div class="btn-grid" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 2px;">
                             <button class="fn-key red" onclick="sendKey('delete')">Del</button>
-                            <button class="fn-key amber" onclick="sendKey('f5')">F5</button>
-                            <button class="fn-key amber" onclick="sendKey('f6')">F6</button>
-                            <button class="fn-key amber" onclick="sendKey('f7')">F7</button>
-                            <button class="fn-key amber" onclick="sendKey('f8')">F8</button>
+                            <button class="fn-key amber fkey" data-base="5" onclick="sendFKey(5)">F5</button>
+                            <button class="fn-key amber fkey" data-base="6" onclick="sendFKey(6)">F6</button>
+                            <button class="fn-key amber fkey" data-base="7" onclick="sendFKey(7)">F7</button>
+                            <button class="fn-key amber fkey" data-base="8" onclick="sendFKey(8)">F8</button>
                         </div>
                         <div class="btn-grid" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 4px;">
                             <button class="fn-key" onclick="sendKey('printscreen')">Prt</button>
-                            <button class="fn-key amber" onclick="sendKey('f9')">F9</button>
-                            <button class="fn-key amber" onclick="sendKey('f10')">F10</button>
-                            <button class="fn-key amber" onclick="sendKey('f11')">F11</button>
-                            <button class="fn-key amber" onclick="sendKey('f12')">F12</button>
+                            <button class="fn-key amber fkey" data-base="9" onclick="sendFKey(9)">F9</button>
+                            <button class="fn-key amber fkey" data-base="10" onclick="sendFKey(10)">F10</button>
+                            <button class="fn-key amber fkey" data-base="11" onclick="sendFKey(11)">F11</button>
+                            <button class="fn-key amber fkey" data-base="12" onclick="sendFKey(12)">F12</button>
                         </div>
                         <!-- Navigation keys -->
                         <div class="btn-grid" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 2px;">
@@ -3198,6 +3198,20 @@
                             <button class="fn-key blue" onclick="sendKey('down')">↓</button>
                             <button class="fn-key blue" onclick="sendKey('right')">→</button>
                             <button class="fn-key green" onclick="sendKey('enter')">Enter</button>
+                        </div>
+                        <!-- Media keys -->
+                        <div class="btn-grid" style="grid-template-columns: repeat(5, 1fr); margin-top: 4px; font-size: 16px;">
+                            <button class="fn-key" onclick="sendMediaKey('prevTrack')">⏮</button>
+                            <button class="fn-key" onclick="sendMediaKey('playPause')">⏯</button>
+                            <button class="fn-key" onclick="sendMediaKey('stop')">⏹</button>
+                            <button class="fn-key" onclick="sendMediaKey('nextTrack')">⏭</button>
+                            <button class="fn-key" onclick="sendCombo(['ctrl','shift','m'])" title="Teams Mute">Ⓜ</button>
+                        </div>
+                        <div class="btn-grid" style="grid-template-columns: repeat(5, 1fr); margin-top: 2px; font-size: 16px;">
+                            <button class="fn-key" onclick="sendMediaKey('mute')">🔇</button>
+                            <button class="fn-key" onclick="sendMediaKey('volumeDown')">🔉</button>
+                            <button class="fn-key" onclick="sendMediaKey('volumeUp')">🔊</button>
+                            <button class="fn-key amber" id="fnLayerBtn" onclick="toggleFnLayer()" style="grid-column: span 2; font-size: 11px;">Fn Layer</button>
                         </div>
                     </div>
                 </div>
@@ -4022,6 +4036,50 @@
                 log('TX: ' + keys.join('+').toUpperCase(), 'send');
                 await kvm.sendKeyCombo(keys);
             }
+        }
+
+        // Media key codes (USB HID Consumer Control)
+        const MEDIA_KEYS = {
+            volumeUp: 0xE9,
+            volumeDown: 0xEA,
+            mute: 0xE2,
+            playPause: 0xCD,
+            nextTrack: 0xB5,
+            prevTrack: 0xB6,
+            stop: 0xB7
+        };
+
+        async function sendMediaKey(keyName) {
+            if (kvm.connected) {
+                const code = MEDIA_KEYS[keyName];
+                if (code) {
+                    flashLed('ledTx');
+                    log('TX: MEDIA ' + keyName.toUpperCase(), 'send');
+                    await kvm.sendMediaKey(code);
+                }
+            }
+        }
+
+        // Fn Layer - shifts F1-F12 to F13-F24
+        let fnLayerActive = false;
+
+        function toggleFnLayer() {
+            fnLayerActive = !fnLayerActive;
+            const btn = document.getElementById('fnLayerBtn');
+            btn.classList.toggle('amber', !fnLayerActive);
+            btn.classList.toggle('green', fnLayerActive);
+
+            // Update F-key labels
+            document.querySelectorAll('.fkey').forEach(el => {
+                const base = parseInt(el.dataset.base);
+                const num = fnLayerActive ? base + 12 : base;
+                el.textContent = 'F' + num;
+            });
+        }
+
+        function sendFKey(base) {
+            const num = fnLayerActive ? base + 12 : base;
+            sendKey('f' + num);
         }
 
         document.getElementById('textInput').addEventListener('keypress', (e) => {

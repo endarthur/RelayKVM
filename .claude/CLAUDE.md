@@ -4,9 +4,14 @@ KVM solution using microcontrollers as USB HID bridges. Supports wireless (Bluet
 
 ## Architecture
 
-**Wireless (Bluetooth):**
+**Wireless (BLE to USB HID):**
 ```
 Browser (Controller PC) --[Web Bluetooth]--> Cardputer/Pico 2W --[USB HID]--> Host PC
+```
+
+**Wireless (BLE to BT HID):**
+```
+Browser (Controller PC) --[Web Bluetooth]--> RG34XX/Android --[BT HID]--> Host PC
 ```
 
 **Wired (Dual USB):**
@@ -18,10 +23,11 @@ Browser (Controller PC) --[WebSerial]--> RP2040-PiZero --[USB HID]--> Host PC
 
 | Platform | Connection | Status |
 |----------|------------|--------|
-| M5Stack Cardputer | Bluetooth | ✅ Working |
-| Raspberry Pi Pico 2W | Bluetooth | 🚧 Planned |
-| Waveshare RP2040-PiZero | Wired (dual USB) | 🚧 Planned |
-| Android App | BLE→BT HID | 🚧 Planned |
+| M5Stack Cardputer | BLE → USB HID | ✅ Working |
+| Anbernic RG34XX SP | BLE → BT HID | 🧪 PoC Working ([docs](docs/RG34XX.md)) |
+| Raspberry Pi Pico 2W | BLE → USB HID | 🚧 Planned |
+| Waveshare RP2040-PiZero | WebSerial → USB HID | 🚧 Planned ([docs](docs/WIRED.md)) |
+| Android App | BLE → BT HID | 🚧 Planned |
 
 - **Web interface** (`index.html`): Captures keyboard/mouse, sends via BLE or WebSerial
 - **Firmware** (`firmware/RelayKVM/`): ESP32-S3 Arduino sketch (Cardputer)
@@ -36,6 +42,7 @@ Browser (Controller PC) --[WebSerial]--> RP2040-PiZero --[USB HID]--> Host PC
 | `firmware/RelayKVM/RelayKVM.ino` | Main firmware sketch (Cardputer) |
 | `firmware/platformio.ini` | PlatformIO build config |
 | `docs/WIRED.md` | Wired mode documentation (RP2040-PiZero) |
+| `docs/RG34XX.md` | Anbernic RG34XX SP setup guide |
 | `docs/FEATURES.md` | Features and roadmap |
 | `icons/icon.svg` | Logo (overlapping teal/coral rectangles) |
 

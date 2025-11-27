@@ -18,6 +18,7 @@
 #include <USBCDC.h>
 #include <USBHIDKeyboard.h>
 #include <USBHIDMouse.h>
+#include <USBHIDConsumerControl.h>
 #include <USBMSC.h>
 #include <SD.h>
 #include <SPI.h>
@@ -45,6 +46,7 @@
 // USB HID + CDC devices
 USBHIDKeyboard Keyboard;
 USBHIDMouse Mouse;
+USBHIDConsumerControl ConsumerControl;
 USBCDC USBSerial;
 
 // BLE server and characteristics
@@ -203,6 +205,7 @@ void setup() {
     // All USB devices must be initialized BEFORE USB.begin()
     Keyboard.begin();
     Mouse.begin();
+    ConsumerControl.begin();
 #ifdef DEBUG
     USBSerial.begin();  // CDC Serial for debugging (only in debug mode)
 #endif
@@ -460,6 +463,21 @@ void processNanoKVMPacket(uint8_t* packet, size_t len) {
     switch (cmd) {
         case CMD_SEND_KB_GENERAL_DATA:
             handleKeyboardCommand(data, dataLen);
+            break;
+
+        case CMD_SEND_KB_MEDIA_DATA:
+            // Consumer control (media keys): [code_low, code_high]
+            // Code 0 = release, otherwise press the consumer control code
+            if (dataLen >= 2) {
+                uint16_t code = data[0] | (data[1] << 8);
+                if (code == 0) {
+                    ConsumerControl.release();
+                } else {
+                    ConsumerControl.press(code);
+                    ConsumerControl.release();
+                }
+                DEBUG_PRINTF("Media key: 0x%04X\n", code);
+            }
             break;
 
         case CMD_SEND_MS_ABS_DATA:
