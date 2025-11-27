@@ -1263,6 +1263,152 @@
             color: var(--text-normal);
         }
 
+        .theme-option.custom-slot .theme-btn {
+            border-style: dashed;
+            background: transparent;
+        }
+
+        .theme-option.custom-slot .theme-btn::before,
+        .theme-option.custom-slot .theme-btn::after {
+            opacity: 0.5;
+        }
+
+        .theme-option.custom-slot .theme-btn.has-theme {
+            border-style: solid;
+        }
+
+        .theme-option.custom-slot .theme-btn.has-theme::before,
+        .theme-option.custom-slot .theme-btn.has-theme::after {
+            opacity: 1;
+        }
+
+        /* Theme Editor Modal */
+        .theme-editor-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1001;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .theme-editor-overlay.active {
+            display: flex;
+        }
+
+        .theme-editor {
+            background: var(--panel-bg);
+            border: 3px solid var(--panel-border);
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .theme-editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 2px solid var(--panel-border);
+            background: var(--panel-surface);
+        }
+
+        .theme-editor-header h3 {
+            margin: 0;
+            font-size: 13px;
+            color: var(--text-bright);
+        }
+
+        .theme-editor-body {
+            padding: 16px;
+        }
+
+        .theme-editor-row {
+            margin-bottom: 12px;
+        }
+
+        .theme-editor-row label {
+            display: block;
+            font-size: 10px;
+            color: var(--text-dim);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        .theme-editor-row input[type="text"],
+        .theme-editor-row textarea {
+            width: 100%;
+            box-sizing: border-box;
+            background: var(--panel-inset);
+            border: 1px solid var(--panel-border);
+            border-radius: 3px;
+            color: var(--text-normal);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            padding: 8px;
+        }
+
+        .theme-editor-row textarea {
+            min-height: 200px;
+            resize: vertical;
+        }
+
+        .theme-editor-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .theme-editor-actions button {
+            flex: 1;
+            padding: 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        .btn-apply {
+            background: var(--btn-primary-bg);
+            border: 1px solid var(--btn-primary-border);
+            color: var(--btn-primary-text);
+        }
+
+        .btn-apply:hover {
+            background: var(--btn-primary-hover);
+        }
+
+        .btn-cancel {
+            background: var(--btn-neutral-bg);
+            border: 1px solid var(--panel-border);
+            color: var(--text-normal);
+        }
+
+        .btn-cancel:hover {
+            background: var(--btn-neutral-hover);
+        }
+
+        .theme-preview {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            padding: 12px;
+            background: var(--panel-inset);
+            border-radius: 4px;
+        }
+
+        .theme-preview-swatch {
+            width: 40px;
+            height: 40px;
+            border-radius: 4px;
+            border: 2px solid var(--panel-border);
+        }
+
         .settings-row {
             display: flex;
             justify-content: space-between;
@@ -2594,6 +2740,30 @@
                                 <div class="theme-btn" data-theme="ctp-latte"></div>
                                 <div class="theme-btn-label">Latte</div>
                             </div>
+                            <!-- Custom theme slots -->
+                            <div class="theme-option custom-slot" onclick="selectCustomTheme(1)" oncontextmenu="editCustomTheme(1); return false;" title="Custom 1 (right-click to edit)">
+                                <div class="theme-btn" data-theme="custom-1" id="customThemeBtn1"></div>
+                                <div class="theme-btn-label" id="customThemeLabel1">Custom 1</div>
+                            </div>
+                            <div class="theme-option custom-slot" onclick="selectCustomTheme(2)" oncontextmenu="editCustomTheme(2); return false;" title="Custom 2 (right-click to edit)">
+                                <div class="theme-btn" data-theme="custom-2" id="customThemeBtn2"></div>
+                                <div class="theme-btn-label" id="customThemeLabel2">Custom 2</div>
+                            </div>
+                            <div class="theme-option custom-slot" onclick="selectCustomTheme(3)" oncontextmenu="editCustomTheme(3); return false;" title="Custom 3 (right-click to edit)">
+                                <div class="theme-btn" data-theme="custom-3" id="customThemeBtn3"></div>
+                                <div class="theme-btn-label" id="customThemeLabel3">Custom 3</div>
+                            </div>
+                            <div class="theme-option custom-slot" onclick="selectCustomTheme(4)" oncontextmenu="editCustomTheme(4); return false;" title="Custom 4 (right-click to edit)">
+                                <div class="theme-btn" data-theme="custom-4" id="customThemeBtn4"></div>
+                                <div class="theme-btn-label" id="customThemeLabel4">Custom 4</div>
+                            </div>
+                            <div class="theme-option custom-slot" onclick="selectCustomTheme(5)" oncontextmenu="editCustomTheme(5); return false;" title="Custom 5 (right-click to edit)">
+                                <div class="theme-btn" data-theme="custom-5" id="customThemeBtn5"></div>
+                                <div class="theme-btn-label" id="customThemeLabel5">Custom 5</div>
+                            </div>
+                        </div>
+                        <div style="font-size: 8px; color: var(--text-dim); margin-top: 6px; text-align: center;">
+                            Right-click custom slots to edit
                         </div>
                     </div>
 
@@ -2645,6 +2815,45 @@
                                 Resets theme, device preferences, macros, and scripts
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Theme Editor Modal -->
+        <div class="theme-editor-overlay" id="themeEditorModal" onclick="closeThemeEditor(event)">
+            <div class="theme-editor" onclick="event.stopPropagation()">
+                <div class="theme-editor-header">
+                    <h3>Edit Custom Theme <span id="themeEditorSlot">1</span></h3>
+                    <button class="modal-close" onclick="closeThemeEditor()">&times;</button>
+                </div>
+                <div class="theme-editor-body">
+                    <div class="theme-editor-row">
+                        <label>Import from URL</label>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" id="themeImportUrl" placeholder="https://example.com/theme.json">
+                            <button class="btn-apply" onclick="importThemeFromUrl()" style="flex: 0 0 auto; padding: 8px 12px;">Import</button>
+                        </div>
+                    </div>
+                    <div class="theme-editor-row">
+                        <label>Theme JSON</label>
+                        <textarea id="themeJsonEditor" placeholder='{
+  "name": "My Theme",
+  "accent-primary": "#00ff66",
+  "accent-secondary": "#ff6600",
+  "surface-base": "#0d0f12",
+  "panel-bg": "#1a1d21",
+  "display-text": "#00ff66"
+}'></textarea>
+                    </div>
+                    <div class="theme-preview" id="themePreview">
+                        <div class="theme-preview-swatch" id="previewPrimary" title="Primary"></div>
+                        <div class="theme-preview-swatch" id="previewSecondary" title="Secondary"></div>
+                        <div class="theme-preview-swatch" id="previewBg" title="Background"></div>
+                    </div>
+                    <div class="theme-editor-actions">
+                        <button class="btn-cancel" onclick="closeThemeEditor()">Cancel</button>
+                        <button class="btn-apply" onclick="saveCustomTheme()">Save Theme</button>
                     </div>
                 </div>
             </div>
@@ -3094,6 +3303,194 @@
             });
         }
 
+        // Custom Theme System
+        let currentEditingSlot = 1;
+        const customThemes = {};
+
+        // Default custom theme template
+        const defaultCustomTheme = {
+            name: "Custom Theme",
+            "accent-primary": "#00ff66",
+            "accent-secondary": "#ff6600",
+            "surface-base": "#0d0f12",
+            "panel-bg": "#1a1d21",
+            "panel-surface": "#22262b",
+            "display-text": "#00ff66",
+            "text-bright": "#e8eaed",
+            "text-normal": "#9aa0a6"
+        };
+
+        // Load custom themes from localStorage
+        function loadCustomThemes() {
+            for (let i = 1; i <= 5; i++) {
+                const saved = localStorage.getItem(`customTheme${i}`);
+                if (saved) {
+                    try {
+                        customThemes[i] = JSON.parse(saved);
+                        updateCustomSlotAppearance(i);
+                    } catch (e) {
+                        console.error(`Failed to parse custom theme ${i}:`, e);
+                    }
+                }
+            }
+        }
+
+        // Update the visual appearance of a custom slot
+        function updateCustomSlotAppearance(slot) {
+            const theme = customThemes[slot];
+            const btn = document.getElementById(`customThemeBtn${slot}`);
+            const label = document.getElementById(`customThemeLabel${slot}`);
+
+            if (theme && btn) {
+                btn.classList.add('has-theme');
+                btn.style.setProperty('--custom-primary', theme['accent-primary'] || '#666');
+                btn.style.setProperty('--custom-secondary', theme['accent-secondary'] || '#444');
+                btn.style.background = theme['surface-base'] || '#0d0f12';
+                // Set pseudo-element colors via CSS custom properties
+                btn.style.cssText = `
+                    background: ${theme['surface-base'] || '#0d0f12'};
+                `;
+                // We need to use a different approach for ::before and ::after
+                const style = document.createElement('style');
+                style.textContent = `
+                    .theme-btn[data-theme="custom-${slot}"]::before { background: ${theme['accent-primary'] || '#666'} !important; }
+                    .theme-btn[data-theme="custom-${slot}"]::after { background: ${theme['accent-secondary'] || '#444'} !important; }
+                `;
+                style.id = `custom-theme-style-${slot}`;
+                const existing = document.getElementById(`custom-theme-style-${slot}`);
+                if (existing) existing.remove();
+                document.head.appendChild(style);
+
+                if (label) label.textContent = theme.name || `Custom ${slot}`;
+            } else if (btn) {
+                btn.classList.remove('has-theme');
+                if (label) label.textContent = `Custom ${slot}`;
+            }
+        }
+
+        // Select a custom theme
+        function selectCustomTheme(slot) {
+            const theme = customThemes[slot];
+            if (!theme) {
+                // No theme defined, open editor
+                editCustomTheme(slot);
+                return;
+            }
+            applyCustomTheme(slot);
+        }
+
+        // Apply a custom theme
+        function applyCustomTheme(slot) {
+            const theme = customThemes[slot];
+            if (!theme) return;
+
+            // Create dynamic CSS for this custom theme
+            let styleEl = document.getElementById('custom-theme-active');
+            if (!styleEl) {
+                styleEl = document.createElement('style');
+                styleEl.id = 'custom-theme-active';
+                document.head.appendChild(styleEl);
+            }
+
+            const css = `
+                [data-theme="custom-${slot}"] {
+                    --accent-primary: ${theme['accent-primary'] || '#00ff66'};
+                    --accent-secondary: ${theme['accent-secondary'] || '#ff6600'};
+                    --surface-base: ${theme['surface-base'] || '#0d0f12'};
+                    --panel-bg: ${theme['panel-bg'] || '#1a1d21'};
+                    --panel-surface: ${theme['panel-surface'] || '#22262b'};
+                    --display-text: ${theme['display-text'] || '#00ff66'};
+                    --text-bright: ${theme['text-bright'] || '#e8eaed'};
+                    --text-normal: ${theme['text-normal'] || '#9aa0a6'};
+                    --logo-block1: ${theme['accent-primary'] || '#00ff66'};
+                    --logo-block2: ${theme['accent-secondary'] || '#ff6600'};
+                    --btn-primary-text: ${theme['accent-primary'] || '#00ff66'};
+                }
+            `;
+            styleEl.textContent = css;
+
+            document.documentElement.setAttribute('data-theme', `custom-${slot}`);
+            localStorage.setItem('relaykvm-theme', `custom-${slot}`);
+            updateThemeButtons(`custom-${slot}`);
+        }
+
+        // Open theme editor
+        function editCustomTheme(slot) {
+            currentEditingSlot = slot;
+            document.getElementById('themeEditorSlot').textContent = slot;
+
+            const theme = customThemes[slot] || defaultCustomTheme;
+            document.getElementById('themeJsonEditor').value = JSON.stringify(theme, null, 2);
+            document.getElementById('themeImportUrl').value = '';
+
+            updateThemePreview(theme);
+            document.getElementById('themeEditorModal').classList.add('active');
+        }
+
+        // Close theme editor
+        function closeThemeEditor(event) {
+            if (event && event.target !== event.currentTarget) return;
+            document.getElementById('themeEditorModal').classList.remove('active');
+        }
+
+        // Update preview swatches
+        function updateThemePreview(theme) {
+            document.getElementById('previewPrimary').style.background = theme['accent-primary'] || '#666';
+            document.getElementById('previewSecondary').style.background = theme['accent-secondary'] || '#444';
+            document.getElementById('previewBg').style.background = theme['surface-base'] || '#0d0f12';
+        }
+
+        // Save custom theme
+        function saveCustomTheme() {
+            const jsonText = document.getElementById('themeJsonEditor').value;
+            try {
+                const theme = JSON.parse(jsonText);
+                customThemes[currentEditingSlot] = theme;
+                localStorage.setItem(`customTheme${currentEditingSlot}`, JSON.stringify(theme));
+                updateCustomSlotAppearance(currentEditingSlot);
+                closeThemeEditor();
+                log(`Custom theme ${currentEditingSlot} saved: ${theme.name || 'Unnamed'}`, 'info');
+            } catch (e) {
+                alert('Invalid JSON: ' + e.message);
+            }
+        }
+
+        // Import theme from URL
+        async function importThemeFromUrl() {
+            const url = document.getElementById('themeImportUrl').value.trim();
+            if (!url) {
+                alert('Please enter a URL');
+                return;
+            }
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const theme = await response.json();
+                document.getElementById('themeJsonEditor').value = JSON.stringify(theme, null, 2);
+                updateThemePreview(theme);
+                log(`Theme imported from ${url}`, 'info');
+            } catch (e) {
+                alert('Failed to import theme: ' + e.message);
+            }
+        }
+
+        // Live preview while editing
+        document.addEventListener('DOMContentLoaded', () => {
+            const editor = document.getElementById('themeJsonEditor');
+            if (editor) {
+                editor.addEventListener('input', () => {
+                    try {
+                        const theme = JSON.parse(editor.value);
+                        updateThemePreview(theme);
+                    } catch (e) {
+                        // Invalid JSON, ignore
+                    }
+                });
+            }
+            loadCustomThemes();
+        });
+
         // Settings Modal
         function openSettingsModal() {
             const modal = document.getElementById('settingsModal');
@@ -3197,6 +3594,13 @@
                 // Update theme buttons after DOM loads
                 document.addEventListener('DOMContentLoaded', () => {
                     updateThemeButtons(savedTheme);
+                    // If it's a custom theme, re-apply it to inject the CSS
+                    if (savedTheme.startsWith('custom-')) {
+                        const slot = parseInt(savedTheme.replace('custom-', ''));
+                        if (customThemes[slot]) {
+                            applyCustomTheme(slot);
+                        }
+                    }
                 });
             }
         })();
