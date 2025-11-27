@@ -778,6 +778,29 @@
             padding: 12px;
         }
 
+        /* Themed scrollbars (global) */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--panel-inset);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--panel-border);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-dim);
+        }
+        ::-webkit-scrollbar-corner {
+            background: var(--panel-inset);
+        }
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: var(--panel-border) var(--panel-inset);
+        }
+
         /* Main chassis */
         .chassis {
             width: 100%;
@@ -2606,7 +2629,7 @@
             line-height: 1.6;
             color: var(--text-normal);
             overflow-y: auto;
-            max-height: 60vh;
+            max-height: 70vh;
         }
 
         .modal-body h3 {
