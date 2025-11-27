@@ -511,26 +511,27 @@ curl "http://192.168.1.100:8080/?type=Hello"
 
 ---
 
-## Future: Pico W Firmware
+## Official Firmware
 
-If there's interest, we could create an official RelayKVM firmware for Pico W:
+The official RelayKVM firmware for Pico 2W is available at [`firmware/pico2w/`](../firmware/pico2w/):
 
 ```
-relaykvm-picow/
-├── code.py                    # Main CircuitPython code
-├── lib/                       # Dependencies
-│   ├── adafruit_hid/
-│   └── adafruit_ble/
-├── config.json                # WiFi credentials
-└── README.md
+firmware/pico2w/
+├── main.py                    # Main BLE UART + USB HID firmware
+└── README.md                  # Setup instructions
 ```
 
-**Advantages over ESP32-S3:**
-- No compilation needed (just copy .py files)
-- Easier to customize (edit code.py on the fly)
-- Better for beginners
+**Features:**
+- BLE Nordic UART (same as Cardputer)
+- Full NanoKVM protocol support
+- Keyboard, mouse, and media keys
+- Works with existing web interface
 
-**Would you like me to create this?** It would be a great companion to the ESP32-S3 firmware!
+**Setup:**
+1. Install MicroPython 1.23+
+2. Install `usb-device-hid` via Thonny or mpremote
+3. Copy `main.py` to Pico
+4. Reboot and connect!
 
 ---
 

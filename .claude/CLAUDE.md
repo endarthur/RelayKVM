@@ -24,8 +24,8 @@ Browser (Controller PC) --[WebSerial]--> RP2040-PiZero --[USB HID]--> Host PC
 | Platform | Connection | Status |
 |----------|------------|--------|
 | M5Stack Cardputer | BLE → USB HID | ✅ Working |
+| Raspberry Pi Pico 2W | BLE → USB HID | ✅ Working ([firmware](firmware/pico2w/)) |
 | Anbernic RG34XX SP | BLE → BT HID | 🧪 PoC Working ([docs](docs/RG34XX.md)) |
-| Raspberry Pi Pico 2W | BLE → USB HID | 🚧 Planned |
 | Waveshare RP2040-PiZero | WebSerial → USB HID | 🚧 Planned ([docs](docs/WIRED.md)) |
 | Android App | BLE → BT HID | 🚧 Planned |
 
@@ -40,6 +40,7 @@ Browser (Controller PC) --[WebSerial]--> RP2040-PiZero --[USB HID]--> Host PC
 | `index.html` | Main web interface (single-file, self-contained) |
 | `relaykvm-adapter.js` | BLE communication adapter |
 | `firmware/RelayKVM/RelayKVM.ino` | Main firmware sketch (Cardputer) |
+| `firmware/pico2w/code.py` | CircuitPython firmware (Pico 2W) |
 | `firmware/platformio.ini` | PlatformIO build config |
 | `docs/WIRED.md` | Wired mode documentation (RP2040-PiZero) |
 | `docs/RG34XX.md` | Anbernic RG34XX SP setup guide |

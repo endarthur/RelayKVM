@@ -39,9 +39,9 @@
 ## Roadmap
 
 ### High Priority
+- [x] **Raspberry Pi Pico 2W support** - MicroPython BLE dongle ([firmware](../firmware/pico2w/)) ✅
 - [ ] **Anbernic RG34XX SP support** - Stock firmware BT HID relay, Python daemon ([docs](RG34XX.md)) ✨ *Proof of concept working!*
 - [ ] **Wired mode (RP2040-PiZero)** - Dual USB-C, WebSerial, no pairing needed ([docs](WIRED.md))
-- [ ] **Raspberry Pi Pico 2W support** - Cheaper wireless dongle option
 - [ ] **Android app** - Phone as BLE-to-BT HID bridge
 - [ ] **Mobile/responsive design** - Use from phone/tablet
 
@@ -70,6 +70,12 @@
 ---
 
 ## Completed
+
+### v1.1.0 (2025)
+- Raspberry Pi Pico 2W support (MicroPython)
+- Media keys (volume, mute, play/pause, etc.)
+- Fn Layer toggle (F13-F24)
+- RG34XX SP proof of concept
 
 ### v1.0.0 (2024)
 - Initial release
