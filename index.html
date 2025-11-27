@@ -1248,6 +1248,21 @@
             text-overflow: ellipsis;
         }
 
+        .theme-option {
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: background 0.15s;
+        }
+
+        .theme-option:hover {
+            background: var(--panel-surface);
+        }
+
+        .theme-option:hover .theme-btn-label {
+            color: var(--text-normal);
+        }
+
         .settings-row {
             display: flex;
             justify-content: space-between;
@@ -2539,44 +2554,44 @@
                     <div class="settings-section">
                         <div class="settings-section-title">Theme</div>
                         <div class="theme-grid" id="themeGrid">
-                            <div>
-                                <button class="theme-btn active" data-theme="" onclick="setThemeFromModal('')" title="Default"></button>
+                            <div class="theme-option" onclick="setThemeFromModal('')" title="Default">
+                                <div class="theme-btn active" data-theme=""></div>
                                 <div class="theme-btn-label">Default</div>
                             </div>
-                            <div>
-                                <button class="theme-btn" data-theme="industrial" onclick="setThemeFromModal('industrial')" title="Industrial"></button>
+                            <div class="theme-option" onclick="setThemeFromModal('industrial')" title="Industrial">
+                                <div class="theme-btn" data-theme="industrial"></div>
                                 <div class="theme-btn-label">Industrial</div>
                             </div>
-                            <div>
-                                <button class="theme-btn" data-theme="signal" onclick="setThemeFromModal('signal')" title="Signal"></button>
+                            <div class="theme-option" onclick="setThemeFromModal('signal')" title="Signal">
+                                <div class="theme-btn" data-theme="signal"></div>
                                 <div class="theme-btn-label">Signal</div>
                             </div>
-                            <div>
-                                <button class="theme-btn" data-theme="amber" onclick="setThemeFromModal('amber')" title="Amber"></button>
+                            <div class="theme-option" onclick="setThemeFromModal('amber')" title="Amber">
+                                <div class="theme-btn" data-theme="amber"></div>
                                 <div class="theme-btn-label">Amber</div>
                             </div>
-                            <div>
-                                <button class="theme-btn" data-theme="mono" onclick="setThemeFromModal('mono')" title="Mono"></button>
+                            <div class="theme-option" onclick="setThemeFromModal('mono')" title="Mono">
+                                <div class="theme-btn" data-theme="mono"></div>
                                 <div class="theme-btn-label">Mono</div>
                             </div>
-                            <div>
-                                <button class="theme-btn" data-theme="light" onclick="setThemeFromModal('light')" title="Light"></button>
+                            <div class="theme-option" onclick="setThemeFromModal('light')" title="Light">
+                                <div class="theme-btn" data-theme="light"></div>
                                 <div class="theme-btn-label">Light</div>
                             </div>
-                            <div>
-                                <button class="theme-btn" data-theme="ctp-mocha" onclick="setThemeFromModal('ctp-mocha')" title="Catppuccin Mocha"></button>
+                            <div class="theme-option" onclick="setThemeFromModal('ctp-mocha')" title="Catppuccin Mocha">
+                                <div class="theme-btn" data-theme="ctp-mocha"></div>
                                 <div class="theme-btn-label">Mocha</div>
                             </div>
-                            <div>
-                                <button class="theme-btn" data-theme="ctp-macchiato" onclick="setThemeFromModal('ctp-macchiato')" title="Catppuccin Macchiato"></button>
+                            <div class="theme-option" onclick="setThemeFromModal('ctp-macchiato')" title="Catppuccin Macchiato">
+                                <div class="theme-btn" data-theme="ctp-macchiato"></div>
                                 <div class="theme-btn-label">Macchiato</div>
                             </div>
-                            <div>
-                                <button class="theme-btn" data-theme="ctp-frappe" onclick="setThemeFromModal('ctp-frappe')" title="Catppuccin Frappé"></button>
+                            <div class="theme-option" onclick="setThemeFromModal('ctp-frappe')" title="Catppuccin Frappé">
+                                <div class="theme-btn" data-theme="ctp-frappe"></div>
                                 <div class="theme-btn-label">Frappé</div>
                             </div>
-                            <div>
-                                <button class="theme-btn" data-theme="ctp-latte" onclick="setThemeFromModal('ctp-latte')" title="Catppuccin Latte"></button>
+                            <div class="theme-option" onclick="setThemeFromModal('ctp-latte')" title="Catppuccin Latte">
+                                <div class="theme-btn" data-theme="ctp-latte"></div>
                                 <div class="theme-btn-label">Latte</div>
                             </div>
                         </div>
