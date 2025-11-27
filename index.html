@@ -3072,6 +3072,15 @@
                                 </select>
                             </div>
                         </div>
+                        <!-- Seamless Mode -->
+                        <div style="display: flex; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--panel-border); align-items: center;">
+                            <button class="fn-key" id="seamlessBtn" onclick="toggleSeamlessMode()" style="flex: 0 0 auto; padding: 4px 8px; font-size: 9px;" title="Mouse exits to controller at screen edge">Seamless</button>
+                            <select id="seamlessEdgeSelect" class="text-input" style="flex: 1; padding: 3px; font-size: 9px;" onchange="setSeamlessEdge(this.value)" title="Which edge exits to controller">
+                                <option value="left">← Exit Left</option>
+                                <option value="right">Exit Right →</option>
+                            </select>
+                            <span class="led-label" style="font-size: 8px; color: var(--text-dim);">Edge exit</span>
+                        </div>
                     </div>
                 </div>
 
@@ -4411,6 +4420,39 @@
         let captureStats = { mouse: 0, clicks: 0, keys: 0 };
         const overlay = document.getElementById('captureOverlay');
 
+        // Seamless Mode - virtual cursor tracking for edge detection
+        let seamlessMode = localStorage.getItem('seamlessMode') === 'true';
+        let vCursorX = 0, vCursorY = 0;  // Virtual cursor position on target
+        let targetWidth = 1920, targetHeight = 1080;  // Will be updated from video
+        let seamlessEdge = localStorage.getItem('seamlessEdge') || 'left';  // Which edge releases to controller
+
+        function toggleSeamlessMode() {
+            seamlessMode = !seamlessMode;
+            localStorage.setItem('seamlessMode', seamlessMode);
+            updateSeamlessUI();
+            log('Seamless mode: ' + (seamlessMode ? 'ON' : 'OFF'), 'info');
+        }
+
+        function setSeamlessEdge(edge) {
+            seamlessEdge = edge;
+            localStorage.setItem('seamlessEdge', edge);
+            log('Seamless exit edge: ' + edge, 'info');
+        }
+
+        function updateSeamlessUI() {
+            const btn = document.getElementById('seamlessBtn');
+            if (btn) {
+                btn.classList.toggle('green', seamlessMode);
+            }
+            const select = document.getElementById('seamlessEdgeSelect');
+            if (select) {
+                select.value = seamlessEdge;
+            }
+        }
+
+        // Initialize seamless UI on load
+        setTimeout(updateSeamlessUI, 0);
+
         // Configurable exit key
         let exitKey = localStorage.getItem('exitKey') || 'Escape';
         updateExitKeyDisplay();
@@ -4706,6 +4748,26 @@
                 isCapturing = true;
                 captureStats = { mouse: 0, clicks: 0, keys: 0 };
                 updateCaptureStats();
+
+                // Seamless mode: initialize cursor position from entry edge
+                if (seamlessMode) {
+                    // Update target dimensions from video if available
+                    const videoEl = document.getElementById('videoFeed');
+                    if (videoEl && videoEl.videoWidth) {
+                        targetWidth = videoEl.videoWidth;
+                        targetHeight = videoEl.videoHeight;
+                    }
+                    // Position cursor at entry edge
+                    if (seamlessEdge === 'left') {
+                        vCursorX = targetWidth - 10;  // Enter from right
+                        vCursorY = targetHeight / 2;
+                    } else {
+                        vCursorX = 10;  // Enter from left
+                        vCursorY = targetHeight / 2;
+                    }
+                    log('Seamless: entered at ' + vCursorX + ',' + vCursorY, 'info');
+                }
+
                 log('Jacked in', 'info');
                 document.addEventListener('mousemove', onCaptureMouseMove);
                 document.addEventListener('mousedown', onCaptureMouseDown);
@@ -4732,10 +4794,52 @@
                 // Include button state so drag works correctly - apply sensitivity
                 const dx = Math.round(e.movementX * mouseSensitivity);
                 const dy = Math.round(e.movementY * mouseSensitivity);
+
+                // Seamless mode: track virtual cursor and check edges
+                if (seamlessMode) {
+                    vCursorX += dx;
+                    vCursorY += dy;
+
+                    // Clamp Y to screen bounds
+                    vCursorY = Math.max(0, Math.min(targetHeight, vCursorY));
+
+                    // Check edge - release pointer lock to return to controller
+                    if (seamlessEdge === 'left' && vCursorX < 0) {
+                        document.exitPointerLock();
+                        log('Seamless: exited left edge', 'info');
+                        return;
+                    } else if (seamlessEdge === 'right' && vCursorX > targetWidth) {
+                        document.exitPointerLock();
+                        log('Seamless: exited right edge', 'info');
+                        return;
+                    }
+
+                    // Clamp X within bounds (don't let it go too far if wrong edge)
+                    vCursorX = Math.max(0, Math.min(targetWidth, vCursorX));
+
+                    // Update cursor indicator if visible
+                    updateSeamlessCursor();
+                }
+
                 kvm.moveMouse(dx, dy, 0, captureButtons);
                 captureStats.mouse++;
                 updateCaptureStats();
             }
+        }
+
+        function updateSeamlessCursor() {
+            const cursor = document.getElementById('seamlessCursor');
+            if (!cursor || !seamlessMode) return;
+            const videoEl = document.getElementById('videoFeed');
+            if (!videoEl) return;
+
+            // Map virtual cursor to video element position
+            const rect = videoEl.getBoundingClientRect();
+            const scaleX = rect.width / targetWidth;
+            const scaleY = rect.height / targetHeight;
+            cursor.style.left = (rect.left + vCursorX * scaleX) + 'px';
+            cursor.style.top = (rect.top + vCursorY * scaleY) + 'px';
+            cursor.style.display = 'block';
         }
 
         let captureButtons = 0;
