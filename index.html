@@ -191,56 +191,78 @@
         }
 
         /* ============================================
-           THEME: Mono (grayscale, low contrast)
-           Subtle, eye-friendly
+           THEME: Koma (lava orange + phosphor green)
+           Industrial terminal aesthetic
            ============================================ */
-        [data-theme="mono"] {
-            /* Accents - grayscale */
-            --accent-primary: #9aa0a6;
-            --accent-secondary: #5f6368;
-            --logo-block1: #9aa0a6;
-            --logo-block2: #5f6368;
-            --logo-relay: #e8eaed;
+        [data-theme="koma"] {
+            /* Accents - orange/green */
+            --accent-primary: #ff6b35;
+            --accent-secondary: #00ff88;
+            --logo-block1: #ff6b35;
+            --logo-block2: #00ff88;
+            --logo-relay: #e0e0e0;
 
-            /* LEDs - desaturated */
-            --led-green: #aabbaa;
-            --led-green-dim: #445544;
-            --led-red: #bb9999;
-            --led-red-dim: #554444;
-            --led-amber: #bbaa88;
-            --led-amber-dim: #554433;
-            --led-blue: #8899bb;
-            --led-blue-dim: #334455;
+            /* Surfaces - charcoal */
+            --surface-base: #0f0f0f;
+            --panel-bg: #1a1a1a;
+            --panel-surface: #252525;
+            --panel-raised: #2a2a2a;
+            --panel-inset: #0a0a0a;
+            --panel-border: #333333;
 
-            /* Display */
-            --display-text: #aabbaa;
-            --display-text-dim: #556655;
+            /* Text */
+            --text-bright: #e0e0e0;
+            --text-normal: #999999;
+            --text-dim: #666666;
 
-            /* Primary buttons - gray */
-            --btn-primary-bg: #4a5058;
-            --btn-primary-border: #353a40;
-            --btn-primary-text: #d0d4d8;
-            --btn-primary-hover: #5a6068;
+            /* LEDs */
+            --led-green: #00ff88;
+            --led-green-dim: #004422;
+            --led-red: #ff6b35;
+            --led-red-dim: #552200;
+            --led-amber: #ff6b35;
+            --led-amber-dim: #552200;
+            --led-blue: #4d9fff;
+            --led-blue-dim: #1a3355;
 
-            /* Action buttons - all gray tones */
-            --action-red-bg: #5a4a4a;
-            --action-red-border: #3a3030;
-            --action-amber-bg: #5a5545;
-            --action-amber-border: #3a3828;
-            --action-green-bg: #4a5a4a;
-            --action-green-border: #303a30;
-            --action-blue-bg: #4a4a5a;
-            --action-blue-border: #30303a;
+            /* Display - phosphor green */
+            --display-text: #00ff88;
+            --display-text-dim: #005533;
+            --display-bg: #0a0a0a;
 
-            /* Fnkeys - gray */
-            --fnkey-red-bg: #5a4545;
-            --fnkey-red-border: #3a2828;
-            --fnkey-amber-bg: #5a5540;
-            --fnkey-amber-border: #3a3525;
-            --fnkey-green-bg: #455a45;
-            --fnkey-green-border: #283a28;
-            --fnkey-blue-bg: #45455a;
-            --fnkey-blue-border: #28283a;
+            /* Primary buttons - orange */
+            --btn-primary-bg: #ff6b35;
+            --btn-primary-border: #cc5528;
+            --btn-primary-text: #0f0f0f;
+            --btn-primary-hover: #ff8555;
+
+            /* Neutral buttons */
+            --btn-neutral-bg: #252525;
+            --btn-neutral-hover: #333333;
+
+            /* Action buttons */
+            --action-red-bg: #3a2520;
+            --action-red-border: #552200;
+            --action-red-text: #ff6b35;
+            --action-amber-bg: #3a2520;
+            --action-amber-border: #552200;
+            --action-amber-text: #ff6b35;
+            --action-green-bg: #1a3025;
+            --action-green-border: #004422;
+            --action-green-text: #00ff88;
+            --action-blue-bg: #1a2535;
+            --action-blue-border: #1a3355;
+            --action-blue-text: #4d9fff;
+
+            /* Fnkeys */
+            --fnkey-red-bg: #2a1a15;
+            --fnkey-red-border: #441a00;
+            --fnkey-amber-bg: #2a1a15;
+            --fnkey-amber-border: #441a00;
+            --fnkey-green-bg: #152a1a;
+            --fnkey-green-border: #003318;
+            --fnkey-blue-bg: #151a2a;
+            --fnkey-blue-border: #152244;
         }
 
         /* ============================================
@@ -1214,9 +1236,9 @@
         .theme-btn[data-theme="amber"]::before { background: #ffaa00; }
         .theme-btn[data-theme="amber"]::after { background: #cc8800; }
 
-        .theme-btn[data-theme="mono"] { background: #0d0f12; }
-        .theme-btn[data-theme="mono"]::before { background: #9aa0a6; }
-        .theme-btn[data-theme="mono"]::after { background: #5f6368; }
+        .theme-btn[data-theme="koma"] { background: #1a1a1a; }
+        .theme-btn[data-theme="koma"]::before { background: #ff6b35; }
+        .theme-btn[data-theme="koma"]::after { background: #00ff88; }
 
         .theme-btn[data-theme="light"] { background: #f0f0f0; }
         .theme-btn[data-theme="light"]::before { background: #00897b; }
@@ -2756,9 +2778,9 @@
                                 <div class="theme-btn" data-theme="amber"></div>
                                 <div class="theme-btn-label">Amber</div>
                             </div>
-                            <div class="theme-option" onclick="setThemeFromModal('mono')" title="Mono">
-                                <div class="theme-btn" data-theme="mono"></div>
-                                <div class="theme-btn-label">Mono</div>
+                            <div class="theme-option" onclick="setThemeFromModal('koma')" title="Koma">
+                                <div class="theme-btn" data-theme="koma"></div>
+                                <div class="theme-btn-label">Koma</div>
                             </div>
                             <div class="theme-option" onclick="setThemeFromModal('light')" title="Light">
                                 <div class="theme-btn" data-theme="light"></div>
