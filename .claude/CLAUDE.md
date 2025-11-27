@@ -1,16 +1,31 @@
 # RelayKVM
 
-Wireless KVM using ESP32-S3 (M5Stack Cardputer) as Bluetooth-to-USB HID bridge.
+KVM solution using microcontrollers as USB HID bridges. Supports wireless (Bluetooth) and wired (dual USB) modes.
 
 ## Architecture
 
+**Wireless (Bluetooth):**
 ```
-Browser (Controller PC) --[Web Bluetooth]--> Cardputer --[USB HID]--> Host PC
+Browser (Controller PC) --[Web Bluetooth]--> Cardputer/Pico 2W --[USB HID]--> Host PC
 ```
 
-- **Web interface** (`index.html`): Captures keyboard/mouse, sends via BLE
-- **Firmware** (`firmware/RelayKVM/`): ESP32-S3 Arduino sketch, receives BLE commands, outputs USB HID
-- **Protocol**: Modified NanoKVM HID protocol over BLE UART (Nordic UART Service)
+**Wired (Dual USB):**
+```
+Browser (Controller PC) --[WebSerial]--> RP2040-PiZero --[USB HID]--> Host PC
+```
+
+## Hardware Platforms
+
+| Platform | Connection | Status |
+|----------|------------|--------|
+| M5Stack Cardputer | Bluetooth | ✅ Working |
+| Raspberry Pi Pico 2W | Bluetooth | 🚧 Planned |
+| Waveshare RP2040-PiZero | Wired (dual USB) | 🚧 Planned |
+| Android App | BLE→BT HID | 🚧 Planned |
+
+- **Web interface** (`index.html`): Captures keyboard/mouse, sends via BLE or WebSerial
+- **Firmware** (`firmware/RelayKVM/`): ESP32-S3 Arduino sketch (Cardputer)
+- **Protocol**: Modified NanoKVM HID protocol over BLE UART or USB Serial
 
 ## Key Files
 
@@ -18,10 +33,11 @@ Browser (Controller PC) --[Web Bluetooth]--> Cardputer --[USB HID]--> Host PC
 |------|---------|
 | `index.html` | Main web interface (single-file, self-contained) |
 | `relaykvm-adapter.js` | BLE communication adapter |
-| `firmware/RelayKVM/RelayKVM.ino` | Main firmware sketch |
+| `firmware/RelayKVM/RelayKVM.ino` | Main firmware sketch (Cardputer) |
 | `firmware/platformio.ini` | PlatformIO build config |
+| `docs/WIRED.md` | Wired mode documentation (RP2040-PiZero) |
+| `docs/FEATURES.md` | Features and roadmap |
 | `icons/icon.svg` | Logo (overlapping teal/coral rectangles) |
-| `icons/icon-generator.html` | Browser tool to generate PNG icons |
 
 ## Build Commands
 
@@ -52,6 +68,7 @@ The m5launcher build includes correct partition scheme and OTA support for retur
 |------|-----|-----|--------------|
 | HID | `0xFEED` | `0xAE01` | RelayKVM Controller |
 | MSC | `0xFEED` | `0xAE02` | RelayKVM SD Card |
+| CDC Serial | `0xFEED` | `0xAE03` | RelayKVM Serial |
 
 ## Known Issues & Solutions
 

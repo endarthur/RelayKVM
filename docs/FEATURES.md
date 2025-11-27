@@ -39,7 +39,8 @@
 ## Roadmap
 
 ### High Priority
-- [ ] **Raspberry Pi Pico 2W support** - Cheaper headless dongle option (~$7 vs $40)
+- [ ] **Wired mode (RP2040-PiZero)** - Dual USB-C, WebSerial, no pairing needed ([docs](WIRED.md))
+- [ ] **Raspberry Pi Pico 2W support** - Cheaper wireless dongle option
 - [ ] **Android app** - Phone as BLE-to-BT HID bridge
 - [ ] **Mobile/responsive design** - Use from phone/tablet
 
