@@ -1291,7 +1291,7 @@
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.8);
-            z-index: 1100;
+            z-index: 10001;
             justify-content: center;
             align-items: center;
         }
@@ -1393,20 +1393,45 @@
             background: var(--btn-neutral-hover);
         }
 
-        .theme-preview {
-            display: flex;
+        .color-picker-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
             gap: 8px;
-            margin-top: 12px;
-            padding: 12px;
-            background: var(--panel-inset);
-            border-radius: 4px;
+            margin-bottom: 12px;
         }
 
-        .theme-preview-swatch {
-            width: 40px;
-            height: 40px;
-            border-radius: 4px;
-            border: 2px solid var(--panel-border);
+        .color-picker-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .color-picker-item label {
+            font-size: 8px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .color-picker-item input[type="color"] {
+            width: 100%;
+            height: 28px;
+            padding: 0;
+            border: 1px solid var(--panel-border);
+            border-radius: 3px;
+            cursor: pointer;
+            background: transparent;
+        }
+
+        .color-picker-item input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 2px;
+        }
+
+        .color-picker-item input[type="color"]::-webkit-color-swatch {
+            border-radius: 2px;
+            border: none;
         }
 
         .settings-row {
@@ -1465,6 +1490,21 @@
 
         .btn-danger-sm:hover {
             background: var(--btn-danger-hover);
+        }
+
+        .btn-secondary {
+            background: var(--btn-neutral-bg);
+            border: 1px solid var(--panel-border);
+            color: var(--text-normal);
+            padding: 6px 12px;
+            border-radius: 3px;
+            font-size: 10px;
+            cursor: pointer;
+        }
+
+        .btn-secondary:hover {
+            background: var(--btn-neutral-hover);
+            color: var(--text-bright);
         }
 
         .hw-btn.danger {
@@ -2804,15 +2844,32 @@
                                 </label>
                             </div>
                         </div>
+                        <div class="settings-row">
+                            <span class="settings-label">Show Log (no video)</span>
+                            <div class="settings-value">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="modalAutoShowLog" onchange="updateAutoShowLogFromModal(this.checked)">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Data Section -->
                     <div class="settings-section">
                         <div class="settings-section-title">Data</div>
+                        <div class="settings-row" style="gap: 8px;">
+                            <button class="btn-secondary" onclick="exportSettings()" style="flex: 1;">Export Settings</button>
+                            <button class="btn-secondary" onclick="document.getElementById('importSettingsFile').click()" style="flex: 1;">Import Settings</button>
+                            <input type="file" id="importSettingsFile" accept=".json" onchange="importSettings(this)" style="display: none;">
+                        </div>
+                        <div style="font-size: 9px; color: var(--text-dim); margin-bottom: 12px; text-align: center;">
+                            Backup or restore all settings, themes, macros, and scripts
+                        </div>
                         <div class="danger-zone">
                             <button class="btn-danger-sm" onclick="clearLocalStorage()">Clear All Saved Data</button>
                             <div style="font-size: 9px; color: var(--text-dim); margin-top: 6px; text-align: center;">
-                                Resets theme, device preferences, macros, and scripts
+                                Resets everything to defaults
                             </div>
                         </div>
                     </div>
@@ -2836,6 +2893,43 @@
                         </div>
                     </div>
                     <div class="theme-editor-row">
+                        <label>Colors (click to pick)</label>
+                        <div class="color-picker-grid">
+                            <div class="color-picker-item" onmouseenter="highlightJsonKey('accent-primary')" onmouseleave="clearJsonHighlight()">
+                                <label>Primary</label>
+                                <input type="color" id="colorPrimary" data-key="accent-primary" onchange="updateJsonFromPicker(this)">
+                            </div>
+                            <div class="color-picker-item" onmouseenter="highlightJsonKey('accent-secondary')" onmouseleave="clearJsonHighlight()">
+                                <label>Secondary</label>
+                                <input type="color" id="colorSecondary" data-key="accent-secondary" onchange="updateJsonFromPicker(this)">
+                            </div>
+                            <div class="color-picker-item" onmouseenter="highlightJsonKey('surface-base')" onmouseleave="clearJsonHighlight()">
+                                <label>Surface</label>
+                                <input type="color" id="colorSurface" data-key="surface-base" onchange="updateJsonFromPicker(this)">
+                            </div>
+                            <div class="color-picker-item" onmouseenter="highlightJsonKey('panel-bg')" onmouseleave="clearJsonHighlight()">
+                                <label>Panel BG</label>
+                                <input type="color" id="colorPanelBg" data-key="panel-bg" onchange="updateJsonFromPicker(this)">
+                            </div>
+                            <div class="color-picker-item" onmouseenter="highlightJsonKey('panel-surface')" onmouseleave="clearJsonHighlight()">
+                                <label>Panel Surface</label>
+                                <input type="color" id="colorPanelSurface" data-key="panel-surface" onchange="updateJsonFromPicker(this)">
+                            </div>
+                            <div class="color-picker-item" onmouseenter="highlightJsonKey('display-text')" onmouseleave="clearJsonHighlight()">
+                                <label>Display</label>
+                                <input type="color" id="colorDisplay" data-key="display-text" onchange="updateJsonFromPicker(this)">
+                            </div>
+                            <div class="color-picker-item" onmouseenter="highlightJsonKey('text-bright')" onmouseleave="clearJsonHighlight()">
+                                <label>Text Bright</label>
+                                <input type="color" id="colorTextBright" data-key="text-bright" onchange="updateJsonFromPicker(this)">
+                            </div>
+                            <div class="color-picker-item" onmouseenter="highlightJsonKey('text-normal')" onmouseleave="clearJsonHighlight()">
+                                <label>Text Normal</label>
+                                <input type="color" id="colorTextNormal" data-key="text-normal" onchange="updateJsonFromPicker(this)">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="theme-editor-row">
                         <label>Theme JSON</label>
                         <textarea id="themeJsonEditor" placeholder='{
   "name": "My Theme",
@@ -2845,11 +2939,6 @@
   "panel-bg": "#1a1d21",
   "display-text": "#00ff66"
 }'></textarea>
-                    </div>
-                    <div class="theme-preview" id="themePreview">
-                        <div class="theme-preview-swatch" id="previewPrimary" title="Primary"></div>
-                        <div class="theme-preview-swatch" id="previewSecondary" title="Secondary"></div>
-                        <div class="theme-preview-swatch" id="previewBg" title="Background"></div>
                     </div>
                     <div class="theme-editor-actions">
                         <button class="btn-cancel" onclick="closeThemeEditor()">Cancel</button>
@@ -3433,11 +3522,59 @@
             document.getElementById('themeEditorModal').classList.remove('active');
         }
 
-        // Update preview swatches
+        // Update color pickers from theme
         function updateThemePreview(theme) {
-            document.getElementById('previewPrimary').style.background = theme['accent-primary'] || '#666';
-            document.getElementById('previewSecondary').style.background = theme['accent-secondary'] || '#444';
-            document.getElementById('previewBg').style.background = theme['surface-base'] || '#0d0f12';
+            updateColorPickers(theme);
+        }
+
+        // Sync color pickers with theme values
+        function updateColorPickers(theme) {
+            const pickers = document.querySelectorAll('.color-picker-grid input[type="color"]');
+            pickers.forEach(picker => {
+                const key = picker.dataset.key;
+                if (theme[key]) {
+                    picker.value = theme[key];
+                }
+            });
+        }
+
+        // Update JSON when color picker changes
+        function updateJsonFromPicker(input) {
+            const key = input.dataset.key;
+            const value = input.value;
+            const editor = document.getElementById('themeJsonEditor');
+
+            try {
+                const theme = JSON.parse(editor.value);
+                theme[key] = value;
+                editor.value = JSON.stringify(theme, null, 2);
+            } catch (e) {
+                // Invalid JSON, ignore
+            }
+        }
+
+        // Highlight corresponding JSON line on color picker hover
+        function highlightJsonKey(key) {
+            const editor = document.getElementById('themeJsonEditor');
+            const text = editor.value;
+
+            // Find the key in the JSON
+            const pattern = new RegExp(`"${key}"\\s*:\\s*"[^"]*"`);
+            const match = text.match(pattern);
+
+            if (match) {
+                const start = text.indexOf(match[0]);
+                const end = start + match[0].length;
+                editor.focus();
+                editor.setSelectionRange(start, end);
+            }
+        }
+
+        // Clear JSON highlight
+        function clearJsonHighlight() {
+            const editor = document.getElementById('themeJsonEditor');
+            // Move cursor to end to clear selection
+            editor.setSelectionRange(editor.value.length, editor.value.length);
         }
 
         // Save custom theme
@@ -3513,6 +3650,7 @@
             const savedScroll = parseInt(localStorage.getItem('scrollSensitivity')) || 3;
             const savedExitKey = localStorage.getItem('exitKey') || 'Escape';
             const savedCapsLock = localStorage.getItem('capsLockCmdMode') === 'true';
+            const savedAutoShowLog = localStorage.getItem('autoShowLogNoVideo') !== 'false'; // default true
 
             document.getElementById('modalMouseSpeed').value = savedMouse;
             document.getElementById('modalMouseSpeedVal').textContent = savedMouse.toFixed(1) + 'x';
@@ -3520,6 +3658,7 @@
             document.getElementById('modalScrollSpeedVal').textContent = savedScroll;
             document.getElementById('modalExitKey').value = savedExitKey;
             document.getElementById('modalCapsLockMode').checked = savedCapsLock;
+            document.getElementById('modalAutoShowLog').checked = savedAutoShowLog;
         }
 
         function updateMouseSpeedFromModal(value) {
@@ -3572,11 +3711,92 @@
             log('CapsLock commands: ' + (checked ? 'ON' : 'OFF'), 'info');
         }
 
+        function updateAutoShowLogFromModal(checked) {
+            localStorage.setItem('autoShowLogNoVideo', checked);
+            autoShowLogNoVideo = checked;
+            log('Auto-show log (no video): ' + (checked ? 'ON' : 'OFF'), 'info');
+        }
+
         function clearLocalStorage() {
             if (confirm('Clear all saved data? This will reset theme, device preferences, macros, and scripts.')) {
                 localStorage.clear();
                 location.reload();
             }
+        }
+
+        // Export all settings to JSON file
+        function exportSettings() {
+            const settings = {};
+
+            // Collect all localStorage items with our prefix
+            const keys = [
+                'relaykvm-theme',
+                'relaykvm-lastDevice',
+                'relaykvm-videoRes',
+                'relaykvm-videoFps',
+                'relaykvm-exitKey',
+                'relaykvm-capsLockMode',
+                'mouseSensitivity',
+                'scrollSensitivity',
+                'autoShowLogNoVideo',
+                'capsLockCmdMode',
+                'exitKey',
+                'macros',
+                'scripts',
+                'customTheme1',
+                'customTheme2',
+                'customTheme3',
+                'customTheme4',
+                'customTheme5'
+            ];
+
+            keys.forEach(key => {
+                const value = localStorage.getItem(key);
+                if (value !== null) {
+                    settings[key] = value;
+                }
+            });
+
+            // Create and download the file
+            const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `relaykvm-settings-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            log('Settings exported', 'info');
+        }
+
+        // Import settings from JSON file
+        function importSettings(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const settings = JSON.parse(e.target.result);
+
+                    if (confirm(`Import ${Object.keys(settings).length} settings? This will overwrite current settings.`)) {
+                        Object.entries(settings).forEach(([key, value]) => {
+                            localStorage.setItem(key, value);
+                        });
+
+                        log('Settings imported, reloading...', 'info');
+                        setTimeout(() => location.reload(), 500);
+                    }
+                } catch (err) {
+                    alert('Invalid settings file: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+
+            // Reset input so same file can be selected again
+            input.value = '';
         }
 
         // Close modal with Escape key
@@ -4128,6 +4348,7 @@
             '-': () => { adjustMouseSensitivity(-0.5); return 'Mouse: ' + mouseSensitivity.toFixed(1) + 'x'; },
             '[': () => { adjustScrollSensitivity(-1); return 'Scroll: ' + scrollSensitivity; },
             ']': () => { adjustScrollSensitivity(1); return 'Scroll: ' + scrollSensitivity; },
+            'o': () => { return toggleCaptureLog(); },
         };
 
         function adjustMouseSensitivity(delta) {
@@ -4153,13 +4374,63 @@
         }
 
         function showCmdModeHelp() {
-            log('--- Command Mode ---', 'info');
-            log('C=Connect J=Jiggler Q=Jack Out', 'info');
-            log('R=Reset W=Wake S=Sleep', 'info');
-            log('L=Lock D=Desktop T=Alt+Tab', 'info');
-            log('A=Ctrl+Alt+Del V=Video F=Full', 'info');
-            log('1-4=Macros M=Sensitivity', 'info');
-            log('+/-=Mouse [/]=Scroll H/?=Help', 'info');
+            // Show help overlay on screen (visible during capture)
+            let helpOverlay = document.getElementById('cmdHelpOverlay');
+            if (!helpOverlay) {
+                helpOverlay = document.createElement('div');
+                helpOverlay.id = 'cmdHelpOverlay';
+                helpOverlay.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: rgba(0, 0, 0, 0.9);
+                    border: 1px solid var(--accent-primary);
+                    border-radius: 8px;
+                    padding: 20px;
+                    z-index: 100000;
+                    font-family: 'IBM Plex Mono', monospace;
+                    color: var(--text-bright);
+                    text-align: left;
+                    font-size: 12px;
+                    line-height: 1.6;
+                `;
+                helpOverlay.innerHTML = `
+                    <div style="color: var(--accent-primary); font-weight: bold; margin-bottom: 12px; font-size: 14px;">
+                        CapsLock Command Mode
+                    </div>
+                    <div style="display: grid; grid-template-columns: auto auto; gap: 4px 16px;">
+                        <span style="color: var(--accent-secondary);">C</span><span>Connect/Disconnect</span>
+                        <span style="color: var(--accent-secondary);">J</span><span>Toggle Jiggler</span>
+                        <span style="color: var(--accent-secondary);">Q</span><span>Jack Out</span>
+                        <span style="color: var(--accent-secondary);">R</span><span>Reset Device</span>
+                        <span style="color: var(--accent-secondary);">W</span><span>Wake</span>
+                        <span style="color: var(--accent-secondary);">S</span><span>Sleep</span>
+                        <span style="color: var(--accent-secondary);">L</span><span>Lock (Win+L)</span>
+                        <span style="color: var(--accent-secondary);">D</span><span>Desktop (Win+D)</span>
+                        <span style="color: var(--accent-secondary);">T</span><span>Alt+Tab</span>
+                        <span style="color: var(--accent-secondary);">A</span><span>Ctrl+Alt+Del</span>
+                        <span style="color: var(--accent-secondary);">V</span><span>Toggle Video</span>
+                        <span style="color: var(--accent-secondary);">F</span><span>Fullscreen</span>
+                        <span style="color: var(--accent-secondary);">O</span><span>Toggle Log</span>
+                        <span style="color: var(--accent-secondary);">1-4</span><span>Macros</span>
+                        <span style="color: var(--accent-secondary);">M</span><span>Show Sensitivity</span>
+                        <span style="color: var(--accent-secondary);">+ / -</span><span>Mouse Speed</span>
+                        <span style="color: var(--accent-secondary);">[ / ]</span><span>Scroll Speed</span>
+                    </div>
+                    <div style="color: var(--text-dim); margin-top: 12px; font-size: 10px; text-align: center;">
+                        Press any key to close
+                    </div>
+                `;
+                document.body.appendChild(helpOverlay);
+
+                // Close on any key press
+                const closeHelp = () => {
+                    helpOverlay.remove();
+                    document.removeEventListener('keydown', closeHelp);
+                };
+                setTimeout(() => document.addEventListener('keydown', closeHelp), 100);
+            }
         }
 
         function updateCmdModeDisplay(active) {
@@ -4176,10 +4447,109 @@
             const cmd = CMD_MODE_COMMANDS[key.toLowerCase()];
             if (cmd) {
                 const desc = cmd();
+                showCmdToast(desc);
                 log('CMD: ' + desc, 'info');
                 return true;
             }
             return false;
+        }
+
+        // Toast notification for command feedback
+        let toastTimeout = null;
+        function showCmdToast(msg) {
+            let toast = document.getElementById('cmdToast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'cmdToast';
+                toast.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: rgba(0, 0, 0, 0.85);
+                    border: 1px solid var(--accent-primary);
+                    border-radius: 4px;
+                    padding: 8px 16px;
+                    z-index: 100000;
+                    font-family: 'IBM Plex Mono', monospace;
+                    color: var(--accent-primary);
+                    font-size: 13px;
+                    font-weight: bold;
+                    pointer-events: none;
+                    transition: opacity 0.3s;
+                `;
+                document.body.appendChild(toast);
+            }
+            toast.textContent = msg;
+            toast.style.opacity = '1';
+
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.style.opacity = '0';
+            }, 1500);
+        }
+
+        // Capture log panel (floating log visible during capture)
+        let captureLogPanel = null;
+        let captureLogVisible = false;
+        let autoShowLogNoVideo = localStorage.getItem('autoShowLogNoVideo') !== 'false'; // default true
+
+        function initCaptureLog() {
+            if (captureLogPanel) return;
+            captureLogPanel = document.createElement('div');
+            captureLogPanel.id = 'captureLogPanel';
+            captureLogPanel.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                width: 320px;
+                max-height: calc(100vh - 40px);
+                background: var(--panel-bg);
+                border: 1px solid var(--panel-border);
+                border-radius: 4px;
+                z-index: 99999;
+                overflow: hidden;
+                display: none;
+                flex-direction: column;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            `;
+            captureLogPanel.innerHTML = `
+                <div style="padding: 6px 10px; background: var(--panel-surface); border-bottom: 1px solid var(--panel-border); display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 10px; color: var(--text-dim); text-transform: uppercase;">Log</span>
+                    <span style="font-size: 9px; color: var(--accent-secondary);">O to toggle</span>
+                </div>
+                <div id="captureLogContent" class="log-display" style="flex: 1; min-height: 0; max-height: calc(100vh - 80px); border: none; border-radius: 0;"></div>
+            `;
+            document.body.appendChild(captureLogPanel);
+        }
+
+        function syncCaptureLog() {
+            initCaptureLog();
+            const mainLog = document.getElementById('log');
+            const captureContent = document.getElementById('captureLogContent');
+            if (mainLog && captureContent) {
+                captureContent.innerHTML = mainLog.innerHTML;
+                captureContent.scrollTop = captureContent.scrollHeight;
+            }
+        }
+
+        function toggleCaptureLog() {
+            initCaptureLog();
+            captureLogVisible = !captureLogVisible;
+            if (captureLogVisible) {
+                syncCaptureLog();
+            }
+            captureLogPanel.style.display = captureLogVisible ? 'flex' : 'none';
+            return captureLogVisible ? 'Log visible' : 'Log hidden';
+        }
+
+        function showCaptureLog(show) {
+            initCaptureLog();
+            captureLogVisible = show;
+            if (show) {
+                syncCaptureLog();
+            }
+            captureLogPanel.style.display = show ? 'flex' : 'none';
         }
 
         function startCapture() {
@@ -4188,8 +4558,12 @@
             document.getElementById('capturePanel').classList.add('captured');
             // If video is streaming, make overlay transparent
             const videoEl = document.getElementById('videoFeed');
-            if (videoEl && videoEl.srcObject) {
+            const hasVideo = videoEl && videoEl.srcObject;
+            if (hasVideo) {
                 overlay.classList.add('video-active');
+            } else if (autoShowLogNoVideo) {
+                // Auto-show log when jacking in without video
+                showCaptureLog(true);
             }
             overlay.requestPointerLock();
         }
@@ -4200,6 +4574,11 @@
             overlay.classList.remove('active', 'video-active');
             document.getElementById('capturePanel').classList.remove('captured');
             updateCmdModeDisplay(false); // Clear command mode display
+            // Hide capture log when jacking out
+            if (captureLogPanel) {
+                captureLogPanel.style.display = 'none';
+                captureLogVisible = false;
+            }
             // Only exit pointer lock if overlay has it (not trackpad)
             if (document.pointerLockElement === overlay) document.exitPointerLock();
             resetCaptureKeyboardState();
@@ -4399,6 +4778,17 @@
             el.appendChild(entry);
             el.scrollTop = el.scrollHeight;
             while (el.children.length > 50) el.removeChild(el.firstChild);
+
+            // Sync to capture log if visible
+            if (captureLogVisible) {
+                const captureContent = document.getElementById('captureLogContent');
+                if (captureContent) {
+                    const clone = entry.cloneNode(true);
+                    captureContent.appendChild(clone);
+                    captureContent.scrollTop = captureContent.scrollHeight;
+                    while (captureContent.children.length > 50) captureContent.removeChild(captureContent.firstChild);
+                }
+            }
         }
 
         function clearLog() { document.getElementById('log').innerHTML = ''; }

@@ -30,7 +30,8 @@ Wireless KVM solution using ESP32-S3 (M5Stack Cardputer) as a Bluetooth-to-USB H
 - **Mouse jiggler** - Prevent screen lock
 - **Wake/Sleep** - USB wake signal + Windows sleep macro
 - **Display control** - Dim/off the Cardputer screen remotely
-- **Theming** - 10 themes including Catppuccin variants
+- **Theming** - 10 built-in themes + 5 custom slots with JSON editor
+- **Settings** - Export/import configuration, all preferences in one modal
 - **Mass Storage mode** - Hold 'M' at boot to access SD card
 
 ## Hardware
@@ -87,6 +88,7 @@ The industrial-style control panel includes:
 | **Scripts** | Multi-step automation |
 | **Cardputer** | Display brightness, connection status |
 | **Sensitivity** | Mouse and scroll speed sliders |
+| **Settings** (gear icon) | Themes, custom themes, input options, export/import |
 
 ## SD Card Mode
 

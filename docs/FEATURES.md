@@ -1,668 +1,77 @@
-## 🚀 Additional Features Roadmap
-
-### Implemented ✅
-1. **USB HID Emulation** - Keyboard (6KRO) and Mouse (abs/rel)
-2. **BLE Security** - SSP with PIN display and confirmation
-3. **Protocol Parser** - Full NanoKVM protocol support
-4. **Status Display** - Connection, battery, command count
-5. **Emergency Controls** - ESC key disconnect
-6. **Mass Storage Mode** - Hold 'M' at boot to access SD card
-7. **Display Control** - Remote brightness control (off/dim/on)
-8. **Web Interface** - Industrial-style control panel with capture mode
-
-### Distribution & Release 📦
-
-#### GitHub Actions CI/CD
-**Status:** ✅ **IMPLEMENTED**
-
-Automatically compile firmware on release:
-- Trigger on version tags (e.g., `v1.0.0`)
-- Build with PlatformIO
-- Attach `RelayKVM.bin` to GitHub Release
-- Users can download pre-built firmware directly
-
-```yaml
-# .github/workflows/build.yml
-on:
-  release:
-    types: [published]
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/cache@v4
-        with:
-          path: ~/.platformio
-          key: pio
-      - run: pip install platformio
-      - run: cd firmware && pio run -e m5launcher
-      - uses: actions/upload-release-asset@v1
-        with:
-          asset_path: firmware/.pio/build/m5launcher/RelayKVM.bin
-```
-
-#### M5Launcher Community Repository
-**Status:** 🔲 TODO (after more testing)
-
-Submit to M5Stack's community app repository for M5Launcher:
-- Users can browse and install directly from Cardputer
-- No manual .bin download needed
-- Auto-updates when new versions released
-
-**Requirements before submission:**
-- [ ] Stable for 2+ weeks of daily use
-- [ ] Test on multiple Cardputer units
-- [ ] Test with various host PCs (Windows/Mac/Linux)
-- [ ] Clean app icon and metadata
-
-### Web Interface Improvements 🌐
-
-#### Video Capture (USB)
-**Status:** ✅ **IMPLEMENTED**
-
-Browser-based video capture using USB capture cards:
-- Device selection with auto-save last used
-- Resolution/FPS detection from device capabilities
-- Fullscreen video when jacked in
-- Broadcast-style status overlay (Mouse/Clicks/Keys/FPS)
-- Works with cheap HDMI-to-USB capture dongles (~$15)
-
-#### CapsLock Command Mode
-**Status:** ✅ **IMPLEMENTED**
-
-Use CapsLock as a command key during capture mode:
-- Toggle in Settings panel
-- 20+ shortcuts: Connect, Jiggler, Wake/Sleep, Lock, Alt+Tab, etc.
-- Mouse/scroll sensitivity adjustment (+/-/[/])
-- Help system (H or ?)
-
-#### Mobile/Responsive Design
-**Status:** 🔲 TODO
-
-Make web interface usable on phones/tablets:
-- Collapsible modules
-- Stack layout instead of grid on narrow screens
-- Larger touch targets
-- "Mobile mode" with essentials only (video, trackpad, basic keys)
-- Touch-friendly virtual keyboard
-
-#### Latency/Ping Indicator
-**Status:** 🔲 TODO
-
-Show connection quality in web interface:
-- Round-trip ping measurement to Cardputer
-- Display in header near LED indicators
-- Visual feedback (color-coded: green/yellow/red)
-
-#### Keyboard Layout Support (Web)
-**Status:** 🔲 TODO
-
-Support non-US keyboard layouts for Text Input feature:
-- Host layout selector (what layout the target machine uses)
-- Client layout selector (optional, for display purposes)
-- Translation layer: character → correct HID scancode for host layout
-- Layouts: US, UK, DE, FR, ES, BR-ABNT2, etc.
-- Could adapt layout files from Rubber Ducky / DuckyScript projects
-
-**Note:** Jack In mode (direct capture) is layout-agnostic - physical scancodes pass through and host interprets them. Layout support mainly needed for Text Input typing.
-
-#### Single-File Bundle Script
-**Status:** 🔲 TODO
-
-Create a build script to bundle the web interface into a single HTML file:
-- Inline `relaykvm-adapter.js` into `index.html`
-- Inline any other external resources (CSS, images as base64)
-- Output: single `RelayKVM.html` that works completely offline
-- Useful for SD card distribution and air-gapped environments
-- Could be a simple Node.js or Python script
-
-#### Progressive Web App (PWA)
-**Status:** 🔲 TODO
-
-Make the web interface installable as a PWA:
-- Works offline (service worker caches assets)
-- "Install app" prompt in browser
-- Launches in its own window (no browser chrome)
-- Better permission persistence for Web Bluetooth
-- App icon on desktop/home screen
-
-**Requirements:**
-- `manifest.json` with app metadata and icons
-- Service worker for offline caching
-- HTTPS (already have via GitHub Pages)
-
-#### Super Key (Windows Key) Capture
-**Status:** 🔲 TODO - Investigate
-
-Windows intercepts Win key at OS level - browsers can't fully capture it.
-
-**Possible approaches:**
-- Document the limitation clearly
-- Provide on-screen Win key button (already have in Special Keys)
-- Investigate if `event.preventDefault()` works in any edge cases
-- Consider browser extensions (but defeats the "no install" benefit)
-
-**Current workaround:** Use the GUI button in Special Keys module
-
-#### Alternative Exit Capture Keys
-**Status:** 🔲 TODO
-
-Add more options for exiting capture mode:
-- **Browser Back button** - Useful for trackballs with dedicated back buttons (e.g., Kensington Expert)
-- **Double-tap Escape** - Less likely to be accidental
-- **Scroll click (middle mouse)** - Often unused
-
-```javascript
-// Browser back button detection
-window.addEventListener('popstate', (e) => {
-    if (isCapturing) {
-        stopCapture();
-        history.pushState(null, ''); // Stay on page
-    }
-});
-```
-
-#### Key Translation / Remapping
-**Status:** 🔲 TODO
-
-Translate keys on client side before sending to host. Perfect for QMK/VIA users:
-
-| Client Key | Host Key | Use Case |
-|------------|----------|----------|
-| F13 | Super/Win | QMK layer key → Windows key |
-| F14 | Menu | Context menu |
-| F15-F24 | Custom | User-defined macros |
-
-F13-F24 are valid USB HID codes but unused by most OSes - perfect "virtual" keys.
-
-```javascript
-const keyTranslations = {
-    'F13': 'MetaLeft',   // Super/Win
-    'F14': 'ContextMenu',
-    // User-configurable...
-};
-```
-
-**UI:** Settings panel to configure mappings, stored in localStorage.
-
-#### Global Hotkey to Launch/Connect
-**Status:** 🔲 TODO - Requires companion
-
-PWAs are sandboxed - can't register system-wide hotkeys. Options:
-
-**AutoHotkey (Windows) - Lightest option:**
-```autohotkey
-#k::  ; Win+K launches RelayKVM
-    Run, "chrome.exe" --app=https://endarthur.github.io/RelayKVM
-return
-```
-
-**Browser Extension** - Could register hotkey via chrome.commands API, communicate with page.
-
-**Companion App (Tauri/Electron)** - Full native access but defeats "no install" benefit.
-
-**Recommendation:** Document AutoHotkey/Hammerspoon snippets for power users.
-
-### Implemented ✅
-
-#### USB Wake (Remote Wakeup)
-**Status:** ✅ **IMPLEMENTED**
-
-Press 'W' on Cardputer to wake host from sleep/suspend mode.
-
-```cpp
-// Press W key to show wake menu
-// Select U for USB wake
-bool wakeTargetComputer() {
-  return tud_remote_wakeup();
-}
-```
-
-**Features:**
-- ✅ USB resume signal (USB 2.0 spec compliant)
-- ✅ Works for Sleep (S3) and Hibernate (S4)
-- ✅ Interactive menu with status feedback
-- ✅ Error handling and diagnostics
-- ✅ No network/WiFi required
-
-**Benefit:** Wake host computer instantly from sleep mode
-
-**See:** `docs/WAKE.md` for complete setup guide
-
-### High Priority (Easy Wins) 🟢
-
-#### 1. System Control HID (Sleep/Power/Wake Keys)
-**Benefit:** Universal sleep/wake/power keys that work across all OSes
-
-USB HID has a separate "System Control" usage page (0x01) with dedicated keys:
-- 0x81 = System Power Down
-- 0x82 = System Sleep
-- 0x83 = System Wake Up
-
-```cpp
-// Requires adding System Control HID interface
-// Different from regular keyboard - separate report type
-#include <USB.h>
-#include <USBHIDSystemControl.h>
-
-USBHIDSystemControl SystemControl;
-
-void sendSleep() {
-    SystemControl.press(SYSTEM_CONTROL_SLEEP);
-    delay(50);
-    SystemControl.release();
-}
-```
-
-**Impact:** Universal power management without OS-specific macros
-**Complexity:** ⭐⭐ (need to add new HID interface)
-
-#### 2. Battery Optimization
-**Benefit:** Extend runtime from ~4 hours to ~8+ hours
-
-```cpp
-// Power management modes
-void enablePowerSaving() {
-  // Reduce BLE TX power when signal is strong
-  NimBLEDevice::setPower(ESP_PWR_LVL_N12); // -12dBm vs default 0dBm
-
-  // Enable light sleep between commands
-  esp_sleep_enable_timer_wakeup(100000); // 100ms
-  esp_light_sleep_start();
-
-  // Dim display when idle
-  M5Cardputer.Display.setBrightness(50);
-}
-```
-
-**Impact:** +100% battery life
-
-#### 2. OTA (Over-The-Air) Updates
-**Benefit:** Update firmware without USB cable
-
-```cpp
-#include <ArduinoOTA.h>
-
-void setupOTA() {
-  ArduinoOTA.setHostname("kmputer");
-  ArduinoOTA.setPassword("your-secure-password");
-  ArduinoOTA.begin();
-}
-
-void loop() {
-  ArduinoOTA.handle();
-}
-```
-
-**Requirements:**
-- Controller and Cardputer on same WiFi
-- Or OTA via Bluetooth (slower but wireless)
-
-#### 3. Connection Quality Indicator
-**Benefit:** See signal strength in real-time
-
-```cpp
-void updateDisplay() {
-  int8_t rssi = pServer->getRssi();
-
-  if (rssi > -50) M5.Display.print("████"); // Excellent
-  else if (rssi > -60) M5.Display.print("███ "); // Good
-  else if (rssi > -70) M5.Display.print("██  "); // Fair
-  else M5.Display.print("█   ");              // Poor
-}
-```
-
-#### 4. Auto-Reconnect
-**Benefit:** Reconnect automatically after disconnect
-
-```cpp
-bool autoReconnect = true;
-unsigned long lastReconnectAttempt = 0;
-
-void loop() {
-  if (!deviceConnected && autoReconnect) {
-    if (millis() - lastReconnectAttempt > 5000) {
-      NimBLEDevice::startAdvertising();
-      lastReconnectAttempt = millis();
-    }
-  }
-}
-```
-
-#### 5. Keyboard Layout Support
-**Benefit:** Support non-US layouts (QWERTY, AZERTY, etc.)
-
-```cpp
-enum KeyboardLayout {
-  LAYOUT_US,
-  LAYOUT_UK,
-  LAYOUT_DE,
-  LAYOUT_FR
-};
-
-uint8_t translateKeycode(uint8_t key, KeyboardLayout layout) {
-  // Remap keys based on layout
-}
-```
-
-### Medium Priority 🟡
-
-#### 6. Macro Support
-**Benefit:** Record and replay common sequences
-
-```cpp
-struct Macro {
-  String name;
-  uint8_t commands[256];
-  size_t length;
-};
-
-Macro macros[10];
-
-// Press special key combo to trigger macro
-void executeMacro(int index) {
-  for (size_t i = 0; i < macros[index].length; i++) {
-    // Execute stored commands
-  }
-}
-```
-
-#### 7. Multi-Computer Support
-**Benefit:** Switch between multiple host computers
-
-```cpp
-struct Computer {
-  String name;
-  uint8_t usbPort; // If using USB hub
-};
-
-Computer computers[4] = {
-  {"Workstation", 0},
-  {"Laptop", 1},
-  {"Server", 2}
-};
-
-// Press key combo to switch
-void switchComputer(int index) {
-  // Re-enumerate USB on different port
-}
-```
-
-#### 8. Web Configuration Interface
-**Benefit:** Configure settings via browser
-
-```cpp
-#include <WebServer.h>
-
-WebServer server(80);
-
-void setupWebServer() {
-  server.on("/", handleRoot);
-  server.on("/settings", handleSettings);
-  server.begin();
-}
-
-// Access via http://kmputer.local
-```
-
-#### 9. Gesture Mouse Support
-**Benefit:** Use Cardputer as air mouse (IMU-based)
-
-```cpp
-#include <BMI270_Sensor.h>
-
-void updateMouseFromIMU() {
-  float ax, ay, az;
-  M5.Imu.getAccel(&ax, &ay, &az);
-
-  // Tilt = mouse movement
-  int dx = (int)(ax * 50);
-  int dy = (int)(ay * 50);
-  Mouse.move(dx, dy);
-}
-```
-
-#### 10. Clipboard Sync
-**Benefit:** Sync clipboard between controller and host
-
-```cpp
-// Via BLE service
-void syncClipboard(String text) {
-  // Controller sends clipboard text
-  // RelayKVM types it out on host
-  Keyboard.print(text);
-}
-```
-
-### Medium Priority 🟡 (continued)
-
-#### 10. Wake-on-LAN
-**Benefit:** Wake host from complete shutdown (S5)
-
-```cpp
-void sendWakeOnLAN(uint8_t mac[6]) {
-  // Connect to WiFi
-  WiFi.begin(ssid, password);
-
-  // Build magic packet
-  uint8_t magicPacket[102];
-  for (int i = 0; i < 6; i++) magicPacket[i] = 0xFF;
-  for (int i = 0; i < 16; i++) memcpy(&magicPacket[6 + i * 6], mac, 6);
-
-  // Send UDP broadcast
-  WiFiUDP udp;
-  udp.beginPacket(IPAddress(255,255,255,255), 9);
-  udp.write(magicPacket, sizeof(magicPacket));
-  udp.endPacket();
-}
-```
-
-**Requirements:**
-- Target connected via Ethernet
-- BIOS Wake-on-LAN enabled
-- Cardputer WiFi connection
-- Target MAC address known
-
-**Battery impact:** Moderate (WiFi use)
-**Complexity:** ⭐⭐⭐
-**See:** `docs/WAKE.md` for implementation guide
-
-### Advanced Features 🔴
-
-#### 11. Video Streaming Integration
-**Benefit:** Built-in video viewer on Cardputer (low res preview)
-
-**Challenge:** ESP32-S3 processing power limited
-**Solution:** MJPEG at 320x240@15fps from capture card
-
-```cpp
-#include <esp_camera.h>
-
-// Display preview on Cardputer screen
-void displayVideoPreview() {
-  // Fetch MJPEG frame from capture card
-  // Scale down and display
-}
-```
-
-#### 12. KVM Switching (Hardware)
-**Benefit:** Physical relay switching between computers
-
-**Requirements:**
-- External relay module
-- Grove connector on Cardputer
-- Multiple USB cables
-
-```cpp
-#define RELAY_PIN 2
-
-void switchToComputer(int num) {
-  digitalWrite(RELAY_PIN, num == 1 ? HIGH : LOW);
-  delay(100);
-  // Re-enumerate USB
-}
-```
-
-#### 13. Encrypted Tunnel Mode
-**Benefit:** Additional encryption layer beyond BLE
-
-```cpp
-#include <mbedtls/aes.h>
-
-// AES-256 on top of BLE encryption
-void encryptCommand(uint8_t* data, size_t len) {
-  mbedtls_aes_context aes;
-  mbedtls_aes_setkey_enc(&aes, key, 256);
-  mbedtls_aes_crypt_cbc(&aes, MBEDTLS_AES_ENCRYPT, len, iv, data, output);
-}
-```
-
-#### 14. Multi-User Access
-**Benefit:** Multiple controllers can connect (time-shared)
-
-**Challenge:** Requires arbitration protocol
-
-```cpp
-struct User {
-  String name;
-  NimBLEAddress address;
-  uint8_t priority;
-};
-
-// Queue requests, highest priority wins
-```
-
-#### 15. Screen Recording
-**Benefit:** Record KVM session to SD card
-
-```cpp
-#include <SD.h>
-
-File recordingFile;
-
-void recordCommand(uint8_t* packet, size_t len) {
-  // Write packet + timestamp to SD
-  recordingFile.write(millis());
-  recordingFile.write(packet, len);
-}
-```
-
-#### 16. Remote Desktop Protocol (RDP/VNC) Support
-**Benefit:** Act as RDP/VNC client
-
-**Challenge:** Requires significant processing power
-**Alternative:** Use as HID for existing RDP client
-
-#### 17. FIDO2/WebAuthn Hardware Token
-**Benefit:** Use Cardputer as 2FA device
-
-```cpp
-#include <FIDO2.h>
-
-// Register RelayKVM as security key
-// Use for passwordless login
-```
-
-#### 18. IR Blaster Integration
-**Benefit:** Control monitors, projectors via IR
-
-```cpp
-#define IR_PIN 19 // Cardputer has IR LED
-
-void sendIRCommand(uint32_t code) {
-  // Send NEC/Sony/RC5 IR codes
-  // Turn on/off monitors remotely
-}
-```
-
-#### 19. SSH Terminal
-**Benefit:** Built-in SSH client on Cardputer
-
-```cpp
-#include <SSH.h>
-
-// Use Cardputer keyboard for SSH sessions
-// Display on Cardputer screen
-void connectSSH(String host, String user, String pass) {
-  // SSH client implementation
-}
-```
-
-## 📊 Feature Comparison Matrix
-
-| Feature | Complexity | Battery Impact | Memory Use | Usefulness |
-|---------|-----------|----------------|------------|------------|
-| USB Wake | ⭐ | - | ➕ | ⭐⭐⭐⭐⭐ |
-| Battery Optimization | ⭐ | ➖➖➖ | ➕ | ⭐⭐⭐⭐⭐ |
-| OTA Updates | ⭐⭐ | ➕ | ➕➕ | ⭐⭐⭐⭐ |
-| Signal Indicator | ⭐ | ➕ | ➕ | ⭐⭐⭐⭐ |
-| Auto-Reconnect | ⭐ | ➕ | ➕ | ⭐⭐⭐⭐⭐ |
-| Keyboard Layouts | ⭐⭐ | - | ➕➕ | ⭐⭐⭐ |
-| Macros | ⭐⭐ | ➕ | ➕➕ | ⭐⭐⭐⭐ |
-| Multi-Computer | ⭐⭐⭐ | - | ➕➕ | ⭐⭐⭐ |
-| Web Config | ⭐⭐⭐ | ➕➕ | ➕➕➕ | ⭐⭐⭐⭐ |
-| Gesture Mouse | ⭐⭐ | ➕ | ➕ | ⭐⭐ |
-| Wake-on-LAN | ⭐⭐ | ➕➕ | ➕➕ | ⭐⭐⭐⭐ |
-| Clipboard Sync | ⭐⭐ | ➕ | ➕ | ⭐⭐⭐⭐ |
-| Video Preview | ⭐⭐⭐⭐ | ➕➕➕ | ➕➕➕➕ | ⭐⭐ |
-| KVM Switching | ⭐⭐⭐ | - | ➕ | ⭐⭐⭐⭐ |
-| Encrypted Tunnel | ⭐⭐⭐ | ➕➕ | ➕➕ | ⭐⭐ |
-| Multi-User | ⭐⭐⭐⭐ | ➕➕ | ➕➕➕ | ⭐⭐ |
-| Screen Recording | ⭐⭐⭐ | ➕ | ➕➕➕➕ | ⭐⭐⭐ |
-| RDP/VNC | ⭐⭐⭐⭐⭐ | ➕➕➕ | ➕➕➕➕➕ | ⭐⭐ |
-| FIDO2 Token | ⭐⭐⭐⭐ | ➕ | ➕➕ | ⭐⭐⭐ |
-| IR Blaster | ⭐⭐ | ➕ | ➕ | ⭐⭐⭐ |
-| SSH Terminal | ⭐⭐⭐⭐ | ➕➕ | ➕➕➕➕ | ⭐⭐⭐⭐ |
-
-**Legend:**
-- ⭐ Complexity (more stars = harder to implement)
-- ➕ Resource usage (battery/memory)
-- ➖ Resource savings
-
-## 🎯 Recommended Implementation Order
-
-**Phase 1 (MVP+):**
-1. ✅ USB Wake (DONE!)
-2. Auto-Reconnect
-3. Signal Indicator
-4. Battery Optimization
-
-**Phase 2 (Power User):**
-5. OTA Updates
-6. Macros
-7. Clipboard Sync
-8. Wake-on-LAN
-
-**Phase 3 (Advanced):**
-9. Web Config
-10. Multi-Computer
-
-**Phase 4 (Experimental):**
-10. Pick based on user feedback
-
-## 💾 Memory Budget
-
-ESP32-S3FN8 has:
-- **8MB Flash** (plenty of room)
-- **512KB RAM** (need to be careful)
-
-Current usage:
-- Firmware: ~1.2MB flash
-- Runtime: ~150KB RAM
-- **Available:** ~350KB RAM for features
-
-## 🔋 Battery Estimates
-
-With 1750mAh battery:
-
-| Mode | Current Draw | Runtime |
-|------|--------------|---------|
-| Active (default) | ~450mA | ~3.5 hours |
-| + Power Saving | ~250mA | ~7 hours |
-| + Display Off | ~150mA | ~11 hours |
-| Deep Sleep | ~50mA | ~35 hours |
-
-## Which features interest you most?
-
-I'll implement the top 3-5 you choose!
+# Features & Roadmap
+
+## Current Features (v1.0)
+
+### Core
+- Web Bluetooth interface (Chrome/Edge)
+- Full keyboard support with all modifiers
+- Relative mouse movement with scroll
+- USB HID output via ESP32-S3
+
+### Video
+- USB capture card support
+- Resolution/FPS selection
+- Fullscreen capture mode
+- Auto-save device preferences
+
+### Input
+- CapsLock command mode (20+ shortcuts)
+- Mouse/scroll sensitivity adjustment
+- Macros (4 slots)
+- Scripts (multi-step automation)
+- Mouse jiggler with configurable range
+
+### UI
+- 10 built-in themes (Catppuccin, etc.)
+- 5 custom theme slots with JSON editor
+- Settings modal with export/import
+- Floating log panel during capture
+- Toast notifications for commands
+
+### Hardware
+- M5Stack Cardputer support
+- Display brightness control
+- SD card mass storage mode
+- USB keepalive for Windows
+
+---
+
+## Roadmap
+
+### High Priority
+- [ ] **Raspberry Pi Pico 2W support** - Cheaper headless dongle option (~$7 vs $40)
+- [ ] **Android app** - Phone as BLE-to-BT HID bridge
+- [ ] **Mobile/responsive design** - Use from phone/tablet
+
+### Medium Priority
+- [ ] **Latency/ping indicator** - Connection quality feedback
+- [ ] **Keyboard layout support** - AZERTY, QWERTZ, etc.
+- [ ] **Single-file bundle script** - Inline JS for true single-file deployment
+- [ ] **WebRTC video** - Stream from another device/app
+
+### Fun/Visual
+- [ ] **CRT monitor overlay** - Professional broadcast monitor aesthetic during capture (scanlines, phosphor glow, rounded corners, RGB separation, tube curvature simulation)
+- [ ] **Retro themes** - Amber/green phosphor CRT looks
+- [ ] **Custom overlay layouts** - User-defined status displays
+
+### Hardware Expansion
+- [ ] **ESP32-S2 support** - Even cheaper option (no BLE, WiFi only)
+- [ ] **Absolute mouse mode** - For VNC-style control
+- [ ] **Consumer control** - Volume, brightness, transport keys
+
+### Long Term
+- [ ] **Multi-host switching** - Control multiple PCs
+- [ ] **Session recording** - Record/replay input sessions
+- [ ] **Plugin system** - User-defined modules
+
+---
+
+## Completed
+
+### v1.0.0 (2024)
+- Initial release
+- Video capture support
+- CapsLock command mode
+- Theme system with custom themes
+- Settings export/import
+- GitHub Actions CI for firmware builds
