@@ -364,9 +364,8 @@
                 var absX = Math.round((lastMouseX / window.innerWidth) * 32767);
                 var absY = Math.round((lastMouseY / window.innerHeight) * 32767);
                 try {
-                    // Send position only via absolute mouse (buttons=0)
-                    // Clicks are sent separately via relative mouse for better compatibility
-                    opener.kvm.moveMouseAbsolute(absX, absY, 0, 0);
+                    // Send position with current button state via absolute mouse
+                    opener.kvm.moveMouseAbsolute(absX, absY, 0, captureButtons);
                 } catch (e) {
                     console.error('sendAbsolutePosition error:', e);
                 }
@@ -506,8 +505,17 @@
                 e.preventDefault();
                 var btnMap = { 0: 1, 1: 4, 2: 2 };
                 captureButtons |= btnMap[e.button] || 0;
-                // Always use relative mouse for button clicks (better app compatibility)
-                opener.kvm.moveMouse(0, 0, 0, captureButtons);
+
+                if (seamlessActive) {
+                    // In seamless mode, send click via absolute mouse (digitizer)
+                    // OS ignores relative mouse while digitizer is active
+                    var absX = Math.round((lastMouseX / window.innerWidth) * 32767);
+                    var absY = Math.round((lastMouseY / window.innerHeight) * 32767);
+                    opener.kvm.moveMouseAbsolute(absX, absY, 0, captureButtons);
+                } else {
+                    // In pointer lock mode, use relative mouse
+                    opener.kvm.moveMouse(0, 0, 0, captureButtons);
+                }
             }, { passive: false });
 
             document.addEventListener('mouseup', function(e) {
@@ -516,8 +524,16 @@
                 e.preventDefault();
                 var btnMap = { 0: 1, 1: 4, 2: 2 };
                 captureButtons &= ~(btnMap[e.button] || 0);
-                // Always use relative mouse for button clicks (better app compatibility)
-                opener.kvm.moveMouse(0, 0, 0, captureButtons);
+
+                if (seamlessActive) {
+                    // In seamless mode, send release via absolute mouse
+                    var absX = Math.round((lastMouseX / window.innerWidth) * 32767);
+                    var absY = Math.round((lastMouseY / window.innerHeight) * 32767);
+                    opener.kvm.moveMouseAbsolute(absX, absY, 0, captureButtons);
+                } else {
+                    // In pointer lock mode, use relative mouse
+                    opener.kvm.moveMouse(0, 0, 0, captureButtons);
+                }
             }, { passive: false });
 
             document.addEventListener('wheel', function(e) {

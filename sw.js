@@ -1,18 +1,18 @@
 // RelayKVM Service Worker
-const CACHE_NAME = 'relaykvm-v3';
+const CACHE_NAME = 'relaykvm-v4';
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/portal.html',
-  '/relaykvm-adapter.js',
-  '/manifest.json',
-  '/icons/icon.svg',
-  '/icons/icon-16.png',
-  '/icons/icon-32.png',
-  '/icons/icon-48.png',
-  '/icons/icon-128.png',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png'
+  './',
+  './index.html',
+  './portal.html',
+  './relaykvm-adapter.js',
+  './manifest.json',
+  './icons/icon.svg',
+  './icons/icon-16.png',
+  './icons/icon-32.png',
+  './icons/icon-48.png',
+  './icons/icon-128.png',
+  './icons/icon-192.png',
+  './icons/icon-512.png'
 ];
 
 // Install - cache assets
