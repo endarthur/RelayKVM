@@ -105,6 +105,7 @@ Ideas that are wildly out of scope but too fun to forget. For when it's raining 
 - [ ] **WebRTC DataChannel** - Lightweight P2P data channel on Pico/ESP32? Skip the BLE middleman, direct browser-to-device
 - [ ] **BT Serial TTY (Linux)** - Bluetooth SPP to /dev/rfcomm0, daemon injects to /dev/uinput. No USB on host!
 - [ ] **Audio chirp KVM** - FSK/AFSK modulation over 3.5mm audio jack. For MCUs with USB but no wireless. Host demodulates → HID. Peak cursed.
+- [ ] **Dual-host wired KVM** - RP2040-PiZero with USB HID to BOTH computers simultaneously. Software selects which host receives input. Hardware macropad buttons can target either host. True Software Defined KVM switch.
 
 ---
 
