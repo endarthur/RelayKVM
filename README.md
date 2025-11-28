@@ -33,6 +33,23 @@ Wireless KVM solution using ESP32-S3 (M5Stack Cardputer) as a Bluetooth-to-USB H
 - **Theming** - 10 built-in themes + 5 custom slots with JSON editor
 - **Settings** - Export/import configuration, all preferences in one modal
 - **Mass Storage mode** - Hold 'M' at boot to access SD card
+- **Seamless mode** - Mouse flows between controller and target PCs (Pico 2W only)
+
+## Seamless Mode
+
+Seamless mode allows your mouse to flow naturally between your controller PC and the target PC, similar to how multi-monitor setups work. This requires:
+
+1. **Pico 2W device** - Cardputer does not support absolute mouse positioning
+2. **Dummy HDMI plug** - Creates a virtual monitor on your controller PC
+3. **Portal window** - Drag to the virtual monitor, click to activate
+
+**How it works:**
+- The portal window represents the target PC's screen on your controller
+- Move your mouse onto the portal to control the target
+- Move it off to return to your controller
+- Uses absolute mouse positioning (digitizer HID) for accurate cursor placement
+
+> **Note:** Seamless mode only works with the **Raspberry Pi Pico 2W** firmware. The M5Stack Cardputer's USB stack doesn't support custom HID descriptors required for absolute mouse positioning. See [docs/PICOW.md](docs/PICOW.md) for Pico 2W setup.
 
 ## Hardware
 

@@ -3052,6 +3052,15 @@
                                 <input type="text" id="peerId" class="text-input" style="flex: 1; padding: 3px; font-size: 9px;" placeholder="Peer ID..." disabled>
                                 <button class="fn-key green" id="connectPeerBtn" onclick="connectPeer()" style="padding: 3px 8px; font-size: 9px;" disabled>Connect</button>
                             </div>
+                            <!-- Screen Share row -->
+                            <label class="radio-btn" id="radioScreen">
+                                <input type="radio" name="videoMode" value="screen" onchange="setVideoMode('screen')">
+                                <span>Screen</span>
+                            </label>
+                            <div style="display: flex; gap: 4px;">
+                                <span class="video-hint" style="flex: 1; font-size: 8px;">Share any screen/window</span>
+                                <button class="fn-key green" id="startScreenBtn" onclick="toggleScreenShare()" style="padding: 3px 8px; font-size: 9px;" disabled>Share</button>
+                            </div>
                         </div>
                         <!-- Resolution/FPS row -->
                         <div id="videoParams" class="video-params disabled" style="display: flex; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--panel-border);">
@@ -3073,12 +3082,16 @@
                             </div>
                         </div>
                         <!-- Seamless Mode -->
-                        <div style="display: flex; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--panel-border); align-items: center;">
-                            <button class="fn-key" id="seamlessBtn" onclick="toggleSeamlessMode()" style="flex: 0 0 auto; padding: 4px 8px; font-size: 9px;" title="Mouse exits to controller at screen edge">Seamless</button>
-                            <button class="fn-key blue" onclick="openSeamlessWindow()" style="flex: 0 0 auto; padding: 4px 8px; font-size: 9px;" title="Open capture window for dummy monitor">Portal</button>
-                            <select id="seamlessEdgeSelect" class="text-input" style="flex: 1; padding: 3px; font-size: 9px;" onchange="setSeamlessEdge(this.value)" title="Which edge exits to controller">
-                                <option value="left">← Exit Left</option>
-                                <option value="right">Exit Right →</option>
+                        <div style="display: flex; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--panel-border); align-items: flex-start;">
+                            <div style="display: flex; flex-direction: column; align-items: center;">
+                                <button class="fn-key" id="seamlessBtn" onclick="toggleSeamlessMode()" style="padding: 4px 8px; font-size: 9px;" title="Mouse flows naturally (Pico 2W only)">Seamless</button>
+                                <span style="font-size: 7px; color: var(--text-dim); margin-top: 2px;">PICO ONLY</span>
+                            </div>
+                            <button class="fn-key blue" onclick="openSeamlessWindow()" style="padding: 4px 8px; font-size: 9px;" title="Open capture window for dummy monitor">Portal</button>
+                            <button class="fn-key red" onclick="closePortal()" style="padding: 4px 8px; font-size: 9px;" title="Close portal window">✕</button>
+                            <select id="seamlessEdgeSelect" class="text-input" style="flex: 1; padding: 3px; font-size: 9px;" onchange="setSeamlessEdge(this.value)" title="Where is the portal window?">
+                                <option value="left">Portal ← Left</option>
+                                <option value="right">Right → Portal</option>
                             </select>
                         </div>
                     </div>
@@ -3322,10 +3335,10 @@
                     </div>
                 </div>
 
-                <!-- Cardputer (device control) -->
+                <!-- Device Control -->
                 <div class="module area-cardputer">
                     <div class="module-header">
-                        <span>Cardputer</span>
+                        <span>Device</span>
                         <span class="seg-display dim" id="connLatency" style="padding: 1px 4px; font-size: 9px;">--ms</span>
                     </div>
                     <div class="module-body">
@@ -3340,24 +3353,24 @@
                             <span class="led-label" id="connStatus" style="flex: 1;">Disconnected</span>
                             <button class="fn-key" onclick="reconnect()" style="padding: 3px 6px; font-size: 8px;">Reconnect</button>
                         </div>
-                        <!-- Display controls -->
-                        <div class="btn-grid cols-3" style="margin-bottom: 4px;">
-                            <button class="fn-key" id="dispOff" onclick="setDisplay('off')">Off</button>
-                            <button class="fn-key" id="dispDim" onclick="setDisplay('dim')">Dim</button>
-                            <button class="fn-key blue" id="dispOn" onclick="setDisplay('on')">On</button>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
-                            <label class="led-label" style="font-size: 8px;">Screen Timeout</label>
-                            <span class="seg-display" style="padding: 1px 4px; font-size: 9px;" id="dispTimeoutVal">30s</span>
-                        </div>
-                        <input type="range" id="dispTimeout" min="0" max="300" step="10" value="30" class="sensitivity-slider">
                         <!-- Device recovery controls -->
+                        <div class="btn-grid cols-2" style="margin-bottom: 4px;">
+                            <button class="fn-key" onclick="recoverUsb()" title="Attempt USB recovery (may reset device)">USB Recovery</button>
+                            <button class="fn-key red" onclick="resetDevice()" title="Full device restart">Reset Device</button>
+                        </div>
+                        <!-- Cardputer-specific display controls -->
                         <div style="margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--panel-border);">
-                            <label class="led-label" style="font-size: 8px; margin-bottom: 2px; display: block;">Troubleshooting</label>
-                            <div class="btn-grid cols-2">
-                                <button class="fn-key" onclick="recoverUsb()" title="Attempt USB recovery (may reset device)">USB Recovery</button>
-                                <button class="fn-key red" onclick="resetDevice()" title="Full device restart">Reset Device</button>
+                            <label class="led-label" style="font-size: 8px; margin-bottom: 4px; display: block; color: var(--text-dim);">Cardputer Display</label>
+                            <div class="btn-grid cols-3" style="margin-bottom: 4px;">
+                                <button class="fn-key" id="dispOff" onclick="setDisplay('off')">Off</button>
+                                <button class="fn-key" id="dispDim" onclick="setDisplay('dim')">Dim</button>
+                                <button class="fn-key blue" id="dispOn" onclick="setDisplay('on')">On</button>
                             </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+                                <label class="led-label" style="font-size: 8px;">Timeout</label>
+                                <span class="seg-display" style="padding: 1px 4px; font-size: 9px;" id="dispTimeoutVal">30s</span>
+                            </div>
+                            <input type="range" id="dispTimeout" min="0" max="300" step="10" value="30" class="sensitivity-slider">
                         </div>
                     </div>
                 </div>
@@ -3458,6 +3471,16 @@
                 localStorage.removeItem('relaykvm-theme');
             }
             updateThemeButtons(theme);
+            updatePwaThemeColor();
+        }
+
+        // Update PWA title bar color to match current theme
+        function updatePwaThemeColor() {
+            const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim();
+            const metaTheme = document.querySelector('meta[name="theme-color"]');
+            if (metaTheme && accentColor) {
+                metaTheme.setAttribute('content', accentColor);
+            }
         }
 
         function setThemeFromModal(theme) {
@@ -3900,6 +3923,8 @@
                             applyCustomTheme(slot);
                         }
                     }
+                    // Update PWA title bar color to match theme
+                    updatePwaThemeColor();
                 });
             }
         })();
@@ -3908,6 +3933,35 @@
         if (!RelayKVMAdapter.isSupported()) {
             document.getElementById('browserWarning').style.display = 'block';
         }
+
+        // Handle PWA shortcut URL hashes
+        function handleUrlHash() {
+            const hash = window.location.hash.slice(1);
+            if (!hash) return;
+
+            // Clear hash so it doesn't retrigger
+            history.replaceState(null, '', window.location.pathname);
+
+            switch (hash) {
+                case 'connect':
+                    if (!kvm.connected) connect();
+                    break;
+                case 'jackin':
+                    if (kvm.connected && !isCapturing) startCapture();
+                    break;
+                case 'portal':
+                    if (kvm.connected) openSeamlessWindow();
+                    break;
+                case 'jiggler':
+                    toggleJiggler();
+                    break;
+            }
+        }
+        // Handle on load and hash changes
+        window.addEventListener('hashchange', handleUrlHash);
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(handleUrlHash, 500); // Delay to ensure everything is initialized
+        });
 
         // Sensitivity settings
         let mouseSensitivity = parseFloat(localStorage.getItem('mouseSensitivity')) || 2;
@@ -4424,7 +4478,7 @@
         let seamlessMode = localStorage.getItem('seamlessMode') === 'true';
         let vCursorX = 0, vCursorY = 0;  // Virtual cursor position on target
         let targetWidth = 1920, targetHeight = 1080;  // Will be updated from video
-        let seamlessEdge = localStorage.getItem('seamlessEdge') || 'left';  // Which edge releases to controller
+        let seamlessEdge = localStorage.getItem('seamlessEdge') || 'right';  // Which edge releases to controller
 
         function toggleSeamlessMode() {
             seamlessMode = !seamlessMode;
@@ -4453,8 +4507,34 @@
         // Initialize seamless UI on load
         setTimeout(updateSeamlessUI, 0);
 
+        // Expose variables for portal window access
+        Object.defineProperties(window, {
+            kvm: { get: () => kvm },
+            seamlessMode: { get: () => seamlessMode },
+            seamlessEdge: { get: () => seamlessEdge },
+            targetWidth: { get: () => targetWidth },
+            targetHeight: { get: () => targetHeight },
+            mouseSensitivity: { get: () => mouseSensitivity },
+            scrollSensitivity: { get: () => scrollSensitivity },
+            CODE_TO_KEY: { get: () => CODE_TO_KEY },
+            RelayKVMAdapter: { get: () => RelayKVMAdapter }
+        });
+
         // Seamless Portal Window
         let portalWindow = null;
+
+        // Called by portal when jacked in/out (for PWA badge)
+        window.setPortalJackedIn = function(jackedIn) {
+            if (jackedIn) {
+                if ('setAppBadge' in navigator) {
+                    navigator.setAppBadge().catch(() => {});
+                }
+            } else {
+                if ('clearAppBadge' in navigator) {
+                    navigator.clearAppBadge().catch(() => {});
+                }
+            }
+        };
 
         function openSeamlessWindow() {
             if (!kvm.connected) {
@@ -4468,223 +4548,20 @@
                 return;
             }
 
-            // Create portal window HTML
-            const portalHTML = `<!DOCTYPE html>
-<html>
-<head>
-    <title>RelayKVM Portal</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            background: #0d0f12;
-            color: #9aa0a6;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            cursor: none;
-            user-select: none;
-        }
-        .status {
-            font-size: 24px;
-            color: #00b894;
-            margin-bottom: 20px;
-        }
-        .hint {
-            font-size: 14px;
-            color: #5f6368;
-        }
-        .hint kbd {
-            background: #2a2f35;
-            padding: 2px 8px;
-            border-radius: 4px;
-            border: 1px solid #3a4045;
-        }
-        body.captured { background: #0a1510; }
-        body.captured .status { color: #00ff66; }
-        .edge-indicator {
-            position: fixed;
-            top: 0;
-            bottom: 0;
-            width: 4px;
-            background: #00b894;
-            opacity: 0.5;
-        }
-        .edge-indicator.left { left: 0; }
-        .edge-indicator.right { right: 0; }
-    </style>
-</head>
-<body>
-    <div class="edge-indicator" id="edgeIndicator"></div>
-    <div class="status" id="status">Click to Control Target</div>
-    <div class="hint">Press <kbd>ESC</kbd> to release | Seamless: <span id="seamlessStatus">OFF</span></div>
-    <script>
-        const opener = window.opener;
-        let captured = false;
-        let seamlessMode = false;
-        let seamlessEdge = 'left';
-        let vCursorX = 0, vCursorY = 0;
-        let targetWidth = 1920, targetHeight = 1080;
-        let heldModifiers = 0, heldKeys = [];
-        let captureButtons = 0;
-
-        // Sync settings from parent
-        function syncSettings() {
-            if (opener && opener.seamlessMode !== undefined) {
-                seamlessMode = opener.seamlessMode;
-                seamlessEdge = opener.seamlessEdge;
-                targetWidth = opener.targetWidth;
-                targetHeight = opener.targetHeight;
-                document.getElementById('seamlessStatus').textContent = seamlessMode ? 'ON' : 'OFF';
-                const indicator = document.getElementById('edgeIndicator');
-                indicator.className = 'edge-indicator ' + seamlessEdge;
-            }
-        }
-        syncSettings();
-        setInterval(syncSettings, 1000);
-
-        document.body.addEventListener('click', () => {
-            if (!captured) {
-                document.body.requestPointerLock();
-            }
-        });
-
-        document.addEventListener('pointerlockchange', () => {
-            captured = document.pointerLockElement === document.body;
-            document.body.classList.toggle('captured', captured);
-            document.getElementById('status').textContent = captured ? 'Controlling Target' : 'Click to Control Target';
-            if (captured && seamlessMode) {
-                // Initialize cursor position
-                if (seamlessEdge === 'left') {
-                    vCursorX = targetWidth - 10;
-                    vCursorY = targetHeight / 2;
-                } else {
-                    vCursorX = 10;
-                    vCursorY = targetHeight / 2;
-                }
-            }
-            if (!captured) {
-                // Release all keys
-                if (opener && opener.kvm) {
-                    opener.kvm.sendKeyboardReport(0, []);
-                    opener.kvm.moveMouse(0, 0, 0, 0);
-                }
-                heldModifiers = 0;
-                heldKeys = [];
-                captureButtons = 0;
-            }
-        });
-
-        document.addEventListener('mousemove', (e) => {
-            if (!captured || !opener || !opener.kvm || !opener.kvm.connected) return;
-            const sensitivity = opener.mouseSensitivity || 1;
-            const dx = Math.round(e.movementX * sensitivity);
-            const dy = Math.round(e.movementY * sensitivity);
-
-            if (seamlessMode) {
-                vCursorX += dx;
-                vCursorY += dy;
-                vCursorY = Math.max(0, Math.min(targetHeight, vCursorY));
-
-                if (seamlessEdge === 'left' && vCursorX < 0) {
-                    document.exitPointerLock();
-                    return;
-                } else if (seamlessEdge === 'right' && vCursorX > targetWidth) {
-                    document.exitPointerLock();
-                    return;
-                }
-                vCursorX = Math.max(0, Math.min(targetWidth, vCursorX));
-            }
-
-            opener.kvm.moveMouse(dx, dy, 0, captureButtons);
-        });
-
-        document.addEventListener('mousedown', (e) => {
-            if (!captured || !opener || !opener.kvm) return;
-            e.preventDefault();
-            const btnMap = { 0: 1, 1: 4, 2: 2 };
-            captureButtons |= btnMap[e.button] || 0;
-            opener.kvm.moveMouse(0, 0, 0, captureButtons);
-        });
-
-        document.addEventListener('mouseup', (e) => {
-            if (!captured || !opener || !opener.kvm) return;
-            e.preventDefault();
-            const btnMap = { 0: 1, 1: 4, 2: 2 };
-            captureButtons &= ~(btnMap[e.button] || 0);
-            opener.kvm.moveMouse(0, 0, 0, captureButtons);
-        });
-
-        document.addEventListener('wheel', (e) => {
-            if (!captured || !opener || !opener.kvm) return;
-            e.preventDefault();
-            const scrollSens = opener.scrollSensitivity || 1;
-            opener.kvm.scroll(e.deltaY > 0 ? -scrollSens : scrollSens);
-        });
-
-        // Key mapping (simplified - use parent's mapping)
-        const MODIFIERS = {
-            'ControlLeft': 0x01, 'ControlRight': 0x10,
-            'ShiftLeft': 0x02, 'ShiftRight': 0x20,
-            'AltLeft': 0x04, 'AltRight': 0x40,
-            'MetaLeft': 0x08, 'MetaRight': 0x80
-        };
-
-        document.addEventListener('keydown', (e) => {
-            if (!captured || !opener || !opener.kvm) return;
-            if (e.code === 'Escape') {
-                document.exitPointerLock();
-                return;
-            }
-            e.preventDefault();
-
-            if (MODIFIERS[e.code]) {
-                heldModifiers |= MODIFIERS[e.code];
-            } else if (opener.CODE_TO_KEY && opener.RelayKVMAdapter) {
-                const keyName = opener.CODE_TO_KEY[e.code];
-                if (keyName) {
-                    const keyCode = opener.RelayKVMAdapter.KEYCODE[keyName];
-                    if (keyCode && !heldKeys.includes(keyCode)) {
-                        heldKeys.push(keyCode);
-                        if (heldKeys.length > 6) heldKeys.shift();
-                    }
-                }
-            }
-            opener.kvm.sendKeyboardReport(heldModifiers, heldKeys);
-        });
-
-        document.addEventListener('keyup', (e) => {
-            if (!captured || !opener || !opener.kvm) return;
-            e.preventDefault();
-
-            if (MODIFIERS[e.code]) {
-                heldModifiers &= ~MODIFIERS[e.code];
-            } else if (opener.CODE_TO_KEY && opener.RelayKVMAdapter) {
-                const keyName = opener.CODE_TO_KEY[e.code];
-                if (keyName) {
-                    const keyCode = opener.RelayKVMAdapter.KEYCODE[keyName];
-                    const idx = heldKeys.indexOf(keyCode);
-                    if (idx !== -1) heldKeys.splice(idx, 1);
-                }
-            }
-            opener.kvm.sendKeyboardReport(heldModifiers, heldKeys);
-        });
-
-        document.addEventListener('contextmenu', e => e.preventDefault());
-    </script>
-</body>
-</html>`;
-
-            // Open popup window
-            portalWindow = window.open('', 'RelayKVM_Portal', 'width=800,height=600,menubar=no,toolbar=no,location=no,status=no');
+            // Open portal.html in popup window
+            portalWindow = window.open('portal.html', 'RelayKVM_Portal', 'width=1200,height=700,menubar=no,toolbar=no,location=no,status=no');
             if (portalWindow) {
-                portalWindow.document.write(portalHTML);
-                portalWindow.document.close();
                 log('Portal window opened - drag to dummy monitor', 'info');
             } else {
                 log('Popup blocked - allow popups for this site', 'error');
+            }
+        }
+
+        function closePortal() {
+            if (portalWindow && !portalWindow.closed) {
+                portalWindow.close();
+                portalWindow = null;
+                log('Portal closed', 'info');
             }
         }
 
@@ -4957,6 +4834,10 @@
                 showCaptureLog(true);
             }
             overlay.requestPointerLock();
+            // PWA badge - show when jacked in
+            if ('setAppBadge' in navigator) {
+                navigator.setAppBadge().catch(() => {});
+            }
         }
 
         function stopCapture() {
@@ -4974,6 +4855,10 @@
             if (document.pointerLockElement === overlay) document.exitPointerLock();
             resetCaptureKeyboardState();
             captureButtons = 0;
+            // PWA badge - clear when jacked out
+            if ('clearAppBadge' in navigator) {
+                navigator.clearAppBadge().catch(() => {});
+            }
             log('Jacked out', 'info');
         }
 
@@ -5506,6 +5391,15 @@
             connectPeerBtn.classList.toggle('red', videoStreaming && videoMode === 'webrtc');
             connectPeerBtn.classList.toggle('green', !videoStreaming || videoMode !== 'webrtc');
 
+            // Enable/disable Screen Share controls
+            const startScreenBtn = document.getElementById('startScreenBtn');
+            if (startScreenBtn) {
+                startScreenBtn.disabled = videoMode !== 'screen';
+                startScreenBtn.textContent = videoStreaming && videoMode === 'screen' ? 'Stop' : 'Share';
+                startScreenBtn.classList.toggle('red', videoStreaming && videoMode === 'screen');
+                startScreenBtn.classList.toggle('green', !videoStreaming || videoMode !== 'screen');
+            }
+
             // Dim resolution/FPS when off
             if (videoMode === 'off') {
                 videoParams.classList.add('disabled');
@@ -5538,6 +5432,45 @@
                 }
                 startVideoStream('webrtc');
                 log('WebRTC: connecting to ' + peerId + '... (not implemented)', 'info');
+            }
+        }
+
+        async function toggleScreenShare() {
+            if (videoStreaming) {
+                stopVideoStream();
+            } else {
+                try {
+                    log('Video: requesting screen share...', 'info');
+                    const stream = await navigator.mediaDevices.getDisplayMedia({
+                        video: {
+                            cursor: 'always'
+                        },
+                        audio: false
+                    });
+
+                    videoStream = stream;
+                    videoFeed.srcObject = stream;
+                    videoFeed.style.display = 'block';
+                    videoStreaming = true;
+
+                    // Handle stream end (user clicks "Stop sharing")
+                    stream.getVideoTracks()[0].onended = () => {
+                        stopVideoStream();
+                        // Reset to off mode
+                        videoMode = 'off';
+                        document.querySelector('input[name="videoMode"][value="off"]').checked = true;
+                        updateVideoUI();
+                    };
+
+                    // Get actual resolution
+                    const track = stream.getVideoTracks()[0];
+                    const settings = track.getSettings();
+                    log('Screen share: ' + settings.width + 'x' + settings.height, 'info');
+
+                    updateVideoUI();
+                } catch (err) {
+                    log('Screen share failed: ' + err.message, 'error');
+                }
             }
         }
 

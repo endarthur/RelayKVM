@@ -32,6 +32,21 @@
       "name": "Connect",
       "url": "/index.html#connect",
       "description": "Connect to RelayKVM device"
+    },
+    {
+      "name": "Jack In",
+      "url": "/index.html#jackin",
+      "description": "Start capture mode"
+    },
+    {
+      "name": "Portal",
+      "url": "/index.html#portal",
+      "description": "Open seamless portal window"
+    },
+    {
+      "name": "Jiggler",
+      "url": "/index.html#jiggler",
+      "description": "Toggle mouse jiggler"
     }
   ]
 }

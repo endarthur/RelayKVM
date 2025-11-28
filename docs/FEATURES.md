@@ -46,6 +46,7 @@
 - [ ] **Mobile/responsive design** - Use from phone/tablet
 
 ### Medium Priority
+- [ ] **Keyboard Lock API** - Capture system keys (Alt+Tab, Ctrl+W, Win key) when fullscreen - send them to host instead of controller browser
 - [ ] **Latency/ping indicator** - Connection quality feedback
 - [ ] **Keyboard layout support** - AZERTY, QWERTZ, etc.
 - [ ] **Single-file bundle script** - Inline JS for true single-file deployment
@@ -59,8 +60,25 @@
 ### Hardware Expansion
 - [ ] **3D printed cases** - Enclosures for Pico 2W and RP2040-PiZero (design or find existing)
 - [ ] **ESP32-S2 support** - Even cheaper option (no BLE, WiFi only)
-- [ ] **Absolute mouse mode** - For VNC-style control
+- [x] **Absolute mouse mode** - Digitizer HID for seamless mode (Pico 2W only) ✅
 - [x] **Consumer control** - Volume, mute, play/pause, media keys ✅
+
+### Pico 2W GPIO Expansion (Software Defined KVM)
+The Pico 2W has many unused GPIO pins. Future firmware could support user-configurable physical controls:
+
+**Physical Inputs:**
+- [ ] **Hardware buttons** - Jack in/out toggle, dedicated macro keys (Ctrl+Alt+Del, etc.)
+- [ ] **Rotary encoder** - Mouse/scroll sensitivity adjustment
+- [ ] **Potentiometers/sliders** - Analog control for sensitivity
+- [ ] **Foot pedal input** - Hands-free jack in/out
+- [ ] **Joystick module** - Direct mouse control
+
+**Feedback Outputs:**
+- [ ] **RGB LED status** - Connection state, jacked in indicator
+- [ ] **Small OLED display** - Status info (SSD1306, etc.)
+- [ ] **Buzzer/speaker** - Audio feedback on events
+
+**Vision:** A "RelayKVM Control Box" - 3D printed enclosure with physical buttons, knobs, and status LEDs wired to the Pico. Firmware reports GPIO config via BLE, web UI allows function assignment. True Software Defined KVM where hardware is just a configurable I/O bridge.
 
 ### Long Term
 - [ ] **Multi-host switching** - Control multiple PCs
@@ -70,6 +88,12 @@
 ---
 
 ## Completed
+
+### v1.2.0 (2025)
+- **Seamless mode** - Mouse flows between controller and target PCs (Pico 2W only)
+- Absolute mouse positioning (digitizer HID)
+- Portal window for virtual monitor capture
+- PWA badge indicator when jacked in
 
 ### v1.1.0 (2025)
 - Raspberry Pi Pico 2W support (MicroPython)

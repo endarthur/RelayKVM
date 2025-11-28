@@ -16,6 +16,7 @@
 #include <M5Cardputer.h>
 #include <USB.h>
 #include <USBCDC.h>
+#include <USBHID.h>
 #include <USBHIDKeyboard.h>
 #include <USBHIDMouse.h>
 #include <USBHIDConsumerControl.h>
@@ -48,6 +49,150 @@ USBHIDKeyboard Keyboard;
 USBHIDMouse Mouse;
 USBHIDConsumerControl ConsumerControl;
 USBCDC USBSerial;
+
+// Absolute Mouse using TinyUSB directly
+// HID Report ID for absolute mouse (must not conflict with keyboard=1, mouse=2, consumer=3)
+#define REPORT_ID_ABS_MOUSE 4
+
+// Absolute mouse report structure (digitizer-style)
+// Coordinates are 0-32767 for full screen range
+typedef struct {
+    uint8_t report_id;
+    uint8_t buttons;   // Bit 0 = tip switch (left click), Bit 1 = barrel (right click)
+    uint16_t x;        // 0-32767
+    uint16_t y;        // 0-32767
+} __attribute__((packed)) abs_mouse_report_t;
+
+static abs_mouse_report_t abs_mouse_report = {REPORT_ID_ABS_MOUSE, 0, 0, 0};
+
+// Custom HID Report Descriptor for Absolute Mouse (Digitizer/Tablet style)
+// This descriptor defines a pointing device with absolute X,Y coordinates
+// Note: "In Range" bit is required for OS to accept coordinates
+static const uint8_t abs_mouse_hid_descriptor[] = {
+    0x05, 0x0D,        // Usage Page (Digitizer)
+    0x09, 0x02,        // Usage (Pen)
+    0xA1, 0x01,        // Collection (Application)
+    0x85, REPORT_ID_ABS_MOUSE, // Report ID (4)
+
+    // Buttons: In Range, Tip Switch, Barrel Switch (3 bits)
+    0x09, 0x32,        //   Usage (In Range) - REQUIRED for coordinates to work
+    0x09, 0x42,        //   Usage (Tip Switch) - left click
+    0x09, 0x44,        //   Usage (Barrel Switch) - right click
+    0x15, 0x00,        //   Logical Minimum (0)
+    0x25, 0x01,        //   Logical Maximum (1)
+    0x75, 0x01,        //   Report Size (1)
+    0x95, 0x03,        //   Report Count (3)
+    0x81, 0x02,        //   Input (Data, Variable, Absolute)
+
+    // Padding (5 bits to make 1 byte)
+    0x95, 0x05,        //   Report Count (5)
+    0x81, 0x03,        //   Input (Constant)
+
+    // X coordinate (absolute, 0-32767)
+    0x05, 0x01,        //   Usage Page (Generic Desktop)
+    0x09, 0x30,        //   Usage (X)
+    0x15, 0x00,        //   Logical Minimum (0)
+    0x26, 0xFF, 0x7F,  //   Logical Maximum (32767)
+    0x75, 0x10,        //   Report Size (16)
+    0x95, 0x01,        //   Report Count (1)
+    0x81, 0x02,        //   Input (Data, Variable, Absolute)
+
+    // Y coordinate (absolute, 0-32767)
+    0x09, 0x31,        //   Usage (Y)
+    0x81, 0x02,        //   Input (Data, Variable, Absolute)
+
+    0xC0               // End Collection
+};
+
+// Flag to track if absolute mouse is enabled
+static bool absMouseEnabled = false;
+
+// Forward declaration of global HID instance from Arduino-ESP32
+extern USBHID HID;
+
+/**
+ * Custom USB HID Absolute Mouse class
+ * Extends Arduino-ESP32's USBHIDDevice to add digitizer/tablet-style absolute positioning
+ */
+class USBHIDAbsoluteMouse : public USBHIDDevice {
+public:
+    USBHIDAbsoluteMouse() : _buttons(0), _x(0), _y(0) {}
+
+    void begin() {
+        static bool initialized = false;
+        if (!initialized) {
+            initialized = true;
+            // Register this HID device with the USB HID composite device
+            // Note: HID is the global USBHID instance from Arduino-ESP32
+            HID.addDevice(this, sizeof(abs_mouse_hid_descriptor));
+        }
+    }
+
+    // Get the HID report descriptor
+    uint16_t _onGetDescriptor(uint8_t* dst) override {
+        memcpy(dst, abs_mouse_hid_descriptor, sizeof(abs_mouse_hid_descriptor));
+        return sizeof(abs_mouse_hid_descriptor);
+    }
+
+    // Move to absolute position (coordinates 0-32767)
+    void move(uint16_t x, uint16_t y) {
+        _x = x;
+        _y = y;
+        sendReport();
+    }
+
+    // Set buttons and move
+    void move(uint16_t x, uint16_t y, uint8_t buttons) {
+        _buttons = buttons;
+        _x = x;
+        _y = y;
+        sendReport();
+    }
+
+    // Press button (1=left, 2=right)
+    void press(uint8_t button = 1) {
+        _buttons |= button;
+        sendReport();
+    }
+
+    // Release button
+    void release(uint8_t button = 1) {
+        _buttons &= ~button;
+        sendReport();
+    }
+
+    // Click (press and release)
+    void click(uint8_t button = 1) {
+        press(button);
+        delay(10);
+        release(button);
+    }
+
+private:
+    uint8_t _buttons;  // bit0=tip(left), bit1=barrel(right)
+    uint16_t _x;
+    uint16_t _y;
+
+    void sendReport() {
+        if (tud_hid_n_ready(0)) {
+            // Build report: buttons + x (16-bit LE) + y (16-bit LE)
+            // Button format: bit0=in_range (always 1), bit1=tip, bit2=barrel
+            uint8_t report[5];
+            uint8_t hidButtons = 0x01;  // Always set In Range bit
+            if (_buttons & 0x01) hidButtons |= 0x02;  // Left -> Tip (bit 1)
+            if (_buttons & 0x02) hidButtons |= 0x04;  // Right -> Barrel (bit 2)
+            report[0] = hidButtons;
+            report[1] = _x & 0xFF;
+            report[2] = (_x >> 8) & 0xFF;
+            report[3] = _y & 0xFF;
+            report[4] = (_y >> 8) & 0xFF;
+            tud_hid_n_report(0, REPORT_ID_ABS_MOUSE, report, sizeof(report));
+        }
+    }
+};
+
+// Global instance
+USBHIDAbsoluteMouse AbsoluteMouse;
 
 // BLE server and characteristics
 NimBLEServer *pServer = nullptr;
@@ -205,6 +350,7 @@ void setup() {
     // All USB devices must be initialized BEFORE USB.begin()
     Keyboard.begin();
     Mouse.begin();
+    // AbsoluteMouse.begin();  // TODO: Fix custom HID - currently breaks USB stack
     ConsumerControl.begin();
 #ifdef DEBUG
     USBSerial.begin();  // CDC Serial for debugging (only in debug mode)
@@ -620,27 +766,15 @@ void handleKeyboardCommand(uint8_t* data, size_t len) {
 /**
  * Handle absolute mouse command (0x04)
  * Data format: [0x02, buttons, x_low, x_high, y_low, y_high, scroll]
+ *
+ * NOTE: Custom absolute mouse HID currently breaks USB stack on ESP32-S3.
+ * For now, this command is ignored. Use Pico 2W for seamless mode.
+ * TODO: Fix USBHIDAbsoluteMouse integration with Arduino-ESP32
  */
 void handleMouseAbsCommand(uint8_t* data, size_t len) {
-    if (len < 7) {
-        DEBUG_PRINTLN("MS_ABS: Invalid data length");
-        return;
-    }
-
-    uint8_t buttons = data[1];
-    uint16_t x = data[2] | (data[3] << 8);
-    uint16_t y = data[4] | (data[5] << 8);
-    int8_t scroll = (int8_t)data[6];
-
-    // Map 0-4095 to screen coordinates (this is approximate)
-    // Note: Absolute positioning requires proper coordinate mapping
-    Mouse.move(x, y);
-    Mouse.click(buttons);
-    if (scroll != 0) {
-        Mouse.move(0, 0, scroll);
-    }
-
-    DEBUG_PRINTF("MS_ABS: btn=0x%02X x=%d y=%d scroll=%d\n", buttons, x, y, scroll);
+    // Absolute mouse disabled - custom HID descriptor breaks USB stack
+    // Just log and ignore for now
+    DEBUG_PRINTLN("MS_ABS: Command ignored (absolute mouse disabled)");
 }
 
 /**

@@ -124,6 +124,44 @@ CONSUMER_REPORT_DESC = bytes([
     0xC0,        # End Collection
 ])
 
+# Absolute Mouse (Digitizer/Tablet style) - for seamless mode
+# Note: "In Range" bit is required for OS to accept coordinates
+ABS_MOUSE_REPORT_DESC = bytes([
+    0x05, 0x0D,  # Usage Page (Digitizer)
+    0x09, 0x02,  # Usage (Pen)
+    0xA1, 0x01,  # Collection (Application)
+    0x85, 0x04,  #   Report ID (4)
+
+    # Buttons: In Range, Tip Switch, Barrel Switch (3 bits)
+    0x09, 0x32,  #   Usage (In Range) - REQUIRED for coordinates to work
+    0x09, 0x42,  #   Usage (Tip Switch) - left click
+    0x09, 0x44,  #   Usage (Barrel Switch) - right click
+    0x15, 0x00,  #   Logical Minimum (0)
+    0x25, 0x01,  #   Logical Maximum (1)
+    0x75, 0x01,  #   Report Size (1)
+    0x95, 0x03,  #   Report Count (3)
+    0x81, 0x02,  #   Input (Data, Variable, Absolute)
+
+    # Padding (5 bits to make 1 byte)
+    0x95, 0x05,  #   Report Count (5)
+    0x81, 0x03,  #   Input (Constant)
+
+    # X coordinate (absolute, 0-32767)
+    0x05, 0x01,  #   Usage Page (Generic Desktop)
+    0x09, 0x30,  #   Usage (X)
+    0x15, 0x00,  #   Logical Minimum (0)
+    0x26, 0xFF, 0x7F,  # Logical Maximum (32767)
+    0x75, 0x10,  #   Report Size (16)
+    0x95, 0x01,  #   Report Count (1)
+    0x81, 0x02,  #   Input (Data, Variable, Absolute)
+
+    # Y coordinate (absolute, 0-32767)
+    0x09, 0x31,  #   Usage (Y)
+    0x81, 0x02,  #   Input (Data, Variable, Absolute)
+
+    0xC0,        # End Collection
+])
+
 
 class BLEHID:
     """BLE Nordic UART + USB HID handler"""
@@ -153,8 +191,8 @@ class BLEHID:
             return
 
         try:
-            # Combined report descriptor
-            report_desc = KEYBOARD_REPORT_DESC + MOUSE_REPORT_DESC + CONSUMER_REPORT_DESC
+            # Combined report descriptor (keyboard + mouse + consumer + absolute mouse)
+            report_desc = KEYBOARD_REPORT_DESC + MOUSE_REPORT_DESC + CONSUMER_REPORT_DESC + ABS_MOUSE_REPORT_DESC
 
             # Try newer MicroPython USB HID API
             try:
@@ -269,6 +307,33 @@ class BLEHID:
         except Exception as e:
             print(f"Consumer send error: {e}")
 
+    def send_mouse_absolute(self, buttons, x, y):
+        """Send absolute mouse HID report (digitizer-style)"""
+        if self._hid is None:
+            return
+
+        # Convert NanoKVM button format to HID digitizer format
+        # NanoKVM: bit0=left, bit1=right
+        # HID digitizer: bit0=in_range, bit1=tip(left), bit2=barrel(right)
+        # In Range MUST be set for OS to accept coordinates
+        hid_buttons = 0x01  # Always set In Range bit
+        if buttons & 0x01:  # Left click -> Tip switch
+            hid_buttons |= 0x02
+        if buttons & 0x02:  # Right click -> Barrel switch
+            hid_buttons |= 0x04
+
+        # Report: [ReportID, Buttons, X_Low, X_High, Y_Low, Y_High]
+        report = bytes([
+            0x04,
+            hid_buttons,
+            x & 0xFF, (x >> 8) & 0xFF,
+            y & 0xFF, (y >> 8) & 0xFF
+        ])
+        try:
+            self._hid.send_report(report)
+        except Exception as e:
+            print(f"Absolute mouse send error: {e}")
+
     def process_packet(self, data):
         """Parse and process NanoKVM protocol packet"""
         if len(data) < 6:
@@ -298,6 +363,19 @@ class BLEHID:
                 if code != 0:
                     time.sleep_ms(50)
                     self.send_consumer(0)  # Release
+
+        elif cmd == CMD_SEND_MS_ABS_DATA:
+            # Absolute mouse: [0x02, buttons, x_low, x_high, y_low, y_high, scroll]
+            if len(payload) >= 7:
+                buttons = payload[1]
+                x = payload[2] | (payload[3] << 8)
+                y = payload[4] | (payload[5] << 8)
+                scroll = payload[6]
+                self.send_mouse_absolute(buttons, x, y)
+                # Handle scroll using relative mouse (absolute doesn't have scroll)
+                if scroll != 0:
+                    wheel = scroll if scroll < 128 else scroll - 256
+                    self.send_mouse(0, 0, 0, wheel)
 
         elif cmd == CMD_SEND_MS_REL_DATA:
             if len(payload) >= 5:

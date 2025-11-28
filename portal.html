@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>RelayKVM Portal</title>
+    <style>
+        :root {
+            --bg-color: #0d0f12;
+            --text-color: #9aa0a6;
+            --accent-color: #00b894;
+            --accent-secondary: #e17055;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            transition: background 0.3s;
+        }
+        body.ready {
+            background: #2a1a10;
+        }
+        body.captured {
+            background: #0a1510;
+            cursor: none;
+        }
+
+        /* Center guide line */
+        .guide-line {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 2px;
+            background: #3a4045;
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        /* Direction indicator */
+        .direction {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 48px;
+            color: #3a4045;
+            opacity: 0.5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .direction.left { left: 10%; }
+        .direction.right { right: 10%; }
+        .direction .arrow { font-size: 72px; }
+        .direction .text { font-size: 14px; text-transform: uppercase; letter-spacing: 2px; }
+        body.captured .direction { display: none; }
+
+        /* Ready state - show OK instead of arrow */
+        body.ready .direction .arrow { display: none; }
+        body.ready .direction .text { display: none; }
+        body.ready .direction .ok { display: flex; }
+        .direction .ok {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .direction .ok-text {
+            font-size: 72px;
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+        .direction .ok-hint {
+            font-size: 14px;
+            color: #9aa0a6;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+
+        /* Pre-capture state */
+        .pre-capture {
+            text-align: center;
+            z-index: 1;
+        }
+        .status {
+            font-size: 18px;
+            color: #5f6368;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        body.ready .status {
+            color: #e17055;
+            font-size: 24px;
+        }
+        .jack-in-btn {
+            background: #3a4045;
+            border: none;
+            color: #5f6368;
+            font-size: 24px;
+            font-weight: bold;
+            padding: 30px 60px;
+            border-radius: 8px;
+            cursor: not-allowed;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            transition: all 0.2s;
+        }
+        .jack-in-btn.enabled {
+            background: #e17055;
+            color: #fff;
+            cursor: pointer;
+        }
+        .jack-in-btn.enabled:hover {
+            background: #d63031;
+            transform: scale(1.05);
+        }
+        .hint {
+            font-size: 14px;
+            color: #5f6368;
+            margin-top: 30px;
+        }
+        .hint kbd {
+            background: #2a2f35;
+            padding: 2px 8px;
+            border-radius: 4px;
+            border: 1px solid #3a4045;
+        }
+        body:not(.ready) .hint { opacity: 0.5; }
+
+        /* Post-capture state */
+        body.captured .pre-capture { display: none; }
+        body.captured .post-capture { display: block; }
+        .post-capture {
+            display: none;
+            text-align: center;
+        }
+        .post-capture .status {
+            color: var(--accent-color);
+            font-size: 24px;
+        }
+
+        /* Edge indicator for seamless mode */
+        .edge-indicator {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--accent-color);
+            opacity: 0.5;
+            display: none;
+        }
+        .edge-indicator.left { left: 0; }
+        .edge-indicator.right { right: 0; }
+
+        .seamless-badge {
+            position: fixed;
+            bottom: 15px;
+            left: 15px;
+            font-size: 14px;
+            color: #5f6368;
+            background: rgba(0,0,0,0.5);
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+        .seamless-badge.on { color: var(--accent-color); }
+
+        /* Hide UI in fullscreen and captured */
+        body.captured .controls { display: none; }
+        body.captured .guide-line { display: none; }
+        body.captured .seamless-badge { display: none; }
+
+        .error { color: #ff6b6b; }
+    </style>
+</head>
+<body>
+    <div class="guide-line"></div>
+    <div class="edge-indicator" id="edgeIndicator"></div>
+
+    <div class="direction" id="directionIndicator">
+        <span class="arrow" id="directionArrow">&#10132;</span>
+        <span class="text">Drag this way</span>
+        <div class="ok">
+            <span class="ok-text">OK!</span>
+            <span class="ok-hint">Click anywhere</span>
+        </div>
+    </div>
+
+    <div class="pre-capture">
+        <div class="status" id="status">Drag to virtual screen</div>
+        <button class="jack-in-btn" id="jackInBtn">Jack In</button>
+        <div class="hint">Press <kbd>ESC</kbd> to jack out</div>
+    </div>
+
+    <div class="post-capture">
+        <div class="status">Jacked In</div>
+        <div class="hint">Move to edge or press <kbd>ESC</kbd> to release</div>
+    </div>
+
+    <div class="seamless-badge" id="seamlessBadge">Seamless: OFF</div>
+
+    <script>
+        const opener = window.opener;
+        let isReady = false;
+
+        function goFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(function(e) {
+                    console.log('Fullscreen error:', e);
+                });
+            }
+        }
+
+        // Detect which screen the window is on
+        function updateScreenState() {
+            const x = window.screenX;
+            const centerX = x + window.outerWidth / 2;
+
+            // Check if window center is outside primary screen
+            const isPrimary = centerX >= 0 && centerX < screen.availWidth;
+            isReady = !isPrimary;
+
+            document.body.classList.toggle('ready', isReady);
+            document.getElementById('jackInBtn').classList.toggle('enabled', isReady);
+
+            if (isReady) {
+                document.getElementById('status').textContent = 'Click to Fullscreen';
+            } else {
+                document.getElementById('status').textContent = 'Drag to virtual screen';
+            }
+        }
+
+        // Update direction arrow based on portal position setting
+        function updateDirectionIndicator() {
+            const indicator = document.getElementById('directionIndicator');
+            const arrow = document.getElementById('directionArrow');
+            const edge = (opener && opener.seamlessEdge) || 'right';
+
+            // Arrow points in direction to drag the portal window
+            // "Portal ← Left" (edge='left') = drag left, arrow on right pointing left
+            // "Right → Portal" (edge='right') = drag right, arrow on left pointing right
+            if (edge === 'left') {
+                indicator.className = 'direction right';  // Arrow on right side
+                arrow.innerHTML = '&#10132;';
+                arrow.style.transform = 'scaleX(-1)';     // Point left ←
+            } else {
+                indicator.className = 'direction left';   // Arrow on left side
+                arrow.innerHTML = '&#10132;';
+                arrow.style.transform = 'none';           // Point right →
+            }
+        }
+
+        // Hide UI when in fullscreen and handle seamless mode activation
+        document.addEventListener('fullscreenchange', function() {
+            const guide = document.querySelector('.guide-line');
+            const direction = document.getElementById('directionIndicator');
+            if (document.fullscreenElement) {
+                guide.style.display = 'none';
+                direction.style.display = 'none';
+                // Notify inner script that fullscreen is ready (for seamless mode)
+                document.dispatchEvent(new CustomEvent('fullscreen-ready'));
+            } else {
+                guide.style.display = 'block';
+                if (!document.body.classList.contains('captured')) {
+                    direction.style.display = 'flex';
+                }
+                // Notify inner script that fullscreen ended
+                document.dispatchEvent(new CustomEvent('fullscreen-ended'));
+            }
+        });
+
+        // Sync theme from parent
+        function syncTheme() {
+            if (opener) {
+                try {
+                    const parentStyles = getComputedStyle(opener.document.documentElement);
+                    const root = document.documentElement;
+                    root.style.setProperty('--bg-color', parentStyles.getPropertyValue('--bg-color') || '#0d0f12');
+                    root.style.setProperty('--text-color', parentStyles.getPropertyValue('--text-color') || '#9aa0a6');
+                    root.style.setProperty('--accent-color', parentStyles.getPropertyValue('--accent-color') || '#00b894');
+                } catch(e) {}
+            }
+        }
+        syncTheme();
+
+        // Initialize
+        updateScreenState();
+        updateDirectionIndicator();
+        setInterval(updateScreenState, 500);
+
+        if (!opener || !opener.kvm) {
+            document.getElementById('status').textContent = 'No Connection';
+            document.getElementById('status').classList.add('error');
+            document.getElementById('jackInBtn').disabled = true;
+            document.getElementById('jackInBtn').style.opacity = '0.5';
+        } else {
+            let captured = false;
+            let seamlessMode = false;
+            let seamlessEdge = 'left';
+            let vCursorX = 0, vCursorY = 0;
+            let targetWidth = 1920, targetHeight = 1080;
+            let heldModifiers = 0, heldKeys = [];
+            let captureButtons = 0;
+
+            // Sync settings from parent
+            function syncSettings() {
+                if (opener && opener.seamlessMode !== undefined) {
+                    seamlessMode = opener.seamlessMode;
+                    seamlessEdge = opener.seamlessEdge;
+                    targetWidth = opener.targetWidth || 1920;
+                    targetHeight = opener.targetHeight || 1080;
+                    const modeText = seamlessMode ? 'Exit ' + (seamlessEdge === 'left' ? 'Left' : 'Right') : 'Seamless: OFF';
+                    document.getElementById('seamlessBadge').textContent = modeText;
+                    document.getElementById('seamlessBadge').classList.toggle('on', seamlessMode);
+                    const indicator = document.getElementById('edgeIndicator');
+                    indicator.className = 'edge-indicator ' + seamlessEdge;
+                    indicator.style.display = seamlessMode ? 'block' : 'none';
+                    updateDirectionIndicator();
+                }
+            }
+            syncSettings();
+            setInterval(syncSettings, 1000);
+
+            function jackIn() {
+                if (!isReady || captured) return;
+                document.body.requestPointerLock();
+            }
+
+            document.getElementById('jackInBtn').addEventListener('click', jackIn);
+
+            // Click anywhere when ready - go fullscreen (and jack in only if not seamless mode)
+            document.body.addEventListener('click', function(e) {
+                if (!captured && !seamlessActive && isReady) {
+                    goFullscreen();
+                    // Only request pointer lock in non-seamless mode
+                    if (!seamlessMode) {
+                        setTimeout(jackIn, 100);
+                    }
+                    // In seamless mode, mouseenter will handle activation after fullscreen
+                }
+            });
+
+            // Seamless mode: track if mouse is active on portal (no pointer lock needed!)
+            var seamlessActive = false;
+            var positionInterval = null;
+            var lastMouseX = 0, lastMouseY = 0;
+
+            function sendAbsolutePosition() {
+                if (!seamlessActive || !seamlessMode || !opener || !opener.kvm || !opener.kvm.connected) return;
+                if (!opener.kvm.moveMouseAbsolute) {
+                    console.error('moveMouseAbsolute not available!');
+                    return;
+                }
+                // Map portal window coordinates to target screen coordinates
+                // Portal window represents the full target screen
+                var absX = Math.round((lastMouseX / window.innerWidth) * 32767);
+                var absY = Math.round((lastMouseY / window.innerHeight) * 32767);
+                try {
+                    // Send position only via absolute mouse (buttons=0)
+                    // Clicks are sent separately via relative mouse for better compatibility
+                    opener.kvm.moveMouseAbsolute(absX, absY, 0, 0);
+                } catch (e) {
+                    console.error('sendAbsolutePosition error:', e);
+                }
+            }
+
+            // Activate seamless mode
+            function activateSeamless() {
+                if (seamlessActive) return;
+                if (!seamlessMode || !opener || !opener.kvm || !opener.kvm.connected) return;
+                seamlessActive = true;
+                document.body.classList.add('captured');
+                console.log('Seamless: activating');
+                // Start periodic position updates
+                if (!positionInterval) {
+                    positionInterval = setInterval(sendAbsolutePosition, 50);
+                }
+                // Notify main window for PWA badge
+                if (opener && opener.setPortalJackedIn) {
+                    opener.setPortalJackedIn(true);
+                }
+            }
+
+            // Deactivate seamless mode
+            function deactivateSeamless() {
+                if (!seamlessActive) return;
+                seamlessActive = false;
+                document.body.classList.remove('captured');
+                console.log('Seamless: deactivating');
+                // Stop position updates
+                if (positionInterval) {
+                    clearInterval(positionInterval);
+                    positionInterval = null;
+                }
+                // Release buttons via relative mouse
+                captureButtons = 0;
+                if (opener && opener.kvm) {
+                    opener.kvm.moveMouse(0, 0, 0, 0);
+                }
+                // Notify main window for PWA badge
+                if (opener && opener.setPortalJackedIn) {
+                    opener.setPortalJackedIn(false);
+                }
+            }
+
+            // Activate seamless mode when fullscreen becomes ready
+            document.addEventListener('fullscreen-ready', function() {
+                if (seamlessMode && isReady) {
+                    activateSeamless();
+                }
+            });
+
+            // Deactivate when fullscreen ends
+            document.addEventListener('fullscreen-ended', function() {
+                deactivateSeamless();
+            });
+
+            // Also activate on mouseenter (for re-entry after leaving)
+            document.body.addEventListener('mouseenter', function() {
+                if (!seamlessMode || !document.fullscreenElement || !isReady) return;
+                activateSeamless();
+            });
+
+            // Deactivate when mouse leaves
+            document.body.addEventListener('mouseleave', function() {
+                if (!seamlessMode) return;
+                deactivateSeamless();
+            });
+
+            // For non-seamless mode, still support pointer lock via click
+            document.addEventListener('pointerlockchange', function() {
+                captured = document.pointerLockElement === document.body;
+                document.body.classList.toggle('captured', captured);
+
+                // PWA badge for non-seamless mode
+                if (opener && opener.setPortalJackedIn) {
+                    opener.setPortalJackedIn(captured);
+                }
+
+                if (captured && !seamlessMode) {
+                    // Initialize virtual cursor for edge exit detection
+                    // Portal on LEFT = enter from RIGHT (coming from primary)
+                    // Portal on RIGHT = enter from LEFT (coming from primary)
+                    if (seamlessEdge === 'left') {
+                        vCursorX = targetWidth - 10;  // Portal on left, enter from right
+                    } else {
+                        vCursorX = 10;  // Portal on right, enter from left
+                    }
+                    vCursorY = targetHeight / 2;
+                }
+
+                if (!captured) {
+                    // Release all keys
+                    if (opener && opener.kvm) {
+                        opener.kvm.sendKeyboardReport(0, []);
+                        opener.kvm.moveMouse(0, 0, 0, 0);
+                    }
+                    heldModifiers = 0;
+                    heldKeys = [];
+                    captureButtons = 0;
+                }
+            });
+
+            document.addEventListener('mousemove', function(e) {
+                // Track actual cursor position for seamless mode
+                lastMouseX = e.clientX;
+                lastMouseY = e.clientY;
+
+                // In seamless mode, position is sent via interval
+                // In non-seamless mode with pointer lock, use relative movement
+                if (!seamlessMode && captured && opener && opener.kvm && opener.kvm.connected) {
+                    var sensitivity = opener.mouseSensitivity || 1;
+                    var dx = Math.round(e.movementX * sensitivity);
+                    var dy = Math.round(e.movementY * sensitivity);
+                    opener.kvm.moveMouse(dx, dy, 0, captureButtons);
+
+                    // Edge exit for non-seamless mode (allows Cardputer users to exit)
+                    vCursorX += e.movementX * sensitivity;
+                    vCursorY += e.movementY * sensitivity;
+                    // Clamp Y
+                    vCursorY = Math.max(0, Math.min(targetHeight, vCursorY));
+                    // Check exit edge - exit towards primary monitor
+                    // Portal on LEFT = exit by going RIGHT (back to primary)
+                    // Portal on RIGHT = exit by going LEFT (back to primary)
+                    if (seamlessEdge === 'left' && vCursorX > targetWidth + 20) {
+                        document.exitPointerLock();
+                    } else if (seamlessEdge === 'right' && vCursorX < -20) {
+                        document.exitPointerLock();
+                    }
+                    // Clamp X within bounds (with small overflow for exit detection)
+                    vCursorX = Math.max(-50, Math.min(targetWidth + 50, vCursorX));
+                }
+            });
+
+            document.addEventListener('mousedown', function(e) {
+                // Work with either seamless mode (seamlessActive) or pointer lock (captured)
+                if ((!seamlessActive && !captured) || !opener || !opener.kvm) return;
+                e.preventDefault();
+                var btnMap = { 0: 1, 1: 4, 2: 2 };
+                captureButtons |= btnMap[e.button] || 0;
+                // Always use relative mouse for button clicks (better app compatibility)
+                opener.kvm.moveMouse(0, 0, 0, captureButtons);
+            }, { passive: false });
+
+            document.addEventListener('mouseup', function(e) {
+                // Work with either seamless mode (seamlessActive) or pointer lock (captured)
+                if ((!seamlessActive && !captured) || !opener || !opener.kvm) return;
+                e.preventDefault();
+                var btnMap = { 0: 1, 1: 4, 2: 2 };
+                captureButtons &= ~(btnMap[e.button] || 0);
+                // Always use relative mouse for button clicks (better app compatibility)
+                opener.kvm.moveMouse(0, 0, 0, captureButtons);
+            }, { passive: false });
+
+            document.addEventListener('wheel', function(e) {
+                // Work with either seamless mode (seamlessActive) or pointer lock (captured)
+                if ((!seamlessActive && !captured) || !opener || !opener.kvm) return;
+                e.preventDefault();
+                var scrollSens = opener.scrollSensitivity || 1;
+                opener.kvm.scroll(e.deltaY > 0 ? -scrollSens : scrollSens);
+            }, { passive: false });
+
+            // Key mapping
+            var MODIFIERS = {
+                'ControlLeft': 0x01, 'ControlRight': 0x10,
+                'ShiftLeft': 0x02, 'ShiftRight': 0x20,
+                'AltLeft': 0x04, 'AltRight': 0x40,
+                'MetaLeft': 0x08, 'MetaRight': 0x80
+            };
+
+            document.addEventListener('keydown', function(e) {
+                // Work with either seamless mode (seamlessActive) or pointer lock (captured)
+                if ((!seamlessActive && !captured) || !opener || !opener.kvm) return;
+
+                // Escape exits pointer lock (only relevant for non-seamless mode)
+                if (e.code === 'Escape' && captured) {
+                    document.exitPointerLock();
+                    return;
+                }
+                e.preventDefault();
+
+                if (MODIFIERS[e.code]) {
+                    heldModifiers |= MODIFIERS[e.code];
+                } else if (opener.CODE_TO_KEY && opener.RelayKVMAdapter) {
+                    var keyName = opener.CODE_TO_KEY[e.code];
+                    if (keyName) {
+                        var keyCode = opener.RelayKVMAdapter.KEYCODE[keyName];
+                        if (keyCode && heldKeys.indexOf(keyCode) === -1) {
+                            heldKeys.push(keyCode);
+                            if (heldKeys.length > 6) heldKeys.shift();
+                        }
+                    }
+                }
+                opener.kvm.sendKeyboardReport(heldModifiers, heldKeys);
+            });
+
+            document.addEventListener('keyup', function(e) {
+                // Work with either seamless mode (seamlessActive) or pointer lock (captured)
+                if ((!seamlessActive && !captured) || !opener || !opener.kvm) return;
+                e.preventDefault();
+
+                if (MODIFIERS[e.code]) {
+                    heldModifiers &= ~MODIFIERS[e.code];
+                } else if (opener.CODE_TO_KEY && opener.RelayKVMAdapter) {
+                    var keyName = opener.CODE_TO_KEY[e.code];
+                    if (keyName) {
+                        var keyCode = opener.RelayKVMAdapter.KEYCODE[keyName];
+                        var idx = heldKeys.indexOf(keyCode);
+                        if (idx !== -1) heldKeys.splice(idx, 1);
+                    }
+                }
+                opener.kvm.sendKeyboardReport(heldModifiers, heldKeys);
+            });
+
+            document.addEventListener('contextmenu', function(e) { e.preventDefault(); }, { passive: false });
+
+            // Prevent default drag behavior that can interfere with click-and-drag
+            document.addEventListener('dragstart', function(e) { e.preventDefault(); }, { passive: false });
+            document.addEventListener('selectstart', function(e) {
+                if (seamlessActive || captured) e.preventDefault();
+            }, { passive: false });
+        }
+    </script>
+</body>
+</html>

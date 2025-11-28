@@ -1,8 +1,9 @@
 // RelayKVM Service Worker
-const CACHE_NAME = 'relaykvm-v1';
+const CACHE_NAME = 'relaykvm-v3';
 const ASSETS = [
   '/',
   '/index.html',
+  '/portal.html',
   '/relaykvm-adapter.js',
   '/manifest.json',
   '/icons/icon.svg',

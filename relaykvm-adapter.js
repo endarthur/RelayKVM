@@ -599,6 +599,53 @@ class RelayKVMAdapter {
     }
 
     /**
+     * Send absolute mouse position (for seamless mode)
+     * @param {number} x - X coordinate (0-32767)
+     * @param {number} y - Y coordinate (0-32767)
+     * @param {number} scroll - Scroll delta (-127 to 127)
+     * @param {number} buttons - Button mask (1=left, 2=right, 4=middle)
+     */
+    async moveMouseAbsolute(x, y, scroll = 0, buttons = null) {
+        // Clamp coordinates to HID absolute range (0-32767)
+        x = Math.max(0, Math.min(32767, Math.round(x)));
+        y = Math.max(0, Math.min(32767, Math.round(y)));
+        scroll = Math.max(-127, Math.min(127, Math.round(scroll)));
+
+        // Use held buttons if not explicitly specified
+        if (buttons === null) {
+            buttons = this._heldButtons || 0;
+        }
+
+        const data = new Uint8Array([
+            0x02,  // Absolute mode indicator
+            buttons,
+            x & 0xFF,          // X low byte
+            (x >> 8) & 0xFF,   // X high byte
+            y & 0xFF,          // Y low byte
+            (y >> 8) & 0xFF,   // Y high byte
+            scroll & 0xFF
+        ]);
+
+        const packet = this.buildPacket(RelayKVMAdapter.CMD_SEND_MS_ABS_DATA, data);
+        await this.sendPacket(packet);
+    }
+
+    /**
+     * Scale screen coordinates to HID absolute range (0-32767)
+     * @param {number} x - Screen X coordinate
+     * @param {number} y - Screen Y coordinate
+     * @param {number} screenWidth - Target screen width
+     * @param {number} screenHeight - Target screen height
+     * @returns {{x: number, y: number}} - Scaled coordinates
+     */
+    static scaleToAbsolute(x, y, screenWidth, screenHeight) {
+        return {
+            x: Math.round((x / screenWidth) * 32767),
+            y: Math.round((y / screenHeight) * 32767)
+        };
+    }
+
+    /**
      * Set Cardputer display brightness
      * @param {string} mode - 'off', 'dim', or 'on'
      */

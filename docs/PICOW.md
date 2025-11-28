@@ -525,7 +525,10 @@ firmware/pico2w/
 - BLE Nordic UART (same as Cardputer)
 - Full NanoKVM protocol support
 - Keyboard, mouse, and media keys
+- **Seamless mode support** (absolute mouse positioning)
 - Works with existing web interface
+
+> **Note:** The Pico 2W is the **only** RelayKVM device that supports seamless mode. This feature requires absolute mouse positioning (digitizer HID), which the M5Stack Cardputer's USB stack cannot support due to limitations with custom HID descriptors.
 
 **Setup:**
 1. Install MicroPython 1.23+
