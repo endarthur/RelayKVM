@@ -85,6 +85,14 @@ The Pico 2W has many unused GPIO pins. Future firmware could support user-config
 - [ ] **Session recording** - Record/replay input sessions
 - [ ] **Plugin system** - User-defined modules
 
+### Technical Notes & Discoveries 🔬
+
+**Digitizer + Relative Mouse Coexistence:**
+- When a digitizer (absolute mouse) is active and sending "In Range", the OS ignores button state from relative mouse
+- However, scroll wheel events from relative mouse ARE still processed
+- Theory: Scroll = event/delta (aggregated from all devices), Buttons = state (exclusive to "active" pointer)
+- Solution: Send clicks via digitizer in seamless mode, scroll can still go through relative mouse
+
 ### Cursed Ideas (Rainy Day Projects) 🌧️
 Ideas that are wildly out of scope but too fun to forget. For when it's raining in São Paulo.
 
