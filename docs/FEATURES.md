@@ -94,6 +94,9 @@ Ideas that are wildly out of scope but too fun to forget. For when it's raining 
 - [ ] **Bluetooth Classic HID** - Make the controller PC think RelayKVM is a regular BT keyboard/mouse (would need ESP32 Classic BT, not just BLE)
 - [ ] **Onboard scripting** - Lua/MicroPython interpreter on the device for offline automation
 - [ ] **KVM-over-IP** - WebRTC relay for controlling PCs across the internet
+- [ ] **WebRTC DataChannel** - Lightweight P2P data channel on Pico/ESP32? Skip the BLE middleman, direct browser-to-device
+- [ ] **BT Serial TTY (Linux)** - Bluetooth SPP to /dev/rfcomm0, daemon injects to /dev/uinput. No USB on host!
+- [ ] **Audio chirp KVM** - FSK/AFSK modulation over 3.5mm audio jack. For MCUs with USB but no wireless. Host demodulates → HID. Peak cursed.
 
 ---
 
