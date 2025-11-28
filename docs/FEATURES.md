@@ -85,6 +85,16 @@ The Pico 2W has many unused GPIO pins. Future firmware could support user-config
 - [ ] **Session recording** - Record/replay input sessions
 - [ ] **Plugin system** - User-defined modules
 
+### Cursed Ideas (Rainy Day Projects) 🌧️
+Ideas that are wildly out of scope but too fun to forget. For when it's raining in São Paulo.
+
+- [ ] **VIA keyboard support** - Pretend to be a VIA-compatible keyboard, configure Cardputer keypad through VIA GUI, save to flash, sync layout to web UI. Basically QMK-lite for RelayKVM.
+- [ ] **Aesthetic relay** - Wire an actual relay to the Pico GPIO that clicks on jack in/out. No electrical function, pure satisfaction. The "Relay" in RelayKVM becomes literal.
+- [ ] **Full QMK fork** - At this point, why not?
+- [ ] **Bluetooth Classic HID** - Make the controller PC think RelayKVM is a regular BT keyboard/mouse (would need ESP32 Classic BT, not just BLE)
+- [ ] **Onboard scripting** - Lua/MicroPython interpreter on the device for offline automation
+- [ ] **KVM-over-IP** - WebRTC relay for controlling PCs across the internet
+
 ---
 
 ## Completed
