@@ -38,13 +38,15 @@ Browser (Controller PC) --[WebSerial]--> RP2040-PiZero --[USB HID]--> Host PC
 | File | Purpose |
 |------|---------|
 | `index.html` | Main web interface (single-file, self-contained) |
+| `portal.html` | Seamless mode portal window |
 | `relaykvm-adapter.js` | BLE communication adapter |
 | `firmware/RelayKVM/RelayKVM.ino` | Main firmware sketch (Cardputer) |
-| `firmware/pico2w/code.py` | CircuitPython firmware (Pico 2W) |
+| `firmware/pico2w/main.py` | MicroPython firmware (Pico 2W) |
 | `firmware/platformio.ini` | PlatformIO build config |
+| `docs/FEATURES.md` | Features and roadmap |
+| `docs/PATTERNS.md` | Code patterns and conventions |
 | `docs/WIRED.md` | Wired mode documentation (RP2040-PiZero) |
 | `docs/RG34XX.md` | Anbernic RG34XX SP setup guide |
-| `docs/FEATURES.md` | Features and roadmap |
 | `icons/icon.svg` | Logo (overlapping teal/coral rectangles) |
 
 ## Build Commands
@@ -89,6 +91,17 @@ The m5launcher build includes correct partition scheme and OTA support for retur
 - NimBLE-Arduino (BLE stack)
 - M5Stack libraries (display, keyboard)
 - TinyUSB (USB HID/MSC)
+
+## Code Patterns
+
+**IMPORTANT:** Before adding new UI components or features, check `docs/PATTERNS.md` for:
+- localStorage conventions (boolean defaults, naming)
+- Modal/popup patterns (use existing `showHelp()` system)
+- UI components (toggle switches, LEDs, settings rows)
+- BLE adapter patterns
+- Checklist for new features
+
+This helps maintain consistency and avoid code duplication.
 
 ## License
 

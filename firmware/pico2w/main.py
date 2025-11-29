@@ -49,6 +49,14 @@ CMD_SEND_KB_GENERAL_DATA = const(0x02)
 CMD_SEND_KB_MEDIA_DATA = const(0x03)
 CMD_SEND_MS_ABS_DATA = const(0x04)
 CMD_SEND_MS_REL_DATA = const(0x05)
+CMD_LED_CTRL = const(0xE0)  # LED control: payload[0] = mode (0=auto, 1=off, 2=on)
+
+# LED modes
+LED_MODE_OFF = const(0)
+LED_MODE_ON = const(1)
+LED_MODE_DOUBLE_BLINK = const(2)      # Disconnected: double blink every 3s
+LED_MODE_DOUBLE_OFF_BLINK = const(3)  # Connected: double off-blink every 3s
+LED_MODE_SLOW_TOGGLE = const(4)       # Command mode: 500ms toggle
 
 # HID Report Descriptors
 KEYBOARD_REPORT_DESC = bytes([
@@ -180,6 +188,10 @@ class BLEHID:
         # LED for status
         self._led = Pin("LED", Pin.OUT)
         self._led.off()
+        self._led_mode = LED_MODE_DOUBLE_BLINK  # Start in disconnected pattern
+        self._led_state = False  # Current on/off state
+        self._led_last_update = time.ticks_ms()
+        self._led_pattern_step = 0  # For multi-step patterns
 
         # USB HID setup (will be initialized if available)
         self._hid = None
@@ -221,18 +233,77 @@ class BLEHID:
             print(f"USB HID setup failed: {e}")
             self._hid = None
 
+    def set_led_mode(self, mode):
+        """Set LED mode and reset pattern state"""
+        self._led_mode = mode
+        self._led_pattern_step = 0
+        self._led_last_update = time.ticks_ms()
+
+        # Set initial state for static modes
+        if mode == LED_MODE_OFF:
+            self._led.off()
+            self._led_state = False
+        elif mode == LED_MODE_ON:
+            self._led.on()
+            self._led_state = True
+
+    def update_led_pattern(self):
+        """Update LED based on current mode pattern - call from main loop"""
+        now = time.ticks_ms()
+        elapsed = time.ticks_diff(now, self._led_last_update)
+
+        if self._led_mode == LED_MODE_OFF or self._led_mode == LED_MODE_ON:
+            # Static modes, nothing to update
+            return
+
+        elif self._led_mode == LED_MODE_DOUBLE_BLINK:
+            # Disconnected: OFF, then double blink every 3s
+            # Pattern: off(2700ms) -> on(100ms) -> off(100ms) -> on(100ms) -> repeat
+            timings = [2700, 100, 100, 100]  # off, on, off, on
+            if elapsed >= timings[self._led_pattern_step]:
+                self._led_pattern_step = (self._led_pattern_step + 1) % 4
+                self._led_last_update = now
+                # Steps 1 and 3 are ON, steps 0 and 2 are OFF
+                if self._led_pattern_step in (1, 3):
+                    self._led.on()
+                else:
+                    self._led.off()
+
+        elif self._led_mode == LED_MODE_DOUBLE_OFF_BLINK:
+            # Connected: ON, then double off-blink every 3s
+            # Pattern: on(2700ms) -> off(100ms) -> on(100ms) -> off(100ms) -> repeat
+            timings = [2700, 100, 100, 100]  # on, off, on, off
+            if elapsed >= timings[self._led_pattern_step]:
+                self._led_pattern_step = (self._led_pattern_step + 1) % 4
+                self._led_last_update = now
+                # Steps 0 and 2 are ON, steps 1 and 3 are OFF
+                if self._led_pattern_step in (0, 2):
+                    self._led.on()
+                else:
+                    self._led.off()
+
+        elif self._led_mode == LED_MODE_SLOW_TOGGLE:
+            # Command mode: 500ms toggle
+            if elapsed >= 500:
+                self._led_last_update = now
+                self._led_state = not self._led_state
+                if self._led_state:
+                    self._led.on()
+                else:
+                    self._led.off()
+
     def _irq(self, event, data):
         """BLE interrupt handler"""
         if event == 1:  # _IRQ_CENTRAL_CONNECT
             conn_handle, _, _ = data
             self._connections.add(conn_handle)
-            self._led.on()
+            self.set_led_mode(LED_MODE_ON)  # Connected: solid
             print(f"Connected: {conn_handle}")
 
         elif event == 2:  # _IRQ_CENTRAL_DISCONNECT
             conn_handle, _, _ = data
             self._connections.discard(conn_handle)
-            self._led.off()
+            self.set_led_mode(LED_MODE_DOUBLE_BLINK)  # Disconnected: double blink
             print(f"Disconnected: {conn_handle}")
             # Restart advertising
             self._advertise()
@@ -385,6 +456,14 @@ class BLEHID:
                 wheel = payload[4]
                 self.send_mouse(buttons, dx, dy, wheel)
 
+        elif cmd == CMD_LED_CTRL:
+            if len(payload) >= 1:
+                mode = payload[0]
+                if mode <= 4:  # Valid modes: 0-4
+                    self.set_led_mode(mode)
+                    mode_names = ['off', 'on', 'double_blink', 'double_off_blink', 'slow_toggle']
+                    print(f"LED mode: {mode_names[mode]}")
+
         return 5 + length + 1  # Packet size
 
     def run(self):
@@ -419,6 +498,9 @@ class BLEHID:
                 packet_data = bytes(self._rx_buffer[:packet_size])
                 self._rx_buffer = self._rx_buffer[packet_size:]
                 self.process_packet(packet_data)
+
+            # Update LED pattern
+            self.update_led_pattern()
 
             time.sleep_ms(1)
 

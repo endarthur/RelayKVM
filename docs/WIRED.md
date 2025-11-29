@@ -174,24 +174,92 @@ void process_command(uint8_t* buf, uint32_t len) {
 }
 ```
 
-## Ground Loop Considerations
+## Electrical Safety & Isolation
 
-Both USB ports share the same ground on the RP2040-PiZero. When connected to two different computers:
+### The Issue
 
-**Usually fine when:**
-- Both PCs on same electrical circuit
-- Same power strip
-- Laptop on battery (isolated)
+Both USB ports share the same ground plane on the RP2040-PiZero. When connected to two different computers, you're creating an electrical path between them:
 
-**Potential issues when:**
+```
+Controller PC ──[USB Ground]──► RP2040 PCB ◄──[USB Ground]── Host PC
+                                    │
+                            Grounds bridged here
+```
+
+If the two computers have different ground reference voltages (even small differences), current can flow through the RP2040's ground plane in unintended ways.
+
+### Is This Dangerous?
+
+**Honest answer:** Usually not, but it's not guaranteed safe.
+
+Most consumer USB KVM switches (including NanoKVM-USB and many others) work exactly this way - no isolation, grounds bridged. Millions of them are used daily without incident. The USB specification has enough tolerance for typical setups.
+
+**This is generally fine when:**
+- Both PCs on same electrical circuit/power strip
+- One PC is a laptop on battery (battery = galvanic isolation)
+- Same building, same breaker panel
+- Short, quality USB cables
+
+**This can cause problems when:**
 - PCs on different circuits/breakers
-- Different buildings
-- Long cable runs
+- Different buildings or distant outlets
+- Industrial environments with electrical noise
+- Long cable runs (more antenna effect)
+- Expensive equipment you don't want to risk
 
-**Solutions if needed:**
-1. Same power strip for both PCs
-2. USB isolator (~$15-30) on controller side
-3. One PC is laptop on battery
+### What Can Go Wrong
+
+In rough order of likelihood:
+
+1. **Nothing** - Most common outcome
+2. **USB noise/glitches** - Occasional communication errors, phantom keypresses
+3. **Ground loop hum** - If either PC has audio equipment connected
+4. **USB enumeration failures** - Devices not recognized consistently
+5. **Component damage** - Rare, but possible in extreme cases (lightning, major faults)
+
+### Mitigation Options
+
+**Level 0 - Accept the risk:**
+- Same as most consumer KVM switches
+- Fine for typical home/office use
+- Both PCs on same power strip recommended
+
+**Level 1 - USB Isolator (~$15-50):**
+- Add a USB isolator dongle on the controller side
+- Provides 1-2.5kV galvanic isolation
+- Examples: Adafruit USB Isolator, industrial isolators
+- Adds negligible latency for HID
+
+**Level 2 - Laptop as controller:**
+- Laptop on battery = natural isolation
+- The battery breaks the ground path
+- Plugged-in laptop still has ground connection
+
+**Level 3 - Built-in isolation (future):**
+- Design isolation into the device itself
+- Digital isolators + isolated DC-DC converter
+- More complex and expensive, but "proper" engineering
+
+### Comparison to RelayKVM Bluetooth
+
+This is one advantage of the Bluetooth version:
+
+| Aspect | Wired (RP2040-PiZero) | Bluetooth (Pico 2W) |
+|--------|------------------------|---------------------|
+| Isolation | None (grounds bridged) | **Complete** (wireless = no electrical path) |
+| Ground loops | Possible | Impossible |
+| Safety | Same power strip recommended | Any configuration safe |
+
+The Bluetooth version has perfect galvanic isolation by nature - there's no wire between the controller and the bridge device.
+
+### Disclaimer
+
+**Use at your own risk.** This is a DIY project, not a certified commercial product. If you're connecting expensive equipment, servers, or anything where damage would be costly, either:
+- Use the Bluetooth version (inherently isolated)
+- Add a USB isolator
+- Ensure both PCs are on the same power strip
+
+The authors are not responsible for any damage caused by ground loops or electrical issues.
 
 ## Protocol
 

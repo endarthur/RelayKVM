@@ -2,20 +2,20 @@
 
 > **Named after geological relay ramps** - structures that accommodate displacement between fault segments. This device "relays" HID input between your computers, bridging the gap wirelessly.
 
-Wireless KVM solution using ESP32-S3 (M5Stack Cardputer) as a Bluetooth-to-USB HID bridge. Control any computer's keyboard and mouse from a web browser over Bluetooth.
+Wireless KVM solution using a tiny BLE-to-USB HID bridge. Control any computer's keyboard and mouse from a web browser over Bluetooth. No software install on the target - it just sees a standard USB keyboard and mouse.
 
 ## How It Works
 
 ```
 ┌─────────────┐     Bluetooth      ┌─────────────┐      USB HID      ┌─────────────┐
-│  Browser    │ ──────────────────>│  Cardputer  │ ─────────────────>│  Host PC  │
-│  (Any PC)   │   Web Bluetooth    │  ESP32-S3   │  Keyboard/Mouse   │             │
+│  Browser    │ ──────────────────>│  Pico 2W /  │ ─────────────────>│  Target PC  │
+│  (Any PC)   │   Web Bluetooth    │  Cardputer  │  Keyboard/Mouse   │             │
 └─────────────┘                    └─────────────┘                    └─────────────┘
 ```
 
 **Controller PC**: Opens the web interface, captures keyboard/mouse input
-**Cardputer**: Receives commands via Bluetooth, sends USB HID to host
-**Host PC**: Sees a standard USB keyboard and mouse
+**BLE Device**: Receives commands via Bluetooth, sends USB HID to target
+**Target PC**: Sees a standard USB keyboard and mouse
 
 ## Features
 
@@ -29,10 +29,10 @@ Wireless KVM solution using ESP32-S3 (M5Stack Cardputer) as a Bluetooth-to-USB H
 - **Scripts** - Multi-step automation (type, delay, key combos)
 - **Mouse jiggler** - Prevent screen lock
 - **Wake/Sleep** - USB wake signal + Windows sleep macro
-- **Display control** - Dim/off the Cardputer screen remotely
+- **Display control** - Dim/off the Cardputer screen remotely (Cardputer only)
 - **Theming** - 10 built-in themes + 5 custom slots with JSON editor
 - **Settings** - Export/import configuration, all preferences in one modal
-- **Mass Storage mode** - Hold 'M' at boot to access SD card
+- **Mass Storage mode** - Hold 'M' at boot to access SD card (Cardputer only)
 - **Seamless mode** - Mouse flows between controller and target PCs (Pico 2W only)
 
 ## Seamless Mode
@@ -53,33 +53,52 @@ Seamless mode allows your mouse to flow naturally between your controller PC and
 
 ## Hardware
 
-**Required:**
-- [M5Stack Cardputer](https://shop.m5stack.com/products/m5stack-cardputer-kit-w-m5stamps3) ($40) - ESP32-S3 with screen, keyboard, battery
-- USB-C cable
+**Raspberry Pi Pico 2W** ⭐ *Recommended*
+- ~$10, tiny, reliable
+- MicroPython firmware - rock solid stability
+- Supports seamless mode (absolute mouse/digitizer)
+- "Set it and forget it" - just works
+- See [docs/PICOW.md](docs/PICOW.md) for setup
+
+**M5Stack Cardputer** - *Feature-rich alternative*
+- ~$40 - ESP32-S3 with screen, keyboard, battery
+- Built-in display shows connection status
+- SD card for offline web interface storage
+- Good for development and demos
+- May need occasional reset
 
 **Optional:**
-- MicroSD card - For storing web interface offline
-- USB HDMI capture card ($15) - For video feedback
-
-**Alternatives:** Any ESP32-S3 board with USB OTG should work, though we only tested with the M5Stack Cardputer v1.1. See [docs/PICOW.md](docs/PICOW.md) for Raspberry Pi Pico W/2W option (cheaper, CircuitPython-based).
+- USB HDMI capture card (~$15) - For video feedback from target
+- Dummy HDMI plug (~$5) - Required for seamless mode
 
 ## Quick Start
 
 ### 1. Flash Firmware
 
+**Pico 2W (recommended):**
 ```bash
-cd firmware
-pio run -e m5launcher -t upload
+# Copy MicroPython firmware (one-time)
+# Hold BOOTSEL, plug in, copy .uf2 to RPI-RP2 drive
+
+# Then copy RelayKVM script
+mpremote cp firmware/pico2w/main.py :main.py
 ```
 
-Or download pre-built `.bin` from [Releases](https://github.com/endarthur/RelayKVM/releases) and flash via M5Launcher.
+See [docs/PICOW.md](docs/PICOW.md) for detailed Pico 2W setup.
 
-> **Important:** Always use the `m5launcher` environment (`-e m5launcher`). Do NOT use direct upload without specifying the environment. The m5launcher build includes the correct partition scheme and OTA support for returning to the M5Launcher menu.
+**Cardputer:**
+```bash
+cd firmware
+pio run -e m5launcher
+# Copy .bin to SD card, flash via M5Launcher
+```
+
+> **Note:** For Cardputer, always use the `m5launcher` environment. The build includes correct partition scheme and OTA support for returning to M5Launcher.
 
 ### 2. Connect Hardware
 
-1. Plug Cardputer into **host PC** via USB-C
-2. Host PC recognizes "RelayKVM Controller" as keyboard/mouse
+1. Plug device into **target PC** via USB-C
+2. Target PC recognizes "RelayKVM Controller" as keyboard/mouse
 
 ### 3. Open Web Interface
 
@@ -103,34 +122,36 @@ The industrial-style control panel includes:
 | **Wake/Power** | Wake from sleep, sleep macro |
 | **Macros** | Quick key combinations |
 | **Scripts** | Multi-step automation |
-| **Cardputer** | Display brightness, connection status |
+| **Device** | Display brightness (Cardputer), connection status |
 | **Sensitivity** | Mouse and scroll speed sliders |
 | **Settings** (gear icon) | Themes, custom themes, input options, export/import |
 
-## SD Card Mode
+## SD Card Mode (Cardputer only)
 
 Hold **'M'** during boot to enter Mass Storage mode:
 
 1. Cardputer mounts as USB drive
 2. Copy `index.html` and `relaykvm-adapter.js` to SD card
 3. Reset to return to normal mode
-4. Now you can use the interface offline from any PC!
+4. Use the interface offline from any PC!
 
 ## Directory Structure
 
 ```
 RelayKVM/
 ├── index.html              # Web interface (GitHub Pages root)
+├── portal.html             # Seamless mode portal window
 ├── relaykvm-adapter.js     # BLE communication adapter
-├── firmware/               # ESP32-S3 Arduino firmware
-│   ├── RelayKVM/           # Main sketch
-│   └── platformio.ini      # Build config
+├── firmware/
+│   ├── pico2w/             # Pico 2W MicroPython firmware
+│   │   └── main.py
+│   ├── RelayKVM/           # Cardputer Arduino firmware
+│   └── platformio.ini      # Cardputer build config
 ├── icons/                  # Project icons (SVG + PNGs)
 ├── .github/workflows/      # CI/CD (auto-build on release)
-└── docs/                   # Documentation
-    ├── SETUP.md            # Detailed setup guide
-    ├── FEATURES.md         # Roadmap
-    ├── PICOW.md            # Raspberry Pi Pico W/2W guide
+└── docs/
+    ├── PICOW.md            # Pico 2W setup guide
+    ├── FEATURES.md         # Features & roadmap
     └── ...
 ```
 

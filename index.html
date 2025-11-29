@@ -11,7 +11,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <meta name="theme-color" content="#00b894">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="RelayKVM">
     <meta name="description" content="Wireless KVM using Bluetooth HID - control any PC from your browser">
@@ -2780,7 +2780,8 @@
                     </div>
                 </div>
                 <button class="settings-btn" onclick="openSettingsModal()" title="Settings">&#9881;</button>
-                <button class="hw-btn primary" id="connectBtn" onclick="toggleConnection()">Connect</button>
+                <button class="hw-btn" id="dipBtn" onclick="togglePendant()" title="Open Pendant (DIP)" style="display: none;">DIP</button>
+                <button class="hw-btn primary" id="connectBtn" onclick="toggleConnection()" style="min-width: 95px;">Connect</button>
             </div>
         </div>
 
@@ -2905,6 +2906,15 @@
                             <div class="settings-value">
                                 <label class="toggle-switch">
                                     <input type="checkbox" id="modalAutoShowLog" onchange="updateAutoShowLogFromModal(this.checked)">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="settings-row">
+                            <span class="settings-label">Clipboard Bridge (P)</span>
+                            <div class="settings-value">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="modalClipboardBridge" onchange="updateClipboardBridgeFromModal(this.checked)">
                                     <span class="toggle-slider"></span>
                                 </label>
                             </div>
@@ -3275,7 +3285,10 @@
                 <div class="module area-jiggler">
                     <div class="module-header">
                         <span>Jiggler</span>
-                        <div class="led dot" id="ledJiggler"></div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <button class="fn-key" onclick="showHelp('jiggler')" style="padding: 2px 6px; font-size: 8px;">?</button>
+                            <div class="led dot" id="ledJiggler"></div>
+                        </div>
                     </div>
                     <div class="module-body">
                         <button class="hw-btn" id="jigglerBtn" onclick="toggleJiggler()" style="width: 100%; margin-bottom: 4px; padding: 5px;">
@@ -3294,6 +3307,13 @@
                                 <span class="seg-display" style="padding: 1px 4px; font-size: 9px;" id="jigglerIntervalVal">30</span>
                             </div>
                             <input type="range" id="jigglerInterval" min="1" max="120" step="1" value="30" class="sensitivity-slider">
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--border-color);">
+                            <label class="led-label" style="font-size: 8px;">Wake Lock</label>
+                            <label class="toggle-switch" style="transform: scale(0.8);">
+                                <input type="checkbox" id="wakeLockToggle" onchange="updateWakeLockSetting(this.checked)">
+                                <span class="toggle-slider"></span>
+                            </label>
                         </div>
                     </div>
                 </div>
@@ -3753,6 +3773,7 @@
             const savedExitKey = localStorage.getItem('exitKey') || 'Escape';
             const savedCapsLock = localStorage.getItem('capsLockCmdMode') === 'true';
             const savedAutoShowLog = localStorage.getItem('autoShowLogNoVideo') !== 'false'; // default true
+            const savedClipboardBridge = localStorage.getItem('clipboardBridgeEnabled') === 'true'; // default false
 
             document.getElementById('modalMouseSpeed').value = savedMouse;
             document.getElementById('modalMouseSpeedVal').textContent = savedMouse.toFixed(1) + 'x';
@@ -3761,6 +3782,7 @@
             document.getElementById('modalExitKey').value = savedExitKey;
             document.getElementById('modalCapsLockMode').checked = savedCapsLock;
             document.getElementById('modalAutoShowLog').checked = savedAutoShowLog;
+            document.getElementById('modalClipboardBridge').checked = savedClipboardBridge;
         }
 
         function updateMouseSpeedFromModal(value) {
@@ -3819,6 +3841,59 @@
             log('Auto-show log (no video): ' + (checked ? 'ON' : 'OFF'), 'info');
         }
 
+        function updateClipboardBridgeFromModal(checked) {
+            localStorage.setItem('clipboardBridgeEnabled', checked);
+            clipboardBridgeEnabled = checked;
+            log('Clipboard bridge: ' + (checked ? 'ON' : 'OFF'), 'info');
+        }
+
+        // Screen Wake Lock
+        let wakeLock = null;
+        let wakeLockEnabled = localStorage.getItem('wakeLockEnabled') === 'true'; // default false
+
+        // Initialize wake lock toggle
+        document.getElementById('wakeLockToggle').checked = wakeLockEnabled;
+
+        function updateWakeLockSetting(checked) {
+            localStorage.setItem('wakeLockEnabled', checked);
+            wakeLockEnabled = checked;
+            log('Wake Lock: ' + (checked ? 'ON' : 'OFF'), 'info');
+            // If disabling and we have a lock, release it
+            if (!checked && wakeLock) {
+                releaseWakeLock();
+            }
+        }
+
+        async function requestWakeLock() {
+            if (!wakeLockEnabled || !('wakeLock' in navigator)) return;
+            try {
+                wakeLock = await navigator.wakeLock.request('screen');
+                wakeLock.addEventListener('release', () => {
+                    wakeLock = null;
+                });
+                log('Wake lock acquired', 'info');
+            } catch (err) {
+                // Wake lock request failed (e.g., low battery, permission denied)
+                log('Wake lock failed: ' + err.message, 'warn');
+            }
+        }
+
+        function releaseWakeLock() {
+            if (wakeLock) {
+                wakeLock.release();
+                wakeLock = null;
+                log('Wake lock released', 'info');
+            }
+        }
+
+        // Re-acquire wake lock when page becomes visible again
+        document.addEventListener('visibilitychange', async () => {
+            if (document.visibilityState === 'visible' && wakeLockEnabled && document.pointerLockElement) {
+                // We're visible and still in capture mode - re-acquire
+                await requestWakeLock();
+            }
+        });
+
         function clearLocalStorage() {
             if (confirm('Clear all saved data? This will reset theme, device preferences, macros, and scripts.')) {
                 localStorage.clear();
@@ -3842,6 +3917,8 @@
                 'scrollSensitivity',
                 'autoShowLogNoVideo',
                 'capsLockCmdMode',
+                'clipboardBridgeEnabled',
+                'wakeLockEnabled',
                 'exitKey',
                 'macros',
                 'scripts',
@@ -4587,6 +4664,7 @@
 
         // CapsLock command mode
         let capsLockCmdMode = localStorage.getItem('capsLockCmdMode') === 'true';
+        let clipboardBridgeEnabled = localStorage.getItem('clipboardBridgeEnabled') === 'true'; // default false
         const cmdModeBanner = document.getElementById('cmdModeBanner');
         const captureSubtitle = document.getElementById('captureSubtitle');
 
@@ -4617,6 +4695,7 @@
             '[': () => { adjustScrollSensitivity(-1); return 'Scroll: ' + scrollSensitivity; },
             ']': () => { adjustScrollSensitivity(1); return 'Scroll: ' + scrollSensitivity; },
             'o': () => { return toggleCaptureLog(); },
+            'p': () => { return typeClipboard(); },
         };
 
         function adjustMouseSensitivity(delta) {
@@ -4631,6 +4710,75 @@
             document.getElementById('scrollSpeed').value = scrollSensitivity;
             document.getElementById('scrollSpeedVal').textContent = scrollSensitivity;
             localStorage.setItem('scrollSensitivity', scrollSensitivity);
+        }
+
+        // Clipboard bridge - read controller clipboard and type it on target
+        let clipboardTyping = false;
+        function typeClipboard() {
+            if (!clipboardBridgeEnabled) {
+                return 'Clipboard bridge disabled (enable in Settings)';
+            }
+            if (!kvm || !kvm.connected) {
+                return 'Not connected';
+            }
+            if (clipboardTyping) {
+                return 'Already typing...';
+            }
+
+            // Read clipboard and type it out
+            navigator.clipboard.readText().then(async (text) => {
+                if (!text || text.length === 0) {
+                    log('Clipboard empty', 'warn');
+                    return;
+                }
+
+                clipboardTyping = true;
+                const maxLen = 10000; // Safety limit
+                if (text.length > maxLen) {
+                    text = text.substring(0, maxLen);
+                    log('Clipboard truncated to ' + maxLen + ' chars', 'warn');
+                }
+
+                log('Typing ' + text.length + ' chars from clipboard...', 'info');
+                showCmdToast('Pasting ' + text.length + ' chars...');
+
+                const charDelay = 5; // ms between characters
+                const lineDelay = 20; // extra ms after newlines
+
+                for (let i = 0; i < text.length; i++) {
+                    if (!kvm.connected) {
+                        log('Clipboard paste aborted - disconnected', 'warn');
+                        break;
+                    }
+
+                    const char = text[i];
+
+                    // Handle newlines - send Enter key
+                    if (char === '\n') {
+                        await kvm.pressKey('Enter');
+                        await new Promise(r => setTimeout(r, lineDelay));
+                    } else if (char === '\r') {
+                        // Skip carriage returns (Windows line endings are \r\n)
+                        continue;
+                    } else if (char === '\t') {
+                        await kvm.pressKey('Tab');
+                        await new Promise(r => setTimeout(r, charDelay));
+                    } else {
+                        // Type regular character
+                        await kvm.typeText(char);
+                        await new Promise(r => setTimeout(r, charDelay));
+                    }
+                }
+
+                clipboardTyping = false;
+                log('Clipboard paste complete', 'info');
+                showCmdToast('Paste complete');
+            }).catch((err) => {
+                clipboardTyping = false;
+                log('Clipboard read failed: ' + err.message, 'error');
+            });
+
+            return 'Reading clipboard...';
         }
 
         function toggleFullscreen() {
@@ -4681,6 +4829,7 @@
                         <span style="color: var(--accent-secondary);">V</span><span>Toggle Video</span>
                         <span style="color: var(--accent-secondary);">F</span><span>Fullscreen</span>
                         <span style="color: var(--accent-secondary);">O</span><span>Toggle Log</span>
+                        <span style="color: var(--accent-secondary);">P</span><span>Paste Clipboard</span>
                         <span style="color: var(--accent-secondary);">1-4</span><span>Macros</span>
                         <span style="color: var(--accent-secondary);">M</span><span>Show Sensitivity</span>
                         <span style="color: var(--accent-secondary);">+ / -</span><span>Mouse Speed</span>
@@ -4705,9 +4854,13 @@
             if (active) {
                 cmdModeBanner.classList.add('active');
                 captureSubtitle.textContent = 'Command mode - keys are shortcuts';
+                // LED: command mode pattern
+                if (kvm.setLed) kvm.setLed('cmd').catch(() => {});
             } else {
                 cmdModeBanner.classList.remove('active');
                 captureSubtitle.textContent = 'Direct control active';
+                // LED: back to solid if still capturing
+                if (isCapturing && kvm.setLed) kvm.setLed('jacked').catch(() => {});
             }
         }
 
@@ -4859,6 +5012,8 @@
             if ('clearAppBadge' in navigator) {
                 navigator.clearAppBadge().catch(() => {});
             }
+            // LED: back to connected pattern when jacking out
+            if (kvm.setLed) kvm.setLed('connected').catch(() => {});
             log('Jacked out', 'info');
         }
 
@@ -4867,6 +5022,10 @@
                 // Capture overlay got pointer lock - start capture mode
                 isCapturing = true;
                 captureStats = { mouse: 0, clicks: 0, keys: 0 };
+                // LED: heartbeat when jacked in
+                if (kvm.setLed) kvm.setLed('jacked').catch(() => {});
+                // Wake lock: keep screen on while capturing
+                requestWakeLock();
                 updateCaptureStats();
 
                 // Seamless mode: initialize cursor position from entry edge
@@ -4903,6 +5062,8 @@
                 document.removeEventListener('wheel', onCaptureWheel);
                 document.removeEventListener('keydown', onCaptureKeyDown);
                 document.removeEventListener('keyup', onCaptureKeyUp);
+                // Wake lock: release when jacking out
+                releaseWakeLock();
                 stopCapture();
             }
             // If pointerLockElement is trackpad, do nothing here (trackpad handler handles it)
@@ -6156,6 +6317,25 @@
                     • Use Scripts for complex automation<br>
                     • Macros persist in browser storage
                 `
+            },
+            jiggler: {
+                title: 'Keep Awake',
+                body: `
+                    <h3>Jiggler</h3>
+                    Moves mouse periodically to prevent the <strong>target</strong> PC from sleeping or locking.
+                    <br><br>
+                    <div class="cmd-row"><span class="cmd-name">Range</span><span class="cmd-desc">Pixels to move (back and forth)</span></div>
+                    <div class="cmd-row"><span class="cmd-name">Interval</span><span class="cmd-desc">Seconds between jiggles (±20% random)</span></div>
+
+                    <h3>Wake Lock</h3>
+                    Prevents the <strong>controller</strong> screen from dimming while jacked in.
+                    <br><br>
+                    Uses the Screen Wake Lock API to keep your browser's display awake during capture or seamless mode.
+
+                    <h3>Summary</h3>
+                    • <strong>Jiggler</strong> → keeps <em>target</em> awake<br>
+                    • <strong>Wake Lock</strong> → keeps <em>controller</em> awake
+                `
             }
         };
 
@@ -6198,6 +6378,312 @@
 
         checkKnownDevices();
         log('System ready', 'info');
+
+        // ========== Document Picture-in-Picture Pendant ==========
+        let dipWindow = null;
+
+        // Check if Document DIP is supported
+        const dipSupported = 'documentPictureInPicture' in window;
+        if (dipSupported) {
+            document.getElementById('dipBtn').style.display = '';
+        }
+
+        async function togglePendant() {
+            if (dipWindow && !dipWindow.closed) {
+                dipWindow.close();
+                dipWindow = null;
+                return;
+            }
+            await openPendant();
+        }
+
+        async function openPendant() {
+            if (!dipSupported) {
+                log('Document DIP not supported', 'error');
+                return;
+            }
+
+            try {
+                dipWindow = await documentPictureInPicture.requestWindow({
+                    width: 280,
+                    height: 180
+                });
+
+                // Get current theme colors from computed styles
+                const cs = getComputedStyle(document.documentElement);
+                const themeVars = {
+                    bg: cs.getPropertyValue('--bg-color').trim() || '#0d0f12',
+                    moduleBg: cs.getPropertyValue('--module-bg').trim() || '#1a1d21',
+                    text: cs.getPropertyValue('--text-color').trim() || '#9aa0a6',
+                    textDim: cs.getPropertyValue('--text-dim').trim() || '#5f6368',
+                    border: cs.getPropertyValue('--border-color').trim() || '#2a2d31',
+                    accent: cs.getPropertyValue('--accent-primary').trim() || '#00b894',
+                    accent2: cs.getPropertyValue('--accent-secondary').trim() || '#e17055'
+                };
+
+                // Copy styles with theme
+                const style = document.createElement('style');
+                style.textContent = `
+                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                    body {
+                        font-family: 'IBM Plex Mono', 'Consolas', monospace;
+                        font-size: 11px;
+                        background: ${themeVars.bg};
+                        color: ${themeVars.text};
+                        padding: 10px;
+                        height: 100vh;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 6px;
+                        user-select: none;
+                    }
+                    .header {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        padding-bottom: 6px;
+                        border-bottom: 1px solid ${themeVars.border};
+                        margin-bottom: 2px;
+                    }
+                    .logo {
+                        font-size: 10px;
+                        font-weight: bold;
+                        letter-spacing: 1px;
+                        color: ${themeVars.accent};
+                    }
+                    .led-group {
+                        display: flex;
+                        gap: 4px;
+                        align-items: center;
+                    }
+                    .led-group .label {
+                        font-size: 8px;
+                        color: ${themeVars.textDim};
+                    }
+                    .status-row {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        padding: 2px 0;
+                    }
+                    .led {
+                        width: 8px;
+                        height: 8px;
+                        border-radius: 50%;
+                        background: ${themeVars.border};
+                        border: 1px solid rgba(255,255,255,0.1);
+                    }
+                    .led.on { background: ${themeVars.accent}; box-shadow: 0 0 6px ${themeVars.accent}; }
+                    .led.warn { background: #fdcb6e; box-shadow: 0 0 6px #fdcb6e; }
+                    .led.error { background: ${themeVars.accent2}; box-shadow: 0 0 6px ${themeVars.accent2}; }
+                    .label {
+                        flex: 1;
+                        text-transform: uppercase;
+                        letter-spacing: 1px;
+                        font-size: 9px;
+                        color: ${themeVars.textDim};
+                    }
+                    .label.active { color: ${themeVars.text}; }
+                    .buttons {
+                        display: flex;
+                        gap: 4px;
+                        margin-top: auto;
+                    }
+                    button {
+                        flex: 1;
+                        padding: 5px 8px;
+                        border: 1px solid ${themeVars.border};
+                        background: ${themeVars.moduleBg};
+                        color: ${themeVars.textDim};
+                        border-radius: 3px;
+                        cursor: pointer;
+                        font-family: inherit;
+                        font-size: 9px;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                        transition: all 0.15s;
+                    }
+                    button:hover { border-color: ${themeVars.accent}; color: ${themeVars.accent}; }
+                    button.active { border-color: ${themeVars.accent}; color: ${themeVars.accent}; background: rgba(0,184,148,0.1); }
+                    button.danger { border-color: ${themeVars.accent2}; color: ${themeVars.accent2}; }
+                    button.danger:hover { background: ${themeVars.accent2}; color: #fff; }
+                    .stats {
+                        font-size: 9px;
+                        color: ${themeVars.textDim};
+                        text-align: center;
+                        letter-spacing: 1px;
+                    }
+                `;
+                dipWindow.document.head.appendChild(style);
+                dipWindow.document.title = 'RelayKVM';
+
+                // Build content
+                dipWindow.document.body.innerHTML = `
+                    <div class="header">
+                        <span class="logo">RELAYKVM</span>
+                        <div class="led-group">
+                            <span class="label">L</span><div class="led" id="dipLedLink"></div>
+                            <span class="label">T</span><div class="led" id="dipLedTx"></div>
+                            <span class="label">R</span><div class="led" id="dipLedRx"></div>
+                        </div>
+                    </div>
+                    <div class="status-row">
+                        <div class="led" id="dipDotConnect"></div>
+                        <span class="label" id="dipStatusConnect">Disconnected</span>
+                    </div>
+                    <div class="status-row">
+                        <div class="led" id="dipDotJacked"></div>
+                        <span class="label" id="dipStatusJacked">Idle</span>
+                    </div>
+                    <div class="status-row">
+                        <div class="led" id="dipDotCmd"></div>
+                        <span class="label" id="dipStatusCmd">Cmd Mode</span>
+                    </div>
+                    <div class="stats" id="dipStats">M:0 C:0 K:0</div>
+                    <div class="buttons">
+                        <button onclick="opener.focus()">Main</button>
+                        <button id="dipJigglerBtn" onclick="opener.toggleJiggler()">Jig</button>
+                        <button id="dipDisconnectBtn" onclick="opener.disconnect()" class="danger">Drop</button>
+                    </div>
+                `;
+
+                // Initial state sync
+                syncPendantState();
+
+                // Handle close
+                dipWindow.addEventListener('pagehide', () => {
+                    dipWindow = null;
+                });
+
+                log('Pendant opened', 'info');
+            } catch (err) {
+                log('DIP error: ' + err.message, 'error');
+            }
+        }
+
+        function syncPendantState() {
+            if (!dipWindow || dipWindow.closed) return;
+
+            const doc = dipWindow.document;
+
+            // Link LED (mirrors main LED)
+            const ledLink = doc.getElementById('dipLedLink');
+            if (kvm.connected) {
+                ledLink.className = 'led on';
+            } else {
+                ledLink.className = 'led';
+            }
+
+            // Connection status
+            const dotConnect = doc.getElementById('dipDotConnect');
+            const statusConnect = doc.getElementById('dipStatusConnect');
+            if (kvm.connected) {
+                dotConnect.className = 'led on';
+                statusConnect.className = 'label active';
+                statusConnect.textContent = 'Connected';
+            } else {
+                dotConnect.className = 'led';
+                statusConnect.className = 'label';
+                statusConnect.textContent = 'Disconnected';
+            }
+
+            // Jacked in status
+            const dotJacked = doc.getElementById('dipDotJacked');
+            const statusJacked = doc.getElementById('dipStatusJacked');
+            if (isCapturing) {
+                dotJacked.className = 'led warn';
+                statusJacked.className = 'label active';
+                statusJacked.textContent = 'Jacked In';
+            } else {
+                dotJacked.className = 'led';
+                statusJacked.className = 'label';
+                statusJacked.textContent = 'Idle';
+            }
+
+            // Command mode (check if banner is active)
+            const dotCmd = doc.getElementById('dipDotCmd');
+            const statusCmd = doc.getElementById('dipStatusCmd');
+            const cmdActive = cmdModeBanner && cmdModeBanner.classList.contains('active');
+            if (cmdActive) {
+                dotCmd.className = 'led warn';
+                statusCmd.className = 'label active';
+            } else {
+                dotCmd.className = 'led';
+                statusCmd.className = 'label';
+            }
+
+            // Stats
+            const stats = doc.getElementById('dipStats');
+            if (captureStats) {
+                stats.textContent = `M:${captureStats.mouse} C:${captureStats.clicks} K:${captureStats.keys}`;
+            }
+
+            // Jiggler button
+            const jigglerBtn = doc.getElementById('dipJigglerBtn');
+            if (jigglerActive) {
+                jigglerBtn.className = 'active';
+                jigglerBtn.textContent = 'Stop';
+            } else {
+                jigglerBtn.className = '';
+                jigglerBtn.textContent = 'Jig';
+            }
+        }
+
+        // Sync pendant periodically when open
+        setInterval(() => {
+            if (dipWindow && !dipWindow.closed) {
+                syncPendantState();
+            }
+        }, 200);
+
+        // ===== Cursed Gesture Detection (disabled by default) =====
+        // Detects yank up/down and shake gestures on the DIP pendant
+        // Note: Shake conflicts with Windows "Aero Shake" (minimize all)
+        // TODO: Add setting toggle + sensitivity sliders if we want to enable this
+        /*
+        let dipLastX = 0, dipLastY = 0;
+        let dipDragging = false;
+        let dipGestureHistory = [];
+
+        setInterval(() => {
+            if (!dipWindow || dipWindow.closed) return;
+            const x = dipWindow.screenX;
+            const y = dipWindow.screenY;
+            const dx = x - dipLastX;
+            const dy = y - dipLastY;
+            const moving = Math.abs(dx) > 2 || Math.abs(dy) > 2;
+
+            if (moving && !dipDragging) {
+                dipDragging = true;
+                dipGestureHistory = [];
+            } else if (!moving && dipDragging) {
+                dipDragging = false;
+                // Analyze gesture on drag end
+                if (dipGestureHistory.length >= 5) {
+                    let totalDy = 0, maxDy = 0;
+                    for (const g of dipGestureHistory) {
+                        totalDy += g.dy;
+                        if (Math.abs(g.dy) > Math.abs(maxDy)) maxDy = g.dy;
+                    }
+                    if (maxDy > 30 && totalDy > 50) log('Gesture: YANK DOWN', 'info');
+                    else if (maxDy < -30 && totalDy < -50) log('Gesture: YANK UP', 'info');
+                    else {
+                        let dirChanges = 0;
+                        for (let i = 1; i < dipGestureHistory.length; i++) {
+                            if (dipGestureHistory[i].dx * dipGestureHistory[i-1].dx < 0) dirChanges++;
+                        }
+                        if (dirChanges >= 4) log('Gesture: SHAKE', 'info');
+                    }
+                }
+            }
+            if (dipDragging) {
+                dipGestureHistory.push({ dx, dy, t: Date.now() });
+                if (dipGestureHistory.length > 20) dipGestureHistory.shift();
+            }
+            dipLastX = x;
+            dipLastY = y;
+        }, 50);
+        */
 
         // Register service worker for PWA
         if ('serviceWorker' in navigator) {

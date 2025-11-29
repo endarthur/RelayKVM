@@ -179,6 +179,63 @@
         body.captured .seamless-badge { display: none; }
 
         .error { color: #ff6b6b; }
+
+        /* Command mode toast */
+        .cmd-toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid var(--accent-secondary);
+            border-radius: 6px;
+            padding: 10px 20px;
+            color: var(--accent-secondary);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-size: 14px;
+            z-index: 10000;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+        }
+        .cmd-toast.visible { opacity: 1; }
+        .cmd-toast.cmd-mode {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        /* Command mode help overlay */
+        .cmd-help {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            border: 1px solid var(--accent-color);
+            border-radius: 8px;
+            padding: 20px;
+            z-index: 10001;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            color: #9aa0a6;
+            font-size: 13px;
+            line-height: 1.6;
+            display: none;
+        }
+        .cmd-help.visible { display: block; }
+        .cmd-help h3 {
+            color: var(--accent-color);
+            margin: 0 0 12px 0;
+            font-size: 14px;
+        }
+        .cmd-help .grid {
+            display: grid;
+            grid-template-columns: auto auto;
+            gap: 4px 16px;
+        }
+        .cmd-help .key {
+            color: var(--accent-secondary);
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -206,6 +263,27 @@
     </div>
 
     <div class="seamless-badge" id="seamlessBadge">Seamless: OFF</div>
+
+    <div class="cmd-toast" id="cmdToast"></div>
+
+    <div class="cmd-help" id="cmdHelp">
+        <h3>CapsLock Command Mode</h3>
+        <div class="grid">
+            <span class="key">Q</span><span>Exit to controller</span>
+            <span class="key">F</span><span>Toggle fullscreen</span>
+            <span class="key">J</span><span>Toggle jiggler</span>
+            <span class="key">W</span><span>Wake</span>
+            <span class="key">S</span><span>Sleep</span>
+            <span class="key">L</span><span>Lock (Win+L)</span>
+            <span class="key">D</span><span>Desktop (Win+D)</span>
+            <span class="key">T</span><span>Alt+Tab</span>
+            <span class="key">A</span><span>Ctrl+Alt+Del</span>
+            <span class="key">M</span><span>Show sensitivity</span>
+            <span class="key">+/-</span><span>Mouse sens</span>
+            <span class="key">[ ]</span><span>Scroll sens</span>
+            <span class="key">H/?</span><span>Show this help</span>
+        </div>
+    </div>
 
     <script>
         const opener = window.opener;
@@ -310,6 +388,38 @@
             let heldModifiers = 0, heldKeys = [];
             let captureButtons = 0;
 
+            // Screen Wake Lock
+            let wakeLock = null;
+            let wakeLockEnabled = localStorage.getItem('wakeLockEnabled') === 'true'; // default false
+
+            async function requestWakeLock() {
+                if (!wakeLockEnabled || !('wakeLock' in navigator)) return;
+                try {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    wakeLock.addEventListener('release', function() {
+                        wakeLock = null;
+                    });
+                    console.log('Wake lock acquired');
+                } catch (err) {
+                    console.log('Wake lock failed:', err.message);
+                }
+            }
+
+            function releaseWakeLock() {
+                if (wakeLock) {
+                    wakeLock.release();
+                    wakeLock = null;
+                    console.log('Wake lock released');
+                }
+            }
+
+            // Re-acquire wake lock when page becomes visible again
+            document.addEventListener('visibilitychange', async function() {
+                if (document.visibilityState === 'visible' && wakeLockEnabled && (seamlessActive || captured)) {
+                    await requestWakeLock();
+                }
+            });
+
             // Sync settings from parent
             function syncSettings() {
                 if (opener && opener.seamlessMode !== undefined) {
@@ -328,6 +438,181 @@
             }
             syncSettings();
             setInterval(syncSettings, 1000);
+
+            // Command mode support
+            let cmdModeActive = false;
+            let cmdToastTimeout = null;
+            const cmdToast = document.getElementById('cmdToast');
+            const cmdHelp = document.getElementById('cmdHelp');
+
+            function showCmdToast(msg, isCmdMode) {
+                cmdToast.textContent = msg;
+                cmdToast.classList.toggle('cmd-mode', isCmdMode);
+                cmdToast.classList.add('visible');
+                clearTimeout(cmdToastTimeout);
+                cmdToastTimeout = setTimeout(function() {
+                    cmdToast.classList.remove('visible');
+                }, 1500);
+            }
+
+            function toggleCmdHelp() {
+                cmdHelp.classList.toggle('visible');
+                if (cmdHelp.classList.contains('visible')) {
+                    // Close on any key
+                    function closeHelp(e) {
+                        cmdHelp.classList.remove('visible');
+                        document.removeEventListener('keydown', closeHelp);
+                    }
+                    setTimeout(function() {
+                        document.addEventListener('keydown', closeHelp);
+                    }, 100);
+                }
+            }
+
+            // Update PWA badge for command mode
+            function updateBadge(jacked, cmdMode) {
+                if (!opener) return;
+                try {
+                    if (cmdMode) {
+                        // Command mode: show number badge (distinct from dot)
+                        if ('setAppBadge' in navigator) {
+                            navigator.setAppBadge(1).catch(function() {});
+                        }
+                    } else if (jacked) {
+                        // Jacked in but not command mode: show dot
+                        if ('setAppBadge' in navigator) {
+                            navigator.setAppBadge().catch(function() {});
+                        }
+                    } else {
+                        // Not jacked in: clear badge
+                        if ('clearAppBadge' in navigator) {
+                            navigator.clearAppBadge().catch(function() {});
+                        }
+                    }
+                } catch(e) {}
+            }
+
+            // Command mode commands (subset relevant for portal)
+            function handleCmdModeKey(key) {
+                var result = null;
+                var k = key.toLowerCase();
+
+                switch(k) {
+                    case 'q':
+                        // Exit seamless/pointer lock
+                        if (seamlessActive) {
+                            deactivateSeamless();
+                            if (document.fullscreenElement) document.exitFullscreen();
+                        } else if (captured) {
+                            document.exitPointerLock();
+                        }
+                        result = 'Exit to controller';
+                        break;
+
+                    case 'f':
+                        if (document.fullscreenElement) {
+                            document.exitFullscreen();
+                        } else {
+                            document.documentElement.requestFullscreen().catch(function() {});
+                        }
+                        result = 'Toggle fullscreen';
+                        break;
+
+                    case 'j':
+                        if (opener && opener.toggleJiggler) {
+                            opener.toggleJiggler();
+                            result = 'Toggle jiggler';
+                        }
+                        break;
+
+                    case 'w':
+                        if (opener && opener.sendWake) {
+                            opener.sendWake();
+                            result = 'Wake';
+                        }
+                        break;
+
+                    case 's':
+                        if (opener && opener.sendSleep) {
+                            opener.sendSleep();
+                            result = 'Sleep';
+                        }
+                        break;
+
+                    case 'l':
+                        if (opener && opener.sendCombo) {
+                            opener.sendCombo(['gui', 'l']);
+                            result = 'Lock (Win+L)';
+                        }
+                        break;
+
+                    case 'd':
+                        if (opener && opener.sendCombo) {
+                            opener.sendCombo(['gui', 'd']);
+                            result = 'Desktop (Win+D)';
+                        }
+                        break;
+
+                    case 't':
+                        if (opener && opener.sendCombo) {
+                            opener.sendCombo(['alt', 'tab']);
+                            result = 'Alt+Tab';
+                        }
+                        break;
+
+                    case 'a':
+                        if (opener && opener.sendCombo) {
+                            opener.sendCombo(['ctrl', 'alt', 'delete']);
+                            result = 'Ctrl+Alt+Del';
+                        }
+                        break;
+
+                    case 'm':
+                        var ms = (opener && opener.mouseSensitivity) || 1;
+                        var ss = (opener && opener.scrollSensitivity) || 1;
+                        result = 'Mouse: ' + ms.toFixed(1) + 'x  Scroll: ' + ss;
+                        break;
+
+                    case '+':
+                    case '=':
+                        if (opener && opener.adjustMouseSensitivity) {
+                            opener.adjustMouseSensitivity(0.5);
+                            result = 'Mouse: ' + opener.mouseSensitivity.toFixed(1) + 'x';
+                        }
+                        break;
+
+                    case '-':
+                        if (opener && opener.adjustMouseSensitivity) {
+                            opener.adjustMouseSensitivity(-0.5);
+                            result = 'Mouse: ' + opener.mouseSensitivity.toFixed(1) + 'x';
+                        }
+                        break;
+
+                    case '[':
+                        if (opener && opener.adjustScrollSensitivity) {
+                            opener.adjustScrollSensitivity(-1);
+                            result = 'Scroll: ' + opener.scrollSensitivity;
+                        }
+                        break;
+
+                    case ']':
+                        if (opener && opener.adjustScrollSensitivity) {
+                            opener.adjustScrollSensitivity(1);
+                            result = 'Scroll: ' + opener.scrollSensitivity;
+                        }
+                        break;
+
+                    case 'h':
+                    case '?':
+                        toggleCmdHelp();
+                        result = null; // No toast for help
+                        break;
+                }
+
+                if (result) {
+                    showCmdToast(result, true);
+                }
+            }
 
             function jackIn() {
                 if (!isReady || captured) return;
@@ -386,6 +671,12 @@
                 if (opener && opener.setPortalJackedIn) {
                     opener.setPortalJackedIn(true);
                 }
+                // LED: heartbeat when jacked in
+                if (opener && opener.kvm && opener.kvm.setLed) {
+                    opener.kvm.setLed('jacked').catch(function() {});
+                }
+                // Wake lock: keep screen on
+                requestWakeLock();
             }
 
             // Deactivate seamless mode
@@ -408,6 +699,12 @@
                 if (opener && opener.setPortalJackedIn) {
                     opener.setPortalJackedIn(false);
                 }
+                // LED: back to connected pattern
+                if (opener && opener.kvm && opener.kvm.setLed) {
+                    opener.kvm.setLed('connected').catch(function() {});
+                }
+                // Wake lock: release when leaving
+                releaseWakeLock();
             }
 
             // Activate seamless mode when fullscreen becomes ready
@@ -442,6 +739,22 @@
                 // PWA badge for non-seamless mode
                 if (opener && opener.setPortalJackedIn) {
                     opener.setPortalJackedIn(captured);
+                }
+
+                // LED control for non-seamless mode
+                if (opener && opener.kvm && opener.kvm.setLed) {
+                    if (captured) {
+                        opener.kvm.setLed('jacked').catch(function() {});
+                    } else {
+                        opener.kvm.setLed('connected').catch(function() {});
+                    }
+                }
+
+                // Wake lock for non-seamless mode
+                if (captured) {
+                    requestWakeLock();
+                } else {
+                    releaseWakeLock();
                 }
 
                 if (captured && !seamlessMode) {
@@ -561,6 +874,38 @@
                     document.exitPointerLock();
                     return;
                 }
+
+                // Check CapsLock command mode
+                var capsLockCmdMode = opener.capsLockCmdMode || (localStorage.getItem('capsLockCmdMode') === 'true');
+                var capsLockOn = e.getModifierState('CapsLock');
+
+                if (capsLockCmdMode && capsLockOn) {
+                    // In command mode - intercept keys
+                    e.preventDefault();
+                    if (!cmdModeActive) {
+                        cmdModeActive = true;
+                        showCmdToast('Command Mode', true);
+                        updateBadge(seamlessActive || captured, true);
+                        // LED: command mode pattern
+                        if (opener.kvm && opener.kvm.setLed) {
+                            opener.kvm.setLed('cmd').catch(function() {});
+                        }
+                    }
+                    // Handle command (skip CapsLock key itself)
+                    if (e.code !== 'CapsLock') {
+                        handleCmdModeKey(e.key);
+                    }
+                    return;
+                } else if (capsLockCmdMode && cmdModeActive) {
+                    // Exiting command mode
+                    cmdModeActive = false;
+                    updateBadge(seamlessActive || captured, false);
+                    // LED: back to heartbeat (still jacked in)
+                    if (opener.kvm && opener.kvm.setLed) {
+                        opener.kvm.setLed('jacked').catch(function() {});
+                    }
+                }
+
                 e.preventDefault();
 
                 if (MODIFIERS[e.code]) {
@@ -581,6 +926,22 @@
             document.addEventListener('keyup', function(e) {
                 // Work with either seamless mode (seamlessActive) or pointer lock (captured)
                 if ((!seamlessActive && !captured) || !opener || !opener.kvm) return;
+
+                // Update command mode state on keyup (handles CapsLock toggle off)
+                var capsLockCmdMode = opener.capsLockCmdMode || (localStorage.getItem('capsLockCmdMode') === 'true');
+                if (capsLockCmdMode) {
+                    var capsLockOn = e.getModifierState('CapsLock');
+                    if (!capsLockOn && cmdModeActive) {
+                        cmdModeActive = false;
+                        updateBadge(seamlessActive || captured, false);
+                        // LED: back to heartbeat (still jacked in)
+                        if (opener.kvm && opener.kvm.setLed) {
+                            opener.kvm.setLed('jacked').catch(function() {});
+                        }
+                    }
+                    if (capsLockOn) return; // Don't send key releases in command mode
+                }
+
                 e.preventDefault();
 
                 if (MODIFIERS[e.code]) {

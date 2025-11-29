@@ -29,10 +29,22 @@
 - Toast notifications for commands
 
 ### Hardware
-- M5Stack Cardputer support
-- Display brightness control
-- SD card mass storage mode
-- USB keepalive for Windows
+
+**Raspberry Pi Pico 2W** ⭐ *Recommended*
+- ~$10, tiny, reliable
+- MicroPython firmware - rock solid stability
+- Supports seamless mode (absolute mouse/digitizer)
+- Single green LED for status
+- "Set it and forget it" - just works
+
+**M5Stack Cardputer**
+- Built-in display, keyboard, SD card
+- More features but more complexity
+- Good for development and demos
+- May need occasional reset
+- Swiss army knife aesthetic
+
+*The Pico 2W is the reliable daily driver. The Cardputer is the feature-rich dev platform.*
 
 ---
 
@@ -40,17 +52,33 @@
 
 ### High Priority
 - [x] **Raspberry Pi Pico 2W support** - MicroPython BLE dongle ([firmware](../firmware/pico2w/)) ✅
+- [x] **Document DIP control pendant** - Floating mini control panel using Document Picture-in-Picture API (always-on-top status, command feedback, quick actions - solves seamless mode feedback problem!) ✅
+- [ ] **Window Management API for portal** - Screen picker, auto-position portal on target monitor, one-click fullscreen on specific screen, remember choice, handle hotplug
+- [ ] **Web firmware updater** - WebSerial-based MicroPython file upload from browser (no mpremote/Thonny needed)
 - [ ] **Anbernic RG34XX SP support** - Stock firmware BT HID relay, Python daemon ([docs](RG34XX.md)) ✨ *Proof of concept working!*
 - [ ] **Wired mode (RP2040-PiZero)** - Dual USB-C, WebSerial, no pairing needed ([docs](WIRED.md))
 - [ ] **Android app** - Phone as BLE-to-BT HID bridge
 - [ ] **Mobile/responsive design** - Use from phone/tablet
 
 ### Medium Priority
+- [x] **Screen Wake Lock API** - Prevent controller screen from sleeping while jacked in ✅
+- [ ] **Gamepad API** - Use a controller plugged into controller PC as input on target (game streaming without the streaming)
+- [ ] **Idle Detection API** - Auto-enable jiggler when user walks away
+- [ ] **File System Access API** - Save/load macros and scripts as actual files (not just localStorage)
+- [ ] **Web Locks API** - Prevent multiple browser tabs from connecting to same device simultaneously
+- [ ] **Chrome extension companion** - Investigate what extras an extension could provide (global hotkeys, keyboard lock without fullscreen, native messaging, clipboard sync)
 - [ ] **Keyboard Lock API** - Capture system keys (Alt+Tab, Ctrl+W, Win key) when fullscreen - send them to host instead of controller browser
 - [ ] **Latency/ping indicator** - Connection quality feedback
 - [ ] **Keyboard layout support** - AZERTY, QWERTZ, etc.
 - [ ] **Single-file bundle script** - Inline JS for true single-file deployment
 - [ ] **WebRTC video** - Stream from another device/app
+- [ ] **Accessibility mode** - Screen-reader friendly minimal interface, ARIA labels, keyboard navigation. Could be separate `accessible.html` with just core functionality
+- [ ] **Secrets/credential storage** - Investigate secure storage for macros/scripts. Options: Web Crypto API encryption with master password, WebAuthn biometric unlock, or just accept localStorage is insecure. Simpler idea: `{{prompt:Label}}` placeholder in scripts that asks for input at runtime - no storage needed, useful for passwords/OTPs in login scripts
+- [ ] **Script: absolute positioning** - `moveto x,y` command using digitizer (Pico 2W). Also `clickat x,y` to move and click in one command
+- [ ] **Script: conditionals & loops** - `if`, `while`, `goto label`, `repeat n` for more complex automation
+- [ ] **Script: vision commands** - With video feed: `waitcolor x,y,w,h,color,tolerance` (wait until area matches), `ifcolor` conditional, `alert` when color changes. Simple pixel/region average comparison, not OCR. Useful for "wait until loading spinner gone" or "alert when render done"
+- [ ] **Quick Launch buttons** - Win+1 through Win+9 shortcuts as buttons in panel or pendant for fast app switching
+- [ ] **Lock key state feedback** - Host sends LED Output Reports (CapsLock/NumLock/ScrollLock state) to HID devices. Firmware can receive via `tud_hid_set_report_cb`, relay to web UI over BLE. Show indicators in UI/pendant, sync cmd mode with actual CapsLock state
 
 ### Fun/Visual
 - [ ] **CRT monitor overlay** - Professional broadcast monitor aesthetic during capture (scanlines, phosphor glow, rounded corners, RGB separation, tube curvature simulation)
@@ -60,6 +88,7 @@
 ### Hardware Expansion
 - [ ] **3D printed cases** - Enclosures for Pico 2W and RP2040-PiZero (design or find existing)
 - [ ] **ESP32-S2 support** - Even cheaper option (no BLE, WiFi only)
+- [ ] **MicroPython on Cardputer** - Test if MicroPython improves stability vs Arduino (could use MicroHydra launcher)
 - [x] **Absolute mouse mode** - Digitizer HID for seamless mode (Pico 2W only) ✅
 - [x] **Consumer control** - Volume, mute, play/pause, media keys ✅
 
@@ -96,6 +125,8 @@ The Pico 2W has many unused GPIO pins. Future firmware could support user-config
 ### Cursed Ideas (Rainy Day Projects) 🌧️
 Ideas that are wildly out of scope but too fun to forget. For when it's raining in São Paulo.
 
+- [ ] **Web MIDI relay** - Relay MIDI messages to target for music production remote setups
+- [ ] **Web HID wired mode** - Use Web HID API to build wired version entirely in-browser (no firmware needed?)
 - [ ] **VIA keyboard support** - Pretend to be a VIA-compatible keyboard, configure Cardputer keypad through VIA GUI, save to flash, sync layout to web UI. Basically QMK-lite for RelayKVM.
 - [ ] **Aesthetic relay** - Wire an actual relay to the Pico GPIO that clicks on jack in/out. No electrical function, pure satisfaction. The "Relay" in RelayKVM becomes literal.
 - [ ] **Full QMK fork** - At this point, why not?
@@ -106,6 +137,10 @@ Ideas that are wildly out of scope but too fun to forget. For when it's raining 
 - [ ] **BT Serial TTY (Linux)** - Bluetooth SPP to /dev/rfcomm0, daemon injects to /dev/uinput. No USB on host!
 - [ ] **Audio chirp KVM** - FSK/AFSK modulation over 3.5mm audio jack. For MCUs with USB but no wireless. Host demodulates → HID. Peak cursed.
 - [ ] **Dual-host wired KVM** - RP2040-PiZero with USB HID to BOTH computers simultaneously. Software selects which host receives input. Hardware macropad buttons can target either host. True Software Defined KVM switch.
+- [ ] **LED backchannel** - Use LED Output Report bits (ScrollLock) as host→device data channel. Helper app on host toggles ScrollLock, Pico reads state changes. Enables host→device communication without serial/BLE on host side. Could send screen resolution, PeerJS ID for WebRTC, simple state sync. ~200 bps with 1 bit.
+- [ ] **WebHID host helper** - Add 4th HID interface (vendor-specific raw data). Host helper page uses WebHID API to communicate with Pico directly. No serial, no drivers, just browser permission. Could send screen resolution, clipboard text (for bridge), window info, WebRTC signaling. Like QMK's Raw HID / VIA protocol.
+- [ ] **BLE security via USB bootstrap** - Use physical USB connection as trusted channel for key exchange. Plug Pico into controller, page generates shared key, sends via WebHID, both save it. BLE connections then require challenge-response with the key. No passkeys, no morse code, just plug-and-pair. OOB pairing using USB as secure channel.
+- [ ] **SECURITY.md** - Document the security model: threat model (what we protect against, what we don't), USB key exchange, challenge-response auth, encrypted traffic, mutual authentication. Be honest about limitations. Preempt the Hackaday comments.
 
 ---
 
@@ -116,6 +151,9 @@ Ideas that are wildly out of scope but too fun to forget. For when it's raining 
 - Absolute mouse positioning (digitizer HID)
 - Portal window for virtual monitor capture
 - PWA badge indicator when jacked in
+- Document DIP pendant (always-on-top status display)
+- Clipboard bridge (CapsLock+P to type controller clipboard on target)
+- Screen Wake Lock API
 
 ### v1.1.0 (2025)
 - Raspberry Pi Pico 2W support (MicroPython)

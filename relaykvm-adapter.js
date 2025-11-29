@@ -37,6 +37,14 @@ class RelayKVMAdapter {
     static CMD_USB_WAKE = 0x83;
     static CMD_USB_RECONNECT = 0x84;
     static CMD_DEVICE_RESET = 0x85;
+    static CMD_LED_CTRL = 0xE0;  // LED control (Pico 2W)
+
+    // LED modes (Pico 2W)
+    static LED_OFF = 0;
+    static LED_ON = 1;
+    static LED_DOUBLE_BLINK = 2;      // Disconnected pattern
+    static LED_DOUBLE_OFF_BLINK = 3;  // Connected pattern
+    static LED_SLOW_TOGGLE = 4;       // Command mode pattern
 
     // Display brightness levels
     static DISPLAY_OFF = 0;
@@ -150,6 +158,9 @@ class RelayKVMAdapter {
     /**
      * Get previously paired devices (no picker required)
      * Returns array of devices that can be reconnected to directly
+     *
+     * NOTE: Chrome only - requires chrome://flags/#enable-web-bluetooth-new-permissions-backend
+     * Edge does not support this API.
      */
     static async getKnownDevices() {
         if (!RelayKVMAdapter.isSupported()) return [];
@@ -157,7 +168,7 @@ class RelayKVMAdapter {
         try {
             // getDevices() returns previously permitted devices
             if (!navigator.bluetooth.getDevices) {
-                console.log('getDevices() not supported in this browser');
+                console.log('Quick Connect not available (Chrome only, requires chrome://flags/#enable-web-bluetooth-new-permissions-backend)');
                 return [];
             }
 
@@ -179,8 +190,9 @@ class RelayKVMAdapter {
 
     /**
      * Reconnect to a previously paired device (no picker)
+     * Uses watchAdvertisements() to detect device before connecting
      */
-    async reconnect(device, maxRetries = 3) {
+    async reconnect(device, maxRetries = 3, timeout = 10000) {
         if (!device) {
             throw new Error('No device provided');
         }
@@ -195,7 +207,58 @@ class RelayKVMAdapter {
             }
         });
 
-        return await this._connectToDevice(maxRetries);
+        // Web Bluetooth requires watching for advertisements before reconnecting
+        // without a picker - can't just call gatt.connect() on a getDevices() result
+        if (device.watchAdvertisements) {
+            console.log('Watching for advertisements from ' + device.name + '...');
+
+            return new Promise(async (resolve, reject) => {
+                const timeoutId = setTimeout(() => {
+                    device.removeEventListener('advertisementreceived', onAdvert);
+                    if (device.unwatchAdvertisements) {
+                        device.unwatchAdvertisements().catch(() => {});
+                    }
+                    reject(new Error('Device not found - is it powered on and in range?'));
+                }, timeout);
+
+                const onAdvert = async (event) => {
+                    console.log('Advertisement received from ' + event.device.name);
+                    clearTimeout(timeoutId);
+                    device.removeEventListener('advertisementreceived', onAdvert);
+                    if (device.unwatchAdvertisements) {
+                        device.unwatchAdvertisements().catch(() => {});
+                    }
+
+                    try {
+                        const result = await this._connectToDevice(maxRetries);
+                        resolve(result);
+                    } catch (err) {
+                        reject(err);
+                    }
+                };
+
+                device.addEventListener('advertisementreceived', onAdvert);
+
+                try {
+                    await device.watchAdvertisements();
+                } catch (err) {
+                    clearTimeout(timeoutId);
+                    device.removeEventListener('advertisementreceived', onAdvert);
+                    // Fall back to direct connect if watchAdvertisements fails
+                    console.log('watchAdvertisements failed, trying direct connect:', err.message);
+                    try {
+                        const result = await this._connectToDevice(maxRetries);
+                        resolve(result);
+                    } catch (directErr) {
+                        reject(directErr);
+                    }
+                }
+            });
+        } else {
+            // Browser doesn't support watchAdvertisements, try direct connect
+            console.log('watchAdvertisements not supported, trying direct connect');
+            return await this._connectToDevice(maxRetries);
+        }
     }
 
     /**
@@ -718,6 +781,36 @@ class RelayKVMAdapter {
     async resetDevice() {
         const data = new Uint8Array([]);
         const packet = this.buildPacket(RelayKVMAdapter.CMD_DEVICE_RESET, data);
+        await this.sendPacket(packet);
+    }
+
+    /**
+     * Control the LED on Pico 2W
+     * @param {number|string} mode - LED mode number or string name
+     *   0/'off' - LED off
+     *   1/'on'/'connected' - LED solid on (connected idle state)
+     *   2/'disconnected' - Double blink pattern (every 3s)
+     *   3/'jacked'/'active' - Double off-blink pattern (jacked in, relaying)
+     *   4/'cmd'/'command' - Slow toggle (500ms, command mode)
+     */
+    async setLed(mode) {
+        // Convert string to number if needed
+        if (typeof mode === 'string') {
+            const modeMap = {
+                'off': RelayKVMAdapter.LED_OFF,
+                'on': RelayKVMAdapter.LED_ON,
+                'connected': RelayKVMAdapter.LED_ON,
+                'disconnected': RelayKVMAdapter.LED_DOUBLE_BLINK,
+                'jacked': RelayKVMAdapter.LED_DOUBLE_OFF_BLINK,
+                'active': RelayKVMAdapter.LED_DOUBLE_OFF_BLINK,
+                'cmd': RelayKVMAdapter.LED_SLOW_TOGGLE,
+                'command': RelayKVMAdapter.LED_SLOW_TOGGLE
+            };
+            mode = modeMap[mode.toLowerCase()] ?? RelayKVMAdapter.LED_OFF;
+        }
+
+        const data = new Uint8Array([mode & 0xFF]);
+        const packet = this.buildPacket(RelayKVMAdapter.CMD_LED_CTRL, data);
         await this.sendPacket(packet);
     }
 }
