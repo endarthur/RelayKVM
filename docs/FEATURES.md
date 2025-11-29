@@ -77,7 +77,7 @@
 - [ ] **Script: absolute positioning** - `moveto x,y` command using digitizer (Pico 2W). Also `clickat x,y` to move and click in one command
 - [ ] **Script: conditionals & loops** - `if`, `while`, `goto label`, `repeat n` for more complex automation
 - [ ] **Script: vision commands** - With video feed: `waitcolor x,y,w,h,color,tolerance` (wait until area matches), `ifcolor` conditional, `alert` when color changes. Simple pixel/region average comparison, not OCR. Useful for "wait until loading spinner gone" or "alert when render done"
-- [ ] **Quick Launch buttons** - Win+1 through Win+9 shortcuts as buttons in panel or pendant for fast app switching
+- [x] **Quick Launch buttons** - Win+1 through Win+0 shortcuts in DIP pendant for fast app switching ✅
 - [ ] **Lock key state feedback** - Host sends LED Output Reports (CapsLock/NumLock/ScrollLock state) to HID devices. Firmware can receive via `tud_hid_set_report_cb`, relay to web UI over BLE. Show indicators in UI/pendant, sync cmd mode with actual CapsLock state
 
 ### Fun/Visual
@@ -124,6 +124,23 @@ The Pico 2W has many unused GPIO pins. Future firmware could support user-config
 
 ### Cursed Ideas (Rainy Day Projects) 🌧️
 Ideas that are wildly out of scope but too fun to forget. For when it's raining in São Paulo.
+
+#### High Feasibility (we already have most of the pieces)
+
+- [ ] **Pendant Forth interpreter** ⭐ - CapsLock in calc mode activates Forth. Stack already exists, just need a dictionary of words and `:` to define new ones. `2 3 + .` prints 5. `: SQUARE DUP * ;` defines a word. Could save words to localStorage. Genuine utility for automation macros. The pendant becomes a tiny programmable computer.
+- [ ] **Pendant plotting** - Trackpad becomes a tiny graph (~93×105px, almost square!). Enter RPN expression with X variable, set XMIN/XMAX/YMIN/YMAX, plot. HP-48 style. Trackpad color was chosen for this! Show resolution in corner when resizing DIP. Move CLx from X key to D (or just use Delete), free X for variable. Keys: `X` push X var, `[` `]` for xmin/xmax, `{` `}` for ymin/ymax, `G` for graph/plot.
+- [ ] **Stereonet mode** ⭐ - Equal-area (Schmidt) or equal-angle (Wulff) stereonet projection in the trackpad! For structural geology: plot poles, planes, lineations. Enter strike/dip from numpad, plot on net. Could toggle between lower/upper hemisphere. Tiny geology workstation in a pendant. Peak niche. Peak awesome.
+- [ ] **Trig functions** - sin/cos/tan + inverses, log/exp, DEG/RAD toggle. Just more rpnUnaryOp() calls. Needed for stereonet math anyway!
+- [ ] **Memory registers** - STO 0-9 / RCL 0-9 for storing intermediate results. Classic HP feature.
+
+#### Medium Feasibility
+
+- [ ] **Tiny BASIC** - `10 PRINT "HELLO"` / `20 GOTO 10` in the pendant. Line editor in LCD, RUN executes and sends keystrokes to host. BASIC as a macro language!
+- [ ] **Conway's Game of Life** - Trackpad becomes a tiny universe. Click to toggle cells, watch it evolve. Meditative.
+- [ ] **Befunge interpreter** - 2D esoteric programming language. Program counter moves in 4 directions. Perfect for tiny display. Absolutely cursed.
+- [ ] **Fractals** - Mandelbrot/Julia zoom in trackpad area using canvas or CSS. Arrow keys to pan, +/- to zoom. No practical use, pure beauty.
+
+#### Classic Cursed
 
 - [ ] **Web MIDI relay** - Relay MIDI messages to target for music production remote setups
 - [ ] **Web HID wired mode** - Use Web HID API to build wired version entirely in-browser (no firmware needed?)

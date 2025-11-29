@@ -300,11 +300,80 @@ Bump `CACHE_NAME` in `sw.js` when changing `index.html` or `portal.html`.
 
 ---
 
+## DIP Pendant (Document Picture-in-Picture)
+
+### Important: Separate Document Context
+
+The pendant opens via Document Picture-in-Picture API and is a **separate document**. This means:
+
+1. **CSS variables must be redefined** - Variables from the main page (like `--led-green`) are not available. Define them in the pendant's inline `<style>`:
+```javascript
+style.textContent = `
+    :root {
+        --led-green: #00ff66;
+        --led-blue: #0099ff;
+        --led-amber: #ffaa00;
+        /* etc */
+    }
+    /* rest of pendant styles */
+`;
+```
+
+2. **Theme values via JavaScript** - For theme-aware values, extract from computed style and inject:
+```javascript
+const cs = getComputedStyle(document.body);
+const themeVars = {
+    bg: cs.getPropertyValue('--bg-primary').trim(),
+    accent: cs.getPropertyValue('--accent-primary').trim(),
+    // etc
+};
+// Then use in template: background: ${themeVars.bg};
+```
+
+3. **Accessing main window** - DIP windows don't have `opener`. Set `dipWindow.main = window` then use `main.functionName()`:
+```javascript
+// In openPendant(), after creating dipWindow:
+dipWindow.main = window;
+
+// In pendant HTML:
+<button onclick="main.toggleJiggler()">Jig</button>
+<button onclick="main.toggleConnection()">Conn</button>
+```
+
+4. **Logo is inlined** - The logo SVG is inlined in the pendant HTML (not referenced). If `icons/icon.svg` changes, update the pendant logo too:
+```javascript
+<svg class="logo" viewBox="0 0 128 128" width="18" height="18">
+    <rect x="12" y="16" width="64" height="64" rx="8" fill="${themeVars.accent}"/>
+    <rect x="52" y="48" width="64" height="64" rx="8" fill="${themeVars.accent2}"/>
+    <rect x="52" y="48" width="24" height="32" fill="#ffffff"/>
+</svg>
+```
+This allows the logo colors to adapt to the current theme.
+
+### State Sync
+
+Pendant state is synced every 200ms via `syncPendantState()`. When adding new status indicators:
+
+```javascript
+function syncPendantState() {
+    if (!dipWindow || dipWindow.closed) return;
+    const doc = dipWindow.document;
+
+    // Update element based on state
+    const myLed = doc.getElementById('dipMyLed');
+    myLed.className = someCondition ? 'led on' : 'led';
+}
+```
+
+---
+
 ## Checklist for New Features
 
 - [ ] Use existing UI patterns (module, settings-row, toggle-switch)
 - [ ] Add help content if feature has settings/options
 - [ ] Use consistent localStorage key naming
 - [ ] Add to both index.html AND portal.html if capture-relevant
+- [ ] If adding to DIP pendant: define CSS variables in pendant's own stylesheet
+- [ ] If changing logo: update inline SVG in pendant (`openPendant()` in index.html)
 - [ ] Bump `sw.js` cache version
 - [ ] Update FEATURES.md if user-facing

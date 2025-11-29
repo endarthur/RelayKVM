@@ -47,6 +47,11 @@
       "name": "Jiggler",
       "url": "./index.html#jiggler",
       "description": "Toggle mouse jiggler"
+    },
+    {
+      "name": "Pendant",
+      "url": "./index.html#pendant",
+      "description": "Open floating status pendant"
     }
   ]
 }

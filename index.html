@@ -104,6 +104,10 @@
             --logo-block1: var(--accent-primary);
             --logo-block2: var(--accent-secondary);
             --logo-relay: #ffffff;
+
+            /* === PENDANT === */
+            --pendant-btn-bg: #2a2d31;
+            --pendant-btn-text: #9aa0a6;
         }
 
         /* ============================================
@@ -150,6 +154,10 @@
             --fnkey-green-border: #103a20;
             --fnkey-blue-bg: #254565;
             --fnkey-blue-border: #182a40;
+
+            /* Pendant */
+            --pendant-btn-bg: #1a2820;
+            --pendant-btn-text: #66ff99;
         }
 
         /* ============================================
@@ -196,6 +204,10 @@
             --fnkey-green-border: #123050;
             --fnkey-blue-bg: #1a4a70;
             --fnkey-blue-border: #123050;
+
+            /* Pendant */
+            --pendant-btn-bg: #152535;
+            --pendant-btn-text: #88ccff;
         }
 
         /* ============================================
@@ -271,6 +283,10 @@
             --fnkey-green-border: #003318;
             --fnkey-blue-bg: #151a2a;
             --fnkey-blue-border: #152244;
+
+            /* Pendant */
+            --pendant-btn-bg: #1a1a1a;
+            --pendant-btn-text: #ff6b35;
         }
 
         /* ============================================
@@ -326,6 +342,10 @@
             --fnkey-green-border: #454c00;
             --fnkey-blue-bg: #555845;
             --fnkey-blue-border: #383a2d;
+
+            /* Pendant */
+            --pendant-btn-bg: #2a2010;
+            --pendant-btn-text: #ffcc88;
         }
 
         /* ============================================
@@ -417,6 +437,10 @@
 
             /* Recording */
             --recording-color: #dd6600;
+
+            /* Pendant - dark buttons on light theme */
+            --pendant-btn-bg: #2a3530;
+            --pendant-btn-text: #88ddaa;
         }
 
         /* ============================================
@@ -506,6 +530,10 @@
             --logo-block2: #fab387;
             --logo-relay: #cdd6f4;
             --recording-color: #fab387;
+
+            /* Pendant */
+            --pendant-btn-bg: #1e1e2e;
+            --pendant-btn-text: #cba6f7;
         }
 
         /* ============================================
@@ -594,6 +622,10 @@
             --logo-block2: #f5a97f;
             --logo-relay: #cad3f5;
             --recording-color: #f5a97f;
+
+            /* Pendant */
+            --pendant-btn-bg: #24273a;
+            --pendant-btn-text: #c6a0f6;
         }
 
         /* ============================================
@@ -682,6 +714,10 @@
             --logo-block2: #ef9f76;
             --logo-relay: #c6d0f5;
             --recording-color: #ef9f76;
+
+            /* Pendant */
+            --pendant-btn-bg: #303446;
+            --pendant-btn-text: #ca9ee6;
         }
 
         /* ============================================
@@ -770,6 +806,10 @@
             --logo-block2: #fe640b;
             --logo-relay: #eff1f5;
             --recording-color: #fe640b;
+
+            /* Pendant - dark buttons on light theme */
+            --pendant-btn-bg: #303446;
+            --pendant-btn-text: #c6a0f6;
         }
 
         * {
@@ -811,6 +851,7 @@
 
         /* Main chassis */
         .chassis {
+            position: relative;
             width: 100%;
             height: calc(100vh - 24px);
             display: flex;
@@ -1448,7 +1489,7 @@
 
         .color-picker-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(5, 1fr);
             gap: 8px;
             margin-bottom: 12px;
         }
@@ -2685,6 +2726,334 @@
             font-size: 12px;
         }
 
+        /* ============================================
+           Docked Pendant (embedded in main window)
+           ============================================ */
+        .docked-pendant {
+            position: absolute;
+            bottom: 40px;
+            right: 12px;
+            width: 320px;
+            z-index: 100;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            border: 1px solid var(--panel-border);
+        }
+
+        .docked-titlebar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 10px;
+            background: #3c3c3c;
+            border-bottom: 1px solid #2a2a2a;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 12px;
+            color: #e0e0e0;
+        }
+
+        .docked-origin {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .docked-origin::before {
+            content: 'ⓘ';
+            font-size: 14px;
+            opacity: 0.7;
+        }
+
+        .docked-controls {
+            display: flex;
+            gap: 4px;
+        }
+
+        .docked-popout {
+            background: transparent;
+            border: none;
+            color: #999;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+
+        .docked-popout:hover {
+            background: #555;
+            color: #fff;
+        }
+
+        .docked-content {
+            background: var(--surface-base);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            height: 200px;
+        }
+
+        /* Docked pendant header */
+        .dp-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--panel-border);
+        }
+
+        .dp-header-left {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .dp-logo { width: 18px; height: 18px; }
+
+        .dp-help {
+            padding: 0 4px;
+            font-size: 8px;
+            min-width: 14px;
+            height: 14px;
+            background: var(--pendant-btn-bg);
+            color: var(--pendant-btn-text);
+            border: 1px solid var(--panel-border);
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .dp-lcd {
+            flex: 1;
+            margin: 0 8px;
+            padding: 5px 6px;
+            background: var(--pendant-btn-bg);
+            color: var(--pendant-btn-text);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 9px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            border-radius: 2px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        .dp-leds {
+            display: flex;
+            gap: 3px;
+        }
+
+        .dp-led {
+            width: 6px;
+            height: 16px;
+            border-radius: 2px;
+            background: var(--led-green-dim);
+        }
+
+        .dp-led.on { background: var(--led-green); box-shadow: 0 0 6px var(--led-green); }
+        .dp-led.blue { background: var(--led-blue-dim); }
+        .dp-led.blue.on { background: var(--led-blue); box-shadow: 0 0 6px var(--led-blue); }
+        .dp-led.amber { background: var(--led-amber-dim); }
+        .dp-led.amber.on { background: var(--led-amber); box-shadow: 0 0 6px var(--led-amber); }
+
+        /* Grid layout for entire pendant content */
+        .dp-grid {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            grid-template-rows: auto 1fr auto;
+            grid-template-areas:
+                "idl cmd cad esc lck slp wke ptl calc"
+                "track track track numpad numpad numpad numpad numpad numpad"
+                "popout popout popout jig jig jig conn conn conn";
+            gap: 4px;
+            font-size: 9px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .dp-trackpad, .dp-numpad {
+            min-height: 0;
+        }
+
+        .dp-idl { grid-area: idl; }
+        .dp-cmd { grid-area: cmd; }
+        .dp-cad { grid-area: cad; }
+        .dp-esc { grid-area: esc; }
+        .dp-lck { grid-area: lck; }
+        .dp-slp { grid-area: slp; }
+        .dp-wke { grid-area: wke; }
+        .dp-ptl { grid-area: ptl; }
+        .dp-calc { grid-area: calc; }
+        .dp-trackpad { grid-area: track; }
+        .dp-numpad { grid-area: numpad; }
+        .dp-popout { grid-area: popout; }
+        .dp-jig { grid-area: jig; }
+        .dp-conn { grid-area: conn; }
+
+        .dp-status-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: var(--text-dim);
+        }
+
+        .dp-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--led-green-dim);
+        }
+
+        .dp-dot.on { background: var(--led-amber); box-shadow: 0 0 4px var(--led-amber); }
+
+        /* Grid action buttons (row 1) */
+        .dp-grid button {
+            padding: 2px 6px;
+            font-size: 8px;
+            background: var(--pendant-btn-bg);
+            color: var(--pendant-btn-text);
+            border: 1px solid var(--panel-border);
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .dp-grid button:hover { border-color: var(--accent-primary); }
+
+        .dp-grid button.active {
+            background: var(--accent-primary);
+            color: #fff;
+            border-color: var(--accent-primary);
+        }
+
+        .dp-danger {
+            color: var(--accent-secondary) !important;
+            border-color: var(--accent-secondary) !important;
+        }
+
+        .dp-danger:hover {
+            background: var(--accent-secondary) !important;
+            color: #fff !important;
+        }
+
+        .dp-portal {
+            background: var(--fnkey-blue-bg) !important;
+            border-color: var(--fnkey-blue-bg) !important;
+            color: #fff !important;
+        }
+
+        .dp-portal:hover {
+            filter: brightness(1.2);
+        }
+
+        .dp-trackpad {
+            min-height: 80px;
+            background: var(--pendant-btn-bg);
+            border: 2px solid var(--panel-border);
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: crosshair;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        .dp-crosshair {
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border: 1px solid var(--text-dim);
+            border-radius: 50%;
+            opacity: 0.3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        .dp-numpad {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-auto-rows: 1fr;
+            gap: 2px;
+            background: var(--panel-inset);
+            border-radius: 3px;
+            padding: 4px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .dp-numpad button {
+            padding: 4px 6px;
+            font-size: 9px;
+            min-height: 0;
+            overflow: hidden;
+            font-weight: bold;
+            background: var(--pendant-btn-bg);
+            color: var(--pendant-btn-text);
+            border: 1px solid var(--panel-border);
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .dp-numpad button:hover { border-color: var(--accent-primary); }
+
+        .dp-mod {
+            font-size: 7px !important;
+            font-weight: normal !important;
+            color: var(--text-dim) !important;
+        }
+
+        .dp-mod.active {
+            background: var(--accent-primary) !important;
+            color: #fff !important;
+        }
+
+        .dp-mod.calc-op {
+            font-size: 14px !important;
+            font-weight: bold !important;
+            color: var(--accent-primary) !important;
+        }
+
+        .dp-calc.rpn {
+            background: var(--led-amber, #ffaa00) !important;
+            color: #000 !important;
+        }
+
+        /* Bottom buttons */
+        .dp-buttons {
+            display: flex;
+            gap: 4px;
+        }
+
+        .dp-buttons button {
+            flex: 1;
+            padding: 5px 8px;
+            font-size: 9px;
+            text-transform: uppercase;
+            background: var(--pendant-btn-bg);
+            color: var(--pendant-btn-text);
+            border: 1px solid var(--panel-border);
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .dp-buttons button:hover { border-color: var(--accent-primary); }
+
+        .dp-primary {
+            border-color: var(--accent-primary) !important;
+            color: var(--accent-primary) !important;
+        }
+
+        .dp-primary:hover {
+            background: var(--accent-primary) !important;
+            color: #fff !important;
+        }
+
+        .dp-danger-btn {
+            border-color: var(--accent-secondary) !important;
+            color: var(--accent-secondary) !important;
+        }
+
         /* Responsive */
         @media (max-width: 600px) {
             body { padding: 6px; }
@@ -2766,15 +3135,15 @@
             </div>
             <div class="status-cluster">
                 <div class="led-cluster">
-                    <div class="led-bar">
+                    <div class="led-bar" title="Link - Connected to device">
                         <span class="led-label">L</span>
                         <div class="led" id="ledLink"></div>
                     </div>
-                    <div class="led-bar">
+                    <div class="led-bar" title="TX - Sending data">
                         <span class="led-label">T</span>
                         <div class="led blue" id="ledTx"></div>
                     </div>
-                    <div class="led-bar">
+                    <div class="led-bar" title="RX - Receiving data">
                         <span class="led-label">R</span>
                         <div class="led amber" id="ledRx"></div>
                     </div>
@@ -2921,6 +3290,18 @@
                         </div>
                     </div>
 
+                    <!-- Display Section -->
+                    <div class="settings-section" id="displaySection" style="display: none;">
+                        <div class="settings-section-title">Display</div>
+                        <div class="settings-row">
+                            <span class="settings-label">DIP Pendant</span>
+                            <span class="settings-value" style="font-size: 9px; color: var(--text-dim);">Recommended: 320×220</span>
+                        </div>
+                        <div style="font-size: 9px; color: var(--text-dim); text-align: center;">
+                            Browser remembers pendant size. Clear site data to reset.
+                        </div>
+                    </div>
+
                     <!-- Data Section -->
                     <div class="settings-section">
                         <div class="settings-section-title">Data</div>
@@ -2992,6 +3373,14 @@
                             <div class="color-picker-item" onmouseenter="highlightJsonKey('text-normal')" onmouseleave="clearJsonHighlight()">
                                 <label>Text Normal</label>
                                 <input type="color" id="colorTextNormal" data-key="text-normal" onchange="updateJsonFromPicker(this)">
+                            </div>
+                            <div class="color-picker-item" onmouseenter="highlightJsonKey('pendant-btn-bg')" onmouseleave="clearJsonHighlight()">
+                                <label>Pendant Btn</label>
+                                <input type="color" id="colorPendantBtnBg" data-key="pendant-btn-bg" onchange="updateJsonFromPicker(this)">
+                            </div>
+                            <div class="color-picker-item" onmouseenter="highlightJsonKey('pendant-btn-text')" onmouseleave="clearJsonHighlight()">
+                                <label>Pendant Text</label>
+                                <input type="color" id="colorPendantBtnText" data-key="pendant-btn-text" onchange="updateJsonFromPicker(this)">
                             </div>
                         </div>
                     </div>
@@ -3467,6 +3856,69 @@
             </div>
             <div class="bezel-text">GCU · v1.0</div>
         </div>
+
+        <!-- Docked Pendant -->
+        <div class="docked-pendant" id="dockedPendant" style="display: none;">
+            <div class="docked-titlebar">
+                <span class="docked-origin">localhost:6502</span>
+                <div class="docked-controls">
+                    <button class="docked-popout" onclick="popOutPendant()" title="Pop out to floating window">⧉</button>
+                </div>
+            </div>
+            <div class="docked-content">
+                <div class="dp-header">
+                    <div class="dp-header-left">
+                        <svg class="dp-logo" viewBox="0 0 128 128" width="18" height="18">
+                            <rect x="12" y="16" width="64" height="64" rx="8" fill="var(--accent-primary)"/>
+                            <rect x="52" y="48" width="64" height="64" rx="8" fill="var(--accent-secondary)"/>
+                            <rect x="52" y="48" width="24" height="32" fill="#ffffff"/>
+                        </svg>
+                        <button class="dp-help" onclick="showHelp('pendant')" title="Help">?</button>
+                    </div>
+                    <div class="dp-lcd" id="dpLcd">READY</div>
+                    <div class="dp-leds">
+                        <div class="dp-led" id="dpLedLink" title="Link"></div>
+                        <div class="dp-led blue" id="dpLedTx" title="TX"></div>
+                        <div class="dp-led amber" id="dpLedRx" title="RX"></div>
+                    </div>
+                </div>
+                <div class="dp-grid">
+                    <div class="dp-idl dp-status-item"><div class="dp-dot" id="dpDotJacked"></div><span id="dpStatusJacked">IDL</span></div>
+                    <div class="dp-cmd dp-status-item"><div class="dp-dot" id="dpDotCmd"></div><span id="dpStatusCmd">CMD</span></div>
+                    <button class="dp-cad dp-danger" onclick="sendCombo(['ctrl','alt','delete'])" title="Ctrl+Alt+Delete">CAD</button>
+                    <button class="dp-esc" onclick="dpEscape()" title="Escape / Clear calc">Esc</button>
+                    <button class="dp-lck" onclick="sendCombo(['gui','l'])" title="Lock">Lck</button>
+                    <button class="dp-slp" onclick="sendSleep()" title="Sleep">Slp</button>
+                    <button class="dp-wke" onclick="sendWake()" title="Wake">Wke</button>
+                    <button class="dp-ptl dp-portal" onclick="openPortal()" title="Open Portal">Ptl</button>
+                    <button class="dp-calc" id="dpCalcBtn" onclick="toggleCalcMode()" title="Calculator mode">Calc</button>
+                    <div class="dp-trackpad" id="dpTrackpad">
+                        <span class="dp-crosshair">+</span>
+                    </div>
+                    <div class="dp-numpad">
+                        <button onclick="dpNumpadKey('7')">7</button>
+                        <button onclick="dpNumpadKey('8')">8</button>
+                        <button onclick="dpNumpadKey('9')">9</button>
+                        <button class="dp-mod" id="dpModShift" onclick="dpToggleMod('shift')">Shft</button>
+                        <button onclick="dpNumpadKey('4')">4</button>
+                        <button onclick="dpNumpadKey('5')">5</button>
+                        <button onclick="dpNumpadKey('6')">6</button>
+                        <button class="dp-mod" id="dpModCtrl" onclick="dpToggleMod('ctrl')">Ctrl</button>
+                        <button onclick="dpNumpadKey('1')">1</button>
+                        <button onclick="dpNumpadKey('2')">2</button>
+                        <button onclick="dpNumpadKey('3')">3</button>
+                        <button class="dp-mod" id="dpModAlt" onclick="dpToggleMod('alt')">Alt</button>
+                        <button onclick="dpNumpadKey('0')">0</button>
+                        <button onclick="dpNumpadKey('.')">.</button>
+                        <button onclick="dpNumpadKey('enter')">↵</button>
+                        <button class="dp-mod" id="dpModGui" onclick="dpToggleMod('gui')">Win</button>
+                    </div>
+                    <button class="dp-popout" onclick="popOutPendant()">Pop Out</button>
+                    <button class="dp-jig dp-primary" id="dpJigglerBtn" onclick="toggleJiggler()">Jig</button>
+                    <button class="dp-conn dp-primary" id="dpConnectBtn" onclick="toggleConnection()">Conn</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="relaykvm-adapter.js"></script>
@@ -3492,6 +3944,7 @@
             }
             updateThemeButtons(theme);
             updatePwaThemeColor();
+            updatePendantTheme();
         }
 
         // Update PWA title bar color to match current theme
@@ -4032,6 +4485,10 @@
                 case 'jiggler':
                     toggleJiggler();
                     break;
+                case 'pendant':
+                case 'dip':
+                    togglePendant();
+                    break;
             }
         }
         // Handle on load and hash changes
@@ -4096,9 +4553,31 @@
             const led = document.getElementById(id);
             led.classList.add('on');
             clearTimeout(id === 'ledTx' ? txTimeout : rxTimeout);
-            const timeout = setTimeout(() => led.classList.remove('on'), 100);
+
+            // TX stays on longer (jiggler interval * 1.5), RX quick flash
+            const duration = id === 'ledTx' ? Math.round(jigglerInterval * 1.5) : 100;
+            const timeout = setTimeout(() => led.classList.remove('on'), duration);
+
             if (id === 'ledTx') txTimeout = timeout;
             else rxTimeout = timeout;
+
+            // Also update pendant LEDs (DIP and docked)
+            if (dipWindow && !dipWindow.closed) {
+                const dipId = id === 'ledTx' ? 'dipLedTx' : 'dipLedRx';
+                const dipLed = dipWindow.document.getElementById(dipId);
+                if (dipLed) {
+                    dipLed.classList.add('on');
+                    setTimeout(() => dipLed.classList.remove('on'), duration);
+                }
+            }
+
+            // Docked pendant LEDs
+            const dpId = id === 'ledTx' ? 'dpLedTx' : 'dpLedRx';
+            const dpLed = document.getElementById(dpId);
+            if (dpLed) {
+                dpLed.classList.add('on');
+                setTimeout(() => dpLed.classList.remove('on'), duration);
+            }
         }
 
         // UI Updates
@@ -6336,6 +6815,43 @@
                     • <strong>Jiggler</strong> → keeps <em>target</em> awake<br>
                     • <strong>Wake Lock</strong> → keeps <em>controller</em> awake
                 `
+            },
+            pendant: {
+                title: 'Control Pendant',
+                body: `
+                    <h3>Overview</h3>
+                    Floating always-on-top mini control panel using Document Picture-in-Picture API.
+                    Perfect for seamless mode when the main window is hidden.
+
+                    <h3>Header</h3>
+                    <div class="cmd-row"><span class="cmd-name">LEDs</span><span class="cmd-desc">Link (green), TX (blue), RX (amber)</span></div>
+                    <div class="cmd-row"><span class="cmd-name">Modifiers</span><span class="cmd-desc">Shows active Shift/Ctrl/Alt/Win</span></div>
+
+                    <h3>Status Bar</h3>
+                    <div class="cmd-row"><span class="cmd-name">IDLE</span><span class="cmd-desc">Lit when jiggler is active</span></div>
+                    <div class="cmd-row"><span class="cmd-name">CMDM</span><span class="cmd-desc">Lit when CapsLock command mode active</span></div>
+
+                    <h3>Quick Actions</h3>
+                    <div class="cmd-row"><span class="cmd-name">Esc</span><span class="cmd-desc">Send Escape key</span></div>
+                    <div class="cmd-row"><span class="cmd-name">Lck</span><span class="cmd-desc">Lock target (Win+L)</span></div>
+                    <div class="cmd-row"><span class="cmd-name">Slp</span><span class="cmd-desc">Sleep target PC</span></div>
+                    <div class="cmd-row"><span class="cmd-name">Wke</span><span class="cmd-desc">Wake target PC</span></div>
+                    <div class="cmd-row"><span class="cmd-name">CAD</span><span class="cmd-desc">Ctrl+Alt+Delete</span></div>
+
+                    <h3>Numpad</h3>
+                    4x4 grid for Win+Number shortcuts (quick launch taskbar apps).
+                    <br><br>
+                    <strong>Modifiers:</strong> Shft, Ctrl, Alt, Win toggle on/off.
+                    Active modifiers shown in header and apply to next key.
+
+                    <h3>Trackpad</h3>
+                    Mini trackpad for mouse movement. Drag to move cursor on target.
+
+                    <h3>Tips</h3>
+                    • Resize pendant to show/hide sections<br>
+                    • Reset size in Settings → Display<br>
+                    • Pendant floats above other windows
+                `
             }
         };
 
@@ -6386,15 +6902,37 @@
         const dipSupported = 'documentPictureInPicture' in window;
         if (dipSupported) {
             document.getElementById('dipBtn').style.display = '';
+            document.getElementById('displaySection').style.display = '';
+            // Show docked pendant by default
+            document.getElementById('dockedPendant').style.display = '';
+            // Apply calculated theme colors to docked pendant
+            setTimeout(updatePendantTheme, 0);
         }
 
-        async function togglePendant() {
+        function resetPendant() {
             if (dipWindow && !dipWindow.closed) {
                 dipWindow.close();
                 dipWindow = null;
+            }
+            // Show docked pendant
+            document.getElementById('dockedPendant').style.display = '';
+        }
+
+        async function togglePendant() {
+            // If DIP is open, close it and show docked
+            if (dipWindow && !dipWindow.closed) {
+                dipWindow.close();
+                dipWindow = null;
+                document.getElementById('dockedPendant').style.display = '';
                 return;
             }
-            await openPendant();
+            // Toggle docked pendant visibility
+            const docked = document.getElementById('dockedPendant');
+            if (docked.style.display === 'none') {
+                docked.style.display = '';
+            } else {
+                docked.style.display = 'none';
+            }
         }
 
         async function openPendant() {
@@ -6403,27 +6941,63 @@
                 return;
             }
 
+            // Hide docked pendant when opening DIP
+            document.getElementById('dockedPendant').style.display = 'none';
+
             try {
                 dipWindow = await documentPictureInPicture.requestWindow({
-                    width: 280,
-                    height: 180
+                    width: 320,
+                    height: 220
                 });
 
                 // Get current theme colors from computed styles
                 const cs = getComputedStyle(document.documentElement);
                 const themeVars = {
-                    bg: cs.getPropertyValue('--bg-color').trim() || '#0d0f12',
-                    moduleBg: cs.getPropertyValue('--module-bg').trim() || '#1a1d21',
-                    text: cs.getPropertyValue('--text-color').trim() || '#9aa0a6',
+                    bg: cs.getPropertyValue('--surface-base').trim() || '#0d0f12',
+                    moduleBg: cs.getPropertyValue('--panel-bg').trim() || '#1a1d21',
+                    panelInset: cs.getPropertyValue('--panel-inset').trim() || '#13161a',
+                    displayBg: cs.getPropertyValue('--display-bg').trim() || '#0a0c0e',
+                    text: cs.getPropertyValue('--text-normal').trim() || '#9aa0a6',
                     textDim: cs.getPropertyValue('--text-dim').trim() || '#5f6368',
-                    border: cs.getPropertyValue('--border-color').trim() || '#2a2d31',
+                    border: cs.getPropertyValue('--panel-border').trim() || '#2a2d31',
                     accent: cs.getPropertyValue('--accent-primary').trim() || '#00b894',
-                    accent2: cs.getPropertyValue('--accent-secondary').trim() || '#e17055'
+                    accent2: cs.getPropertyValue('--accent-secondary').trim() || '#e17055',
+                    pendantBtnBg: cs.getPropertyValue('--pendant-btn-bg').trim() || '#2a2d31',
+                    pendantBtnText: cs.getPropertyValue('--pendant-btn-text').trim() || '#9aa0a6',
+                    ledGreen: cs.getPropertyValue('--led-green').trim() || '#00ff66',
+                    ledGreenDim: cs.getPropertyValue('--led-green-dim').trim() || '#004d1f',
+                    ledAmber: cs.getPropertyValue('--led-amber').trim() || '#ffaa00',
+                    ledAmberDim: cs.getPropertyValue('--led-amber-dim').trim() || '#4d3300',
+                    ledBlue: cs.getPropertyValue('--led-blue').trim() || '#0099ff',
+                    ledBlueDim: cs.getPropertyValue('--led-blue-dim').trim() || '#003366',
+                    fnkeyBlueBg: cs.getPropertyValue('--fnkey-blue-bg').trim() || '#2a5a8a'
                 };
+
+                // Calculate theme-complementary trackpad color (light gray tinted with accent)
+                const accentHex = themeVars.accent;
+                const r = parseInt(accentHex.slice(1,3), 16);
+                const g = parseInt(accentHex.slice(3,5), 16);
+                const b = parseInt(accentHex.slice(5,7), 16);
+                // Blend: 85% light gray (#c8c8c8) + 15% accent
+                const tr = Math.round(200 * 0.85 + r * 0.15);
+                const tg = Math.round(200 * 0.85 + g * 0.15);
+                const tb = Math.round(200 * 0.85 + b * 0.15);
+                themeVars.trackpad = `rgb(${tr}, ${tg}, ${tb})`;
+                // Darker version for crosshair
+                themeVars.trackpadDark = `rgb(${Math.round(tr*0.5)}, ${Math.round(tg*0.5)}, ${Math.round(tb*0.5)})`;
 
                 // Copy styles with theme
                 const style = document.createElement('style');
+                style.id = 'pendant-theme';
                 style.textContent = `
+                    :root {
+                        --led-green: ${themeVars.ledGreen};
+                        --led-green-dim: ${themeVars.ledGreenDim};
+                        --led-amber: ${themeVars.ledAmber};
+                        --led-amber-dim: ${themeVars.ledAmberDim};
+                        --led-blue: ${themeVars.ledBlue};
+                        --led-blue-dim: ${themeVars.ledBlueDim};
+                    }
                     * { margin: 0; padding: 0; box-sizing: border-box; }
                     body {
                         font-family: 'IBM Plex Mono', 'Consolas', monospace;
@@ -6446,19 +7020,42 @@
                         margin-bottom: 2px;
                     }
                     .logo {
-                        font-size: 10px;
+                        width: 18px;
+                        height: 18px;
+                    }
+                    .header-left {
+                        display: flex;
+                        align-items: center;
+                        gap: 6px;
+                    }
+                    .help-btn {
+                        padding: 0 4px;
+                        font-size: 8px;
+                        min-width: 14px;
+                        height: 14px;
+                        line-height: 12px;
+                        flex: none;
+                    }
+                    .lcd-display {
+                        flex: 1;
+                        margin: 0 8px;
+                        background: ${themeVars.trackpad};
+                        color: ${themeVars.trackpadDark};
+                        font-family: 'IBM Plex Mono', monospace;
+                        font-size: 9px;
                         font-weight: bold;
                         letter-spacing: 1px;
-                        color: ${themeVars.accent};
+                        padding: 3px 6px;
+                        border-radius: 2px;
+                        text-align: left;
+                        box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+                        overflow: hidden;
+                        white-space: nowrap;
                     }
                     .led-group {
                         display: flex;
-                        gap: 4px;
+                        gap: 3px;
                         align-items: center;
-                    }
-                    .led-group .label {
-                        font-size: 8px;
-                        color: ${themeVars.textDim};
                     }
                     .status-row {
                         display: flex;
@@ -6476,6 +7073,26 @@
                     .led.on { background: ${themeVars.accent}; box-shadow: 0 0 6px ${themeVars.accent}; }
                     .led.warn { background: #fdcb6e; box-shadow: 0 0 6px #fdcb6e; }
                     .led.error { background: ${themeVars.accent2}; box-shadow: 0 0 6px ${themeVars.accent2}; }
+                    .led-group .led {
+                        width: 6px;
+                        height: 16px;
+                        border-radius: 2px;
+                        background: var(--led-green-dim);
+                    }
+                    .led-group .led.on {
+                        background: var(--led-green);
+                        box-shadow: 0 0 6px var(--led-green);
+                    }
+                    .led-group .led.blue { background: var(--led-blue-dim); }
+                    .led-group .led.blue.on {
+                        background: var(--led-blue);
+                        box-shadow: 0 0 6px var(--led-blue);
+                    }
+                    .led-group .led.amber { background: var(--led-amber-dim); }
+                    .led-group .led.amber.on {
+                        background: var(--led-amber);
+                        box-shadow: 0 0 6px var(--led-amber);
+                    }
                     .label {
                         flex: 1;
                         text-transform: uppercase;
@@ -6493,8 +7110,8 @@
                         flex: 1;
                         padding: 5px 8px;
                         border: 1px solid ${themeVars.border};
-                        background: ${themeVars.moduleBg};
-                        color: ${themeVars.textDim};
+                        background: ${themeVars.pendantBtnBg};
+                        color: ${themeVars.pendantBtnText};
                         border-radius: 3px;
                         cursor: pointer;
                         font-family: inherit;
@@ -6504,6 +7121,10 @@
                         transition: all 0.15s;
                     }
                     button:hover { border-color: ${themeVars.accent}; color: ${themeVars.accent}; }
+                    button:active {
+                        transform: scale(0.95);
+                        filter: brightness(1.2);
+                    }
                     button.active { border-color: ${themeVars.accent}; color: ${themeVars.accent}; background: rgba(0,184,148,0.1); }
                     button.danger { border-color: ${themeVars.accent2}; color: ${themeVars.accent2}; }
                     button.danger:hover { background: ${themeVars.accent2}; color: #fff; }
@@ -6513,6 +7134,163 @@
                         text-align: center;
                         letter-spacing: 1px;
                     }
+                    .content-grid {
+                        display: grid;
+                        grid-template-columns: repeat(9, 1fr);
+                        grid-template-rows: auto 1fr auto;
+                        grid-template-areas:
+                            "idl cmd cad esc lck slp wke ptl calc"
+                            "track track track numpad numpad numpad numpad numpad numpad"
+                            "dock dock dock jig jig jig conn conn conn";
+                        gap: 4px;
+                        flex: 1;
+                    }
+                    .mini-trackpad, .numpad {
+                        min-height: 0;
+                    }
+                    .dip-idl { grid-area: idl; }
+                    .dip-cmd { grid-area: cmd; }
+                    .dip-cad { grid-area: cad; }
+                    .dip-esc { grid-area: esc; }
+                    .dip-lck { grid-area: lck; }
+                    .dip-slp { grid-area: slp; }
+                    .dip-wke { grid-area: wke; }
+                    .dip-ptl { grid-area: ptl; }
+                    .dip-calc { grid-area: calc; }
+                    .mini-trackpad { grid-area: track; }
+                    .numpad { grid-area: numpad; }
+                    .dip-dock { grid-area: dock; }
+                    .dip-jig { grid-area: jig; }
+                    .dip-conn { grid-area: conn; }
+                    .status-item {
+                        display: flex;
+                        align-items: center;
+                        gap: 4px;
+                    }
+                    .content-grid button {
+                        padding: 2px 6px;
+                        font-size: 8px;
+                    }
+                    .content-grid button:hover {
+                        border-color: ${themeVars.accent};
+                    }
+                    .content-grid button.active {
+                        background: ${themeVars.accent};
+                        color: #fff;
+                        border-color: ${themeVars.accent};
+                    }
+                    .dip-calc.rpn {
+                        background: ${themeVars.ledAmber} !important;
+                        color: #000 !important;
+                        border-color: ${themeVars.ledAmber} !important;
+                    }
+                    .danger-action {
+                        border-color: ${themeVars.accent2};
+                        color: ${themeVars.accent2};
+                    }
+                    .danger-action:hover {
+                        background: ${themeVars.accent2};
+                        color: #fff;
+                    }
+                    .portal-btn {
+                        background: ${themeVars.fnkeyBlueBg};
+                        border-color: ${themeVars.fnkeyBlueBg};
+                        color: #fff;
+                    }
+                    .portal-btn:hover {
+                        filter: brightness(1.2);
+                    }
+                    .mini-trackpad {
+                        min-height: 80px;
+                        background: ${themeVars.trackpad};
+                        border: 2px solid ${themeVars.border};
+                        border-radius: 3px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        cursor: crosshair;
+                        user-select: none;
+                        touch-action: none;
+                        box-shadow: inset 0 2px 6px rgba(0,0,0,0.5);
+                        position: relative;
+                    }
+                    .mini-trackpad:hover {
+                        border-color: ${themeVars.accent};
+                    }
+                    .mini-trackpad:active .trackpad-crosshair {
+                        opacity: 0.8;
+                        transform: translate(-50%, -50%) scale(1.1);
+                        border-color: ${themeVars.accent};
+                        color: ${themeVars.accent};
+                    }
+                    .trackpad-crosshair {
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        width: 18px;
+                        height: 18px;
+                        border: 1px solid ${themeVars.trackpadDark};
+                        border-radius: 50%;
+                        opacity: 0.6;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 12px;
+                        color: ${themeVars.trackpadDark};
+                        pointer-events: none;
+                        transition: all 0.15s;
+                    }
+                    .numpad {
+                        display: grid;
+                        grid-template-columns: repeat(4, 1fr);
+                        grid-auto-rows: 1fr;
+                        gap: 2px;
+                        background: ${themeVars.panelInset};
+                        border-radius: 3px;
+                        padding: 4px;
+                        box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+                    }
+                    .numpad button {
+                        padding: 4px 6px;
+                        font-size: 9px;
+                        font-weight: bold;
+                        min-width: 0;
+                        min-height: 0;
+                        overflow: hidden;
+                    }
+                    .numpad button.mod {
+                        font-size: 7px;
+                        font-weight: normal;
+                        color: ${themeVars.textDim};
+                    }
+                    .numpad button.mod.active {
+                        background: ${themeVars.accent};
+                        color: #fff;
+                        border-color: ${themeVars.accent};
+                    }
+                    .numpad button.mod.calc-op {
+                        font-size: 14px;
+                        font-weight: bold;
+                        color: ${themeVars.accent};
+                    }
+                    button.primary {
+                        border-color: ${themeVars.accent};
+                        color: ${themeVars.accent};
+                    }
+                    button.primary:hover {
+                        background: ${themeVars.accent};
+                        color: #fff;
+                    }
+
+                    /* Responsive adjustments via body classes */
+                    body.compact-width .numpad,
+                    body.compact-width .mini-trackpad,
+                    body.compact-width .lcd-display { display: none; }
+                    body.compact-height .numpad,
+                    body.compact-height .mini-trackpad { display: none; }
+                    body.compact-height .quick-actions { display: none; }
+                    body.minimal .content-grid { display: none; }
                 `;
                 dipWindow.document.head.appendChild(style);
                 dipWindow.document.title = 'RelayKVM';
@@ -6520,39 +7298,244 @@
                 // Build content
                 dipWindow.document.body.innerHTML = `
                     <div class="header">
-                        <span class="logo">RELAYKVM</span>
+                        <div class="header-left">
+                            <svg class="logo" viewBox="0 0 128 128" width="18" height="18">
+                                <rect x="12" y="16" width="64" height="64" rx="8" fill="${themeVars.accent}"/>
+                                <rect x="52" y="48" width="64" height="64" rx="8" fill="${themeVars.accent2}"/>
+                                <rect x="52" y="48" width="24" height="32" fill="#ffffff"/>
+                            </svg>
+                            <button class="help-btn" onclick="main.showHelp('pendant')" title="Help">?</button>
+                        </div>
+                        <div class="lcd-display" id="dipLcd">READY</div>
                         <div class="led-group">
-                            <span class="label">L</span><div class="led" id="dipLedLink"></div>
-                            <span class="label">T</span><div class="led" id="dipLedTx"></div>
-                            <span class="label">R</span><div class="led" id="dipLedRx"></div>
+                            <div class="led" id="dipLedLink" title="Link - Connected to device"></div>
+                            <div class="led blue" id="dipLedTx" title="TX - Sending data"></div>
+                            <div class="led amber" id="dipLedRx" title="RX - Receiving data"></div>
                         </div>
                     </div>
-                    <div class="status-row">
-                        <div class="led" id="dipDotConnect"></div>
-                        <span class="label" id="dipStatusConnect">Disconnected</span>
-                    </div>
-                    <div class="status-row">
-                        <div class="led" id="dipDotJacked"></div>
-                        <span class="label" id="dipStatusJacked">Idle</span>
-                    </div>
-                    <div class="status-row">
-                        <div class="led" id="dipDotCmd"></div>
-                        <span class="label" id="dipStatusCmd">Cmd Mode</span>
-                    </div>
-                    <div class="stats" id="dipStats">M:0 C:0 K:0</div>
-                    <div class="buttons">
-                        <button onclick="opener.focus()">Main</button>
-                        <button id="dipJigglerBtn" onclick="opener.toggleJiggler()">Jig</button>
-                        <button id="dipDisconnectBtn" onclick="opener.disconnect()" class="danger">Drop</button>
+                    <div class="content-grid">
+                        <div class="dip-idl status-item"><div class="led" id="dipDotJacked"></div><span class="label" id="dipStatusJacked">IDL</span></div>
+                        <div class="dip-cmd status-item"><div class="led" id="dipDotCmd"></div><span class="label" id="dipStatusCmd">CMD</span></div>
+                        <button class="dip-cad danger-action" onclick="main.sendCombo(['ctrl','alt','delete'])" title="Ctrl+Alt+Delete">CAD</button>
+                        <button class="dip-esc" onclick="main.dpEscape()" title="Escape / Clear calc">Esc</button>
+                        <button class="dip-lck" onclick="main.sendCombo(['gui','l'])" title="Lock (Win+L)">Lck</button>
+                        <button class="dip-slp" onclick="main.sendSleep()" title="Sleep">Slp</button>
+                        <button class="dip-wke" onclick="main.sendWake()" title="Wake">Wke</button>
+                        <button class="dip-ptl portal-btn" onclick="main.openPortal()" title="Open Portal window">Ptl</button>
+                        <button class="dip-calc" id="dipCalcBtn" onclick="main.toggleCalcMode()" title="Calculator mode - numpad becomes calculator">Calc</button>
+                        <div class="mini-trackpad" id="dipTrackpad" title="Mini trackpad - drag to move mouse">
+                            <span class="trackpad-crosshair">+</span>
+                        </div>
+                        <div class="numpad">
+                            <button onclick="numpadKey('7')">7</button>
+                            <button onclick="numpadKey('8')">8</button>
+                            <button onclick="numpadKey('9')">9</button>
+                            <button class="mod" id="modShift" onclick="toggleMod('shift')">Shft</button>
+                            <button onclick="numpadKey('4')">4</button>
+                            <button onclick="numpadKey('5')">5</button>
+                            <button onclick="numpadKey('6')">6</button>
+                            <button class="mod" id="modCtrl" onclick="toggleMod('ctrl')">Ctrl</button>
+                            <button onclick="numpadKey('1')">1</button>
+                            <button onclick="numpadKey('2')">2</button>
+                            <button onclick="numpadKey('3')">3</button>
+                            <button class="mod" id="modAlt" onclick="toggleMod('alt')">Alt</button>
+                            <button onclick="numpadKey('0')">0</button>
+                            <button onclick="numpadKey('.')">.</button>
+                            <button onclick="numpadKey('enter')">↵</button>
+                            <button class="mod" id="modGui" onclick="toggleMod('gui')">Win</button>
+                        </div>
+                        <button class="dip-dock" onclick="main.dockPendant()">Dock</button>
+                        <button class="dip-jig primary" id="dipJigglerBtn" onclick="main.toggleJiggler()">Jig</button>
+                        <button class="dip-conn primary" id="dipConnectBtn" onclick="main.toggleConnection()">Conn</button>
                     </div>
                 `;
+
+                // Set reference to main window (DIP doesn't have opener)
+                dipWindow.main = window;
+
+                // Numpad modifier state and functions
+                dipWindow.numpadMods = { shift: false, ctrl: false, alt: false, gui: false };
+
+                dipWindow.updateModDisplay = function() {
+                    const mods = dipWindow.numpadMods;
+                    const parts = [];
+                    if (mods.ctrl) parts.push('Ctrl');
+                    if (mods.shift) parts.push('Shift');
+                    if (mods.alt) parts.push('Alt');
+                    if (mods.gui) parts.push('Win');
+                    const display = dipWindow.document.getElementById('dipMods');
+                    display.textContent = parts.length ? parts.join('+') + '+' : '';
+                };
+
+                dipWindow.toggleMod = function(mod) {
+                    if (calcMode) {
+                        const opMap = { shift: '+', ctrl: '-', alt: '*', gui: '/' };
+                        if (rpnMode) {
+                            rpnOperate(opMap[mod]);
+                        } else {
+                            if (calcResult !== null) {
+                                calcExpression = String(calcResult);
+                                calcResult = null;
+                            }
+                            const displayOp = { shift: '+', ctrl: '-', alt: '×', gui: '÷' };
+                            if (calcExpression && !/[+\-×÷]$/.test(calcExpression)) {
+                                calcExpression += displayOp[mod];
+                                updateCalcDisplay();
+                            }
+                        }
+                        return;
+                    }
+                    dipWindow.numpadMods[mod] = !dipWindow.numpadMods[mod];
+                    const btn = dipWindow.document.getElementById('mod' + mod.charAt(0).toUpperCase() + mod.slice(1));
+                    btn.classList.toggle('active', dipWindow.numpadMods[mod]);
+                    dipWindow.updateModDisplay();
+                };
+
+                dipWindow.numpadKey = function(key) {
+                    if (calcMode) {
+                        if (rpnMode) {
+                            if (key === 'enter') {
+                                rpnPush();
+                            } else {
+                                if (key === '.' && rpnEntry.includes('.')) return;
+                                rpnEntry += key;
+                                rpnHasEntry = true;
+                                updateCalcDisplay();
+                            }
+                        } else {
+                            if (key === 'enter') {
+                                calcEvaluate();
+                            } else {
+                                if (calcResult !== null) {
+                                    calcExpression = '';
+                                    calcResult = null;
+                                }
+                                if (key === '.') {
+                                    const lastOpIndex = Math.max(
+                                        calcExpression.lastIndexOf('+'),
+                                        calcExpression.lastIndexOf('-'),
+                                        calcExpression.lastIndexOf('×'),
+                                        calcExpression.lastIndexOf('÷')
+                                    );
+                                    const currentNumber = calcExpression.slice(lastOpIndex + 1);
+                                    if (currentNumber.includes('.')) return;
+                                }
+                                calcExpression += key;
+                                updateCalcDisplay();
+                            }
+                        }
+                        return;
+                    }
+
+                    const mods = dipWindow.numpadMods;
+                    const combo = [];
+                    if (mods.ctrl) combo.push('ctrl');
+                    if (mods.shift) combo.push('shift');
+                    if (mods.alt) combo.push('alt');
+                    if (mods.gui) combo.push('gui');
+                    combo.push(key);
+
+                    if (combo.length > 1) {
+                        dipWindow.main.sendCombo(combo);
+                    } else {
+                        dipWindow.main.kvm.sendKey(key);
+                    }
+                    dipWindow.main.flashLed('ledTx');
+                };
+
+                // Mini trackpad functionality
+                const miniTrackpad = dipWindow.document.getElementById('dipTrackpad');
+                let miniDragging = false;
+                let miniLastX = 0, miniLastY = 0;
+
+                miniTrackpad.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    miniDragging = true;
+                    miniLastX = e.clientX;
+                    miniLastY = e.clientY;
+                });
+
+                dipWindow.addEventListener('mousemove', (e) => {
+                    if (!miniDragging) return;
+                    const dx = e.clientX - miniLastX;
+                    const dy = e.clientY - miniLastY;
+                    miniLastX = e.clientX;
+                    miniLastY = e.clientY;
+
+                    const main = dipWindow.main;
+                    if ((dx !== 0 || dy !== 0) && main.kvm && main.kvm.connected) {
+                        main.kvm.moveMouse(Math.round(dx * 2), Math.round(dy * 2));
+                        main.flashLed('ledTx');
+                    }
+                });
+
+                dipWindow.addEventListener('mouseup', () => {
+                    miniDragging = false;
+                });
+
+                // Click on trackpad = left click
+                miniTrackpad.addEventListener('click', () => {
+                    const main = dipWindow.main;
+                    if (main.kvm && main.kvm.connected) {
+                        main.kvm.click('left');
+                        main.flashLed('ledTx');
+                    }
+                });
 
                 // Initial state sync
                 syncPendantState();
 
-                // Handle close
+                // Responsive behavior via window resize event (fires during drag)
+                let resizeTimeout = null;
+                function updatePendantLayout() {
+                    const doc = dipWindow.document;
+                    const body = doc.body;
+                    const width = dipWindow.innerWidth;
+                    const height = dipWindow.innerHeight;
+
+                    // Toggle classes based on size
+                    body.classList.toggle('compact-width', width < 200);
+                    body.classList.toggle('compact-height', height < 180);
+                    body.classList.toggle('minimal', height < 150);
+
+                    // Show trackpad resolution in corner during resize
+                    const trackpad = doc.getElementById('dipTrackpad');
+                    let resLabel = doc.getElementById('dipTrackpadRes');
+                    if (trackpad) {
+                        const tw = trackpad.offsetWidth;
+                        const th = trackpad.offsetHeight;
+                        if (!resLabel) {
+                            resLabel = doc.createElement('div');
+                            resLabel.id = 'dipTrackpadRes';
+                            resLabel.style.cssText = 'position:absolute;bottom:2px;right:2px;font-size:7px;opacity:0.5;pointer-events:none;font-family:monospace;';
+                            trackpad.style.position = 'relative';
+                            trackpad.appendChild(resLabel);
+                        }
+                        resLabel.textContent = `${tw}×${th}`;
+                        resLabel.style.display = '';
+
+                        // Hide after 1.5s of no resizing
+                        clearTimeout(resizeTimeout);
+                        resizeTimeout = setTimeout(() => {
+                            if (resLabel) resLabel.style.display = 'none';
+                        }, 1500);
+                    }
+                }
+                dipWindow.addEventListener('resize', updatePendantLayout);
+                updatePendantLayout(); // Initial check
+
+                // Handle close - show docked pendant when DIP closes
                 dipWindow.addEventListener('pagehide', () => {
                     dipWindow = null;
+                    document.getElementById('dockedPendant').style.display = '';
+                });
+
+                // Keyboard input for calculator in DIP window
+                dipWindow.addEventListener('keydown', (e) => {
+                    if (calcHandleKey(e)) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
                 });
 
                 log('Pendant opened', 'info');
@@ -6561,71 +7544,927 @@
             }
         }
 
+        // ========== Docked Pendant ==========
+        let dpNumpadMods = { shift: false, ctrl: false, alt: false, gui: false };
+        let calcMode = false;
+        let rpnMode = false;
+        let calcExpression = '';
+        let calcResult = null;
+        // RPN state
+        let rpnStack = [];
+        let rpnEntry = '';
+        let rpnHasEntry = false; // true when user is typing a new number
+        let rpnLastX = null; // stores X before last operation
+
+        function toggleCalcMode() {
+            calcMode = !calcMode;
+            calcExpression = '';
+            calcResult = null;
+            rpnStack = [];
+            rpnEntry = '';
+            rpnHasEntry = false;
+            updateCalcModeUI();
+            updateCalcDisplay();
+        }
+
+        function toggleRpnMode() {
+            if (!calcMode) return;
+            rpnMode = !rpnMode;
+            // Reset state when switching modes
+            calcExpression = '';
+            calcResult = null;
+            rpnStack = [];
+            rpnEntry = '';
+            rpnHasEntry = false;
+            updateCalcModeUI();
+            updateCalcDisplay();
+        }
+
+        function formatNumber(n) {
+            if (typeof n !== 'number') return String(n);
+            if (!Number.isFinite(n)) return 'ERR';
+            if (Math.abs(n) > 999999999999) return n.toExponential(4);
+            return String(Math.round(n * 100000000) / 100000000);
+        }
+
+        function updateCalcDisplay() {
+            let display, leftPart = '', rightPart = '';
+
+            if (rpnMode) {
+                // RPN: stack info on left, X value on right
+                const stackDepth = rpnStack.length;
+                const xValue = rpnHasEntry ? rpnEntry : (stackDepth > 0 ? formatNumber(rpnStack[stackDepth - 1]) : '0');
+
+                // Y value depends on whether we're typing:
+                // - If typing: Y is top of stack (entry is X)
+                // - If not typing: Y is second from top (top is X)
+                let yValue = null;
+                if (rpnHasEntry && stackDepth >= 1) {
+                    yValue = formatNumber(rpnStack[stackDepth - 1]);
+                } else if (!rpnHasEntry && stackDepth >= 2) {
+                    yValue = formatNumber(rpnStack[stackDepth - 2]);
+                }
+
+                // Left part: show Y if available, otherwise stack depth or RPN
+                if (yValue !== null) {
+                    // Show Y value (truncated) with arrow indicating "Y op X"
+                    const yStr = String(yValue).length > 6 ? String(yValue).slice(0, 5) + '…' : String(yValue);
+                    leftPart = `${yStr}→`;
+                } else if (stackDepth > 0 || rpnHasEntry) {
+                    leftPart = `[${stackDepth + (rpnHasEntry ? 1 : 0)}]`;
+                } else {
+                    leftPart = 'RPN';
+                }
+
+                // Right part: X value with cursor if typing
+                rightPart = xValue || '0';
+                if (rpnHasEntry) {
+                    rightPart += '_'; // Entry cursor
+                }
+                if (rightPart.length > 12) rightPart = rightPart.slice(-12);
+
+                display = null; // We'll set innerHTML instead
+            } else {
+                // Normal infix mode
+                display = calcResult !== null ? String(calcResult) : (calcExpression || '0');
+                if (display.length > 20) display = display.slice(-20);
+            }
+
+            // Update docked pendant LCD
+            const dpLcd = document.getElementById('dpLcd');
+            if (dpLcd && calcMode) {
+                if (rpnMode) {
+                    dpLcd.innerHTML = `<span style="float:left;opacity:0.6">${leftPart}</span><span style="float:right">${rightPart}</span>`;
+                } else {
+                    dpLcd.textContent = display;
+                }
+            }
+            // Update DIP pendant LCD
+            if (dipWindow && !dipWindow.closed) {
+                const dipLcd = dipWindow.document.getElementById('dipLcd');
+                if (dipLcd && calcMode) {
+                    if (rpnMode) {
+                        dipLcd.innerHTML = `<span style="float:left;opacity:0.6">${leftPart}</span><span style="float:right">${rightPart}</span>`;
+                    } else {
+                        dipLcd.textContent = display;
+                    }
+                }
+            }
+        }
+
+        function rpnPush() {
+            // Push current entry to stack (or duplicate top if no entry)
+            if (rpnHasEntry && rpnEntry) {
+                const num = parseFloat(rpnEntry);
+                if (!isNaN(num)) {
+                    rpnStack.push(num);
+                }
+                rpnEntry = '';
+                rpnHasEntry = false;
+            } else if (rpnStack.length > 0) {
+                // Duplicate top of stack
+                rpnStack.push(rpnStack[rpnStack.length - 1]);
+            }
+            updateCalcDisplay();
+        }
+
+        function rpnOperate(op) {
+            // If there's a pending entry, push it first
+            if (rpnHasEntry && rpnEntry) {
+                const num = parseFloat(rpnEntry);
+                if (!isNaN(num)) {
+                    rpnStack.push(num);
+                }
+                rpnEntry = '';
+                rpnHasEntry = false;
+            }
+
+            if (rpnStack.length < 2) {
+                // Not enough operands
+                return;
+            }
+
+            const x = rpnStack.pop();
+            const y = rpnStack.pop();
+            rpnLastX = x; // Save X before operation
+
+            let result;
+            switch (op) {
+                case '+': result = y + x; break;
+                case '-': result = y - x; break;
+                case '*': result = y * x; break;
+                case '/': result = x !== 0 ? y / x : NaN; break;
+                default: return;
+            }
+
+            rpnStack.push(result);
+            updateCalcDisplay();
+        }
+
+        function rpnDrop() {
+            if (rpnHasEntry) {
+                rpnEntry = '';
+                rpnHasEntry = false;
+            } else if (rpnStack.length > 0) {
+                rpnStack.pop();
+            }
+            updateCalcDisplay();
+        }
+
+        function rpnSwap() {
+            if (rpnStack.length >= 2) {
+                const x = rpnStack.pop();
+                const y = rpnStack.pop();
+                rpnStack.push(x);
+                rpnStack.push(y);
+                updateCalcDisplay();
+            }
+        }
+
+        function rpnRollDown() {
+            if (rpnStack.length >= 2) {
+                const top = rpnStack.pop();
+                rpnStack.unshift(top);
+                updateCalcDisplay();
+            }
+        }
+
+        function rpnRollUp() {
+            if (rpnStack.length >= 2) {
+                const bottom = rpnStack.shift();
+                rpnStack.push(bottom);
+                updateCalcDisplay();
+            }
+        }
+
+        function rpnNegate() {
+            // CHS - change sign
+            if (rpnHasEntry && rpnEntry) {
+                // Negate the entry string
+                if (rpnEntry.startsWith('-')) {
+                    rpnEntry = rpnEntry.slice(1);
+                } else {
+                    rpnEntry = '-' + rpnEntry;
+                }
+                updateCalcDisplay();
+            } else if (rpnStack.length > 0) {
+                // Negate top of stack
+                rpnStack[rpnStack.length - 1] = -rpnStack[rpnStack.length - 1];
+                updateCalcDisplay();
+            }
+        }
+
+        function rpnClearX() {
+            // CLx - clear X only (entry or top of stack)
+            if (rpnHasEntry) {
+                rpnEntry = '';
+                rpnHasEntry = false;
+            } else if (rpnStack.length > 0) {
+                rpnStack[rpnStack.length - 1] = 0;
+            }
+            updateCalcDisplay();
+        }
+
+        function rpnRecallLastX() {
+            // Recall LastX - push the saved X value
+            if (rpnLastX !== null) {
+                // If typing, push current entry first
+                if (rpnHasEntry && rpnEntry) {
+                    const num = parseFloat(rpnEntry);
+                    if (!isNaN(num)) {
+                        rpnStack.push(num);
+                    }
+                    rpnEntry = '';
+                    rpnHasEntry = false;
+                }
+                rpnStack.push(rpnLastX);
+                updateCalcDisplay();
+            }
+        }
+
+        function rpnUnaryOp(fn) {
+            // Apply a unary operation to X
+            // If typing, use entry; otherwise use top of stack
+            let x;
+            if (rpnHasEntry && rpnEntry) {
+                x = parseFloat(rpnEntry);
+                rpnEntry = '';
+                rpnHasEntry = false;
+            } else if (rpnStack.length > 0) {
+                x = rpnStack.pop();
+            } else {
+                return; // Nothing to operate on
+            }
+
+            rpnLastX = x;
+            const result = fn(x);
+            rpnStack.push(result);
+            updateCalcDisplay();
+        }
+
+        function rpnSqrt() {
+            rpnUnaryOp(x => Math.sqrt(x));
+        }
+
+        function rpnSquare() {
+            rpnUnaryOp(x => x * x);
+        }
+
+        function rpnReciprocal() {
+            rpnUnaryOp(x => x !== 0 ? 1 / x : NaN);
+        }
+
+        function rpnPercent() {
+            // If there's a Y: calculate X% of Y, push result (Y stays)
+            // If no Y: just divide X by 100
+            let x;
+            if (rpnHasEntry && rpnEntry) {
+                x = parseFloat(rpnEntry);
+                rpnEntry = '';
+                rpnHasEntry = false;
+            } else if (rpnStack.length > 0) {
+                x = rpnStack.pop();
+            } else {
+                return;
+            }
+
+            rpnLastX = x;
+            if (rpnStack.length > 0) {
+                // Y exists: calculate X% of Y
+                const y = rpnStack[rpnStack.length - 1]; // peek Y, don't pop
+                rpnStack.push(y * x / 100);
+            } else {
+                // No Y: just X/100
+                rpnStack.push(x / 100);
+            }
+            updateCalcDisplay();
+        }
+
+        function rpnPushPi() {
+            // If typing, push entry first
+            if (rpnHasEntry && rpnEntry) {
+                const num = parseFloat(rpnEntry);
+                if (!isNaN(num)) {
+                    rpnStack.push(num);
+                }
+                rpnEntry = '';
+                rpnHasEntry = false;
+            }
+            rpnStack.push(Math.PI);
+            updateCalcDisplay();
+        }
+
+        function calcEvaluate() {
+            if (rpnMode) {
+                rpnPush();
+                return;
+            }
+            if (!calcExpression) return;
+            try {
+                // Replace display operators with JS operators
+                const expr = calcExpression.replace(/×/g, '*').replace(/÷/g, '/');
+                calcResult = eval(expr);
+                // Handle floating point display
+                if (typeof calcResult === 'number') {
+                    if (!Number.isFinite(calcResult)) {
+                        calcResult = 'ERR';
+                    } else if (Math.abs(calcResult) > 999999999999) {
+                        calcResult = calcResult.toExponential(4);
+                    } else {
+                        calcResult = Math.round(calcResult * 100000000) / 100000000;
+                    }
+                }
+            } catch (e) {
+                calcResult = 'ERR';
+            }
+            updateCalcDisplay();
+        }
+
+        function calcClear() {
+            calcExpression = '';
+            calcResult = null;
+            rpnStack = [];
+            rpnEntry = '';
+            rpnHasEntry = false;
+            rpnLastX = null;
+            updateCalcDisplay();
+        }
+
+        function dpEscape() {
+            if (calcMode) {
+                calcClear();
+            } else if (kvm && kvm.connected) {
+                kvm.sendKey('escape');
+                flashLed('ledTx');
+            }
+        }
+
+        function calcBackspace() {
+            if (calcResult !== null) {
+                // After evaluation, backspace clears
+                calcClear();
+            } else if (calcExpression.length > 0) {
+                calcExpression = calcExpression.slice(0, -1);
+                updateCalcDisplay();
+            }
+        }
+
+        function calcHandleKey(e) {
+            // Don't intercept keys when jacked in - they should go to host
+            if (!calcMode || isCapturing) return false;
+
+            const key = e.key;
+
+            // Toggle RPN mode with 'R'
+            if (key === 'r' || key === 'R') {
+                toggleRpnMode();
+                return true;
+            }
+
+            // Clear (C only - Escape closes DIP window)
+            if (key === 'c' || key === 'C') {
+                calcClear();
+                return true;
+            }
+
+            // RPN-specific handling
+            if (rpnMode) {
+                // Digits
+                if (/^[0-9]$/.test(key)) {
+                    rpnEntry += key;
+                    rpnHasEntry = true;
+                    updateCalcDisplay();
+                    return true;
+                }
+
+                // Decimal point
+                if (key === '.') {
+                    if (!rpnEntry.includes('.')) {
+                        rpnEntry += '.';
+                        rpnHasEntry = true;
+                        updateCalcDisplay();
+                    }
+                    return true;
+                }
+
+                // Operators - immediate execution in RPN
+                if (['+', '-', '*', '/'].includes(key)) {
+                    rpnOperate(key);
+                    return true;
+                }
+
+                // Enter or Space - push to stack
+                if (key === 'Enter' || key === ' ') {
+                    rpnPush();
+                    return true;
+                }
+
+                // Backspace - delete entry char or drop stack
+                if (key === 'Backspace') {
+                    if (rpnHasEntry && rpnEntry.length > 0) {
+                        rpnEntry = rpnEntry.slice(0, -1);
+                        if (rpnEntry === '') rpnHasEntry = false;
+                        updateCalcDisplay();
+                    } else {
+                        rpnDrop();
+                    }
+                    return true;
+                }
+
+                // Delete - drop top of stack
+                if (key === 'Delete') {
+                    rpnDrop();
+                    return true;
+                }
+
+                // Arrow keys - stack manipulation
+                if (key === 'ArrowUp') {
+                    rpnRollUp();
+                    return true;
+                }
+                if (key === 'ArrowDown') {
+                    rpnRollDown();
+                    return true;
+                }
+
+                // Swap X and Y (S or Tab)
+                if (key === 's' || key === 'S' || key === 'Tab') {
+                    rpnSwap();
+                    return true;
+                }
+
+                // Negate / CHS (N or _)
+                if (key === 'n' || key === 'N' || key === '_') {
+                    rpnNegate();
+                    return true;
+                }
+
+                // LastX recall (L)
+                if (key === 'l' || key === 'L') {
+                    rpnRecallLastX();
+                    return true;
+                }
+
+                // CLx - clear X only (D for "delete X")
+                if (key === 'd' || key === 'D') {
+                    rpnClearX();
+                    return true;
+                }
+
+                // Square root (Q)
+                if (key === 'q' || key === 'Q') {
+                    rpnSqrt();
+                    return true;
+                }
+
+                // Square (@ or ²)
+                if (key === '@' || key === '²') {
+                    rpnSquare();
+                    return true;
+                }
+
+                // Reciprocal 1/x (I)
+                if (key === 'i' || key === 'I') {
+                    rpnReciprocal();
+                    return true;
+                }
+
+                // Percent (%)
+                if (key === '%') {
+                    rpnPercent();
+                    return true;
+                }
+
+                // Pi (P)
+                if (key === 'p' || key === 'P') {
+                    rpnPushPi();
+                    return true;
+                }
+
+                return false;
+            }
+
+            // Normal infix mode handling
+            // Digits
+            if (/^[0-9]$/.test(key)) {
+                if (calcResult !== null) {
+                    calcExpression = '';
+                    calcResult = null;
+                }
+                calcExpression += key;
+                updateCalcDisplay();
+                return true;
+            }
+
+            // Decimal point
+            if (key === '.') {
+                if (calcResult !== null) {
+                    calcExpression = '0';
+                    calcResult = null;
+                }
+                const lastOpIndex = Math.max(
+                    calcExpression.lastIndexOf('+'),
+                    calcExpression.lastIndexOf('-'),
+                    calcExpression.lastIndexOf('×'),
+                    calcExpression.lastIndexOf('÷')
+                );
+                const currentNumber = calcExpression.slice(lastOpIndex + 1);
+                if (!currentNumber.includes('.')) {
+                    calcExpression += '.';
+                    updateCalcDisplay();
+                }
+                return true;
+            }
+
+            // Operators
+            if (['+', '-', '*', '/'].includes(key)) {
+                if (calcResult !== null) {
+                    calcExpression = String(calcResult);
+                    calcResult = null;
+                }
+                if (calcExpression && !/[+\-×÷]$/.test(calcExpression)) {
+                    const opMap = { '+': '+', '-': '-', '*': '×', '/': '÷' };
+                    calcExpression += opMap[key];
+                    updateCalcDisplay();
+                }
+                return true;
+            }
+
+            // Evaluate
+            if (key === 'Enter' || key === '=') {
+                calcEvaluate();
+                return true;
+            }
+
+            // Backspace
+            if (key === 'Backspace') {
+                calcBackspace();
+                return true;
+            }
+
+            return false;
+        }
+
+        function updateCalcModeUI() {
+            // Update docked pendant
+            const dpCalcBtn = document.getElementById('dpCalcBtn');
+            if (dpCalcBtn) {
+                dpCalcBtn.classList.toggle('active', calcMode);
+                dpCalcBtn.classList.toggle('rpn', rpnMode);
+                dpCalcBtn.textContent = rpnMode ? 'RPN' : 'Calc';
+            }
+
+            // Reset LCD when exiting calc mode
+            const dpLcd = document.getElementById('dpLcd');
+            if (dpLcd) {
+                if (!calcMode) {
+                    dpLcd.textContent = kvm && kvm.connected ? 'READY' : 'DISCONNECTED';
+                    dpLcd.style.textAlign = '';
+                }
+            }
+
+            const dpModLabels = {
+                dpModShift: calcMode ? '+' : 'Shft',
+                dpModCtrl: calcMode ? '−' : 'Ctrl',
+                dpModAlt: calcMode ? '×' : 'Alt',
+                dpModGui: calcMode ? '÷' : 'Win'
+            };
+            for (const [id, label] of Object.entries(dpModLabels)) {
+                const btn = document.getElementById(id);
+                if (btn) {
+                    btn.textContent = label;
+                    btn.classList.toggle('calc-op', calcMode);
+                }
+            }
+
+            // Update DIP pendant if open
+            if (dipWindow && !dipWindow.closed) {
+                const doc = dipWindow.document;
+                const dipCalcBtn = doc.getElementById('dipCalcBtn');
+                if (dipCalcBtn) {
+                    dipCalcBtn.classList.toggle('active', calcMode);
+                    dipCalcBtn.classList.toggle('rpn', rpnMode);
+                    dipCalcBtn.textContent = rpnMode ? 'RPN' : 'Calc';
+                }
+
+                // Reset LCD when exiting calc mode
+                const dipLcd = doc.getElementById('dipLcd');
+                if (dipLcd) {
+                    if (!calcMode) {
+                        dipLcd.textContent = kvm && kvm.connected ? 'READY' : 'DISCONNECTED';
+                        dipLcd.style.textAlign = '';
+                    }
+                }
+
+                const dipModLabels = {
+                    modShift: calcMode ? '+' : 'Shft',
+                    modCtrl: calcMode ? '−' : 'Ctrl',
+                    modAlt: calcMode ? '×' : 'Alt',
+                    modGui: calcMode ? '÷' : 'Win'
+                };
+                for (const [id, label] of Object.entries(dipModLabels)) {
+                    const btn = doc.getElementById(id);
+                    if (btn) {
+                        btn.textContent = label;
+                        btn.classList.toggle('calc-op', calcMode);
+                    }
+                }
+            }
+        }
+
+        function showDockedPendant() {
+            document.getElementById('dockedPendant').style.display = '';
+        }
+
+        function hideDockedPendant() {
+            document.getElementById('dockedPendant').style.display = 'none';
+        }
+
+        async function popOutPendant() {
+            hideDockedPendant();
+            await openPendant();
+        }
+
+        function dockPendant() {
+            if (dipWindow && !dipWindow.closed) {
+                dipWindow.close();
+                dipWindow = null;
+            }
+            showDockedPendant();
+        }
+
+        function dpToggleMod(mod) {
+            if (calcMode) {
+                const opMap = { shift: '+', ctrl: '-', alt: '*', gui: '/' };
+                if (rpnMode) {
+                    // RPN: execute operator immediately
+                    rpnOperate(opMap[mod]);
+                } else {
+                    // Infix: add operator to expression
+                    if (calcResult !== null) {
+                        calcExpression = String(calcResult);
+                        calcResult = null;
+                    }
+                    const displayOp = { shift: '+', ctrl: '-', alt: '×', gui: '÷' };
+                    if (calcExpression && !/[+\-×÷]$/.test(calcExpression)) {
+                        calcExpression += displayOp[mod];
+                        updateCalcDisplay();
+                    }
+                }
+                return;
+            }
+            dpNumpadMods[mod] = !dpNumpadMods[mod];
+            const btn = document.getElementById('dpMod' + mod.charAt(0).toUpperCase() + mod.slice(1));
+            btn.classList.toggle('active', dpNumpadMods[mod]);
+        }
+
+        function dpNumpadKey(key) {
+            // In calc mode, handle locally
+            if (calcMode) {
+                if (rpnMode) {
+                    // RPN mode
+                    if (key === 'enter') {
+                        rpnPush();
+                    } else {
+                        // Append digit or decimal
+                        if (key === '.' && rpnEntry.includes('.')) return;
+                        rpnEntry += key;
+                        rpnHasEntry = true;
+                        updateCalcDisplay();
+                    }
+                } else {
+                    // Infix mode
+                    if (key === 'enter') {
+                        calcEvaluate();
+                    } else {
+                        if (calcResult !== null) {
+                            calcExpression = '';
+                            calcResult = null;
+                        }
+                        if (key === '.') {
+                            const lastOpIndex = Math.max(
+                                calcExpression.lastIndexOf('+'),
+                                calcExpression.lastIndexOf('-'),
+                                calcExpression.lastIndexOf('×'),
+                                calcExpression.lastIndexOf('÷')
+                            );
+                            const currentNumber = calcExpression.slice(lastOpIndex + 1);
+                            if (currentNumber.includes('.')) return;
+                        }
+                        calcExpression += key;
+                        updateCalcDisplay();
+                    }
+                }
+                return;
+            }
+
+            if (!kvm || !kvm.connected) return;
+
+            const mods = dpNumpadMods;
+            const modKeys = [];
+            if (mods.ctrl) modKeys.push('ctrl');
+            if (mods.shift) modKeys.push('shift');
+            if (mods.alt) modKeys.push('alt');
+            if (mods.gui) modKeys.push('gui');
+
+            if (modKeys.length > 0) {
+                modKeys.push(key);
+                sendCombo(modKeys);
+            } else {
+                kvm.sendKey(key);
+            }
+            flashLed('ledTx');
+        }
+
+        // Docked pendant trackpad
+        (function() {
+            let dpDragging = false;
+            let dpLastX = 0, dpLastY = 0;
+
+            document.addEventListener('DOMContentLoaded', () => {
+                const trackpad = document.getElementById('dpTrackpad');
+                if (!trackpad) return;
+
+                trackpad.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    dpDragging = true;
+                    dpLastX = e.clientX;
+                    dpLastY = e.clientY;
+                });
+
+                document.addEventListener('mousemove', (e) => {
+                    if (!dpDragging) return;
+                    const dx = e.clientX - dpLastX;
+                    const dy = e.clientY - dpLastY;
+                    dpLastX = e.clientX;
+                    dpLastY = e.clientY;
+
+                    if ((dx !== 0 || dy !== 0) && kvm && kvm.connected) {
+                        kvm.moveMouse(Math.round(dx * 2), Math.round(dy * 2));
+                        flashLed('ledTx');
+                    }
+                });
+
+                document.addEventListener('mouseup', () => {
+                    dpDragging = false;
+                });
+
+                trackpad.addEventListener('click', () => {
+                    if (kvm && kvm.connected) {
+                        kvm.click('left');
+                        flashLed('ledTx');
+                    }
+                });
+
+                trackpad.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    if (kvm && kvm.connected) {
+                        kvm.click('right');
+                        flashLed('ledTx');
+                    }
+                });
+
+                // Keyboard input for calculator when pendant is focused
+                const pendant = document.getElementById('dockedPendant');
+                pendant.addEventListener('keydown', (e) => {
+                    if (calcHandleKey(e)) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                });
+
+                // Make pendant focusable
+                pendant.setAttribute('tabindex', '0');
+            });
+        })();
+
+        // Sync docked pendant state
+        // Helper to update element only if changed
+        function setIf(el, prop, value) {
+            if (el[prop] !== value) el[prop] = value;
+        }
+        function setStyleIf(el, prop, value) {
+            if (el.style[prop] !== value) el.style[prop] = value;
+        }
+
+        function syncDockedPendant() {
+            const dp = document.getElementById('dockedPendant');
+            if (!dp || dp.style.display === 'none') return;
+
+            // Link LED
+            const ledLink = document.getElementById('dpLedLink');
+            const ledLinkClass = kvm && kvm.connected ? 'dp-led on' : 'dp-led';
+            setIf(ledLink, 'className', ledLinkClass);
+
+            // Jacked in status
+            const dotJacked = document.getElementById('dpDotJacked');
+            const statusJacked = document.getElementById('dpStatusJacked');
+            setIf(dotJacked, 'className', isCapturing ? 'dp-dot on' : 'dp-dot');
+            setIf(statusJacked, 'textContent', isCapturing ? 'ACT' : 'IDL');
+
+            // Command mode
+            const dotCmd = document.getElementById('dpDotCmd');
+            const cmdActive = cmdModeBanner && cmdModeBanner.classList.contains('active');
+            setIf(dotCmd, 'className', cmdActive ? 'dp-dot on' : 'dp-dot');
+
+            // Jiggler button
+            const jigglerBtn = document.getElementById('dpJigglerBtn');
+            setIf(jigglerBtn, 'className', 'dp-jig dp-primary');
+            setStyleIf(jigglerBtn, 'background', jigglerActive ? 'var(--accent-secondary)' : '');
+            setStyleIf(jigglerBtn, 'color', jigglerActive ? '#fff' : '');
+            setIf(jigglerBtn, 'textContent', jigglerActive ? 'Stop' : 'Jig');
+
+            // Connect button
+            const connectBtn = document.getElementById('dpConnectBtn');
+            const connected = kvm && kvm.connected;
+            setIf(connectBtn, 'className', 'dp-conn dp-primary');
+            setStyleIf(connectBtn, 'background', connected ? 'var(--accent-secondary)' : '');
+            setStyleIf(connectBtn, 'color', connected ? '#fff' : '');
+            setIf(connectBtn, 'textContent', connected ? 'Drop' : 'Conn');
+
+            // LCD (skip when in calc mode - calculator controls it)
+            if (!calcMode) {
+                const lcd = document.getElementById('dpLcd');
+                let lcdText = 'READY';
+                if (connected) {
+                    if (cmdActive) {
+                        lcdText = 'CMD MODE';
+                    } else if (jigglerActive) {
+                        lcdText = 'JIGGLING';
+                    } else if (isCapturing) {
+                        lcdText = 'JACKED IN';
+                    } else {
+                        const modParts = [];
+                        if (dpNumpadMods.ctrl) modParts.push('C');
+                        if (dpNumpadMods.shift) modParts.push('S');
+                        if (dpNumpadMods.alt) modParts.push('A');
+                        if (dpNumpadMods.gui) modParts.push('W');
+                        lcdText = modParts.length > 0 ? 'MOD: ' + modParts.join('+') : 'CONNECTED';
+                    }
+                }
+                setIf(lcd, 'textContent', lcdText);
+            }
+        }
+
+        // Sync both pendants periodically
+        setInterval(syncDockedPendant, 200);
+
         function syncPendantState() {
             if (!dipWindow || dipWindow.closed) return;
 
             const doc = dipWindow.document;
+            const connected = kvm && kvm.connected;
+            const cmdActive = cmdModeBanner && cmdModeBanner.classList.contains('active');
 
-            // Link LED (mirrors main LED)
+            // Link LED
             const ledLink = doc.getElementById('dipLedLink');
-            if (kvm.connected) {
-                ledLink.className = 'led on';
-            } else {
-                ledLink.className = 'led';
-            }
-
-            // Connection status
-            const dotConnect = doc.getElementById('dipDotConnect');
-            const statusConnect = doc.getElementById('dipStatusConnect');
-            if (kvm.connected) {
-                dotConnect.className = 'led on';
-                statusConnect.className = 'label active';
-                statusConnect.textContent = 'Connected';
-            } else {
-                dotConnect.className = 'led';
-                statusConnect.className = 'label';
-                statusConnect.textContent = 'Disconnected';
-            }
+            setIf(ledLink, 'className', connected ? 'led on' : 'led');
 
             // Jacked in status
             const dotJacked = doc.getElementById('dipDotJacked');
             const statusJacked = doc.getElementById('dipStatusJacked');
-            if (isCapturing) {
-                dotJacked.className = 'led warn';
-                statusJacked.className = 'label active';
-                statusJacked.textContent = 'Jacked In';
-            } else {
-                dotJacked.className = 'led';
-                statusJacked.className = 'label';
-                statusJacked.textContent = 'Idle';
-            }
+            setIf(dotJacked, 'className', isCapturing ? 'led warn' : 'led');
+            setIf(statusJacked, 'className', isCapturing ? 'label active' : 'label');
+            setIf(statusJacked, 'textContent', isCapturing ? 'ACT' : 'IDL');
 
-            // Command mode (check if banner is active)
+            // Command mode
             const dotCmd = doc.getElementById('dipDotCmd');
             const statusCmd = doc.getElementById('dipStatusCmd');
-            const cmdActive = cmdModeBanner && cmdModeBanner.classList.contains('active');
-            if (cmdActive) {
-                dotCmd.className = 'led warn';
-                statusCmd.className = 'label active';
-            } else {
-                dotCmd.className = 'led';
-                statusCmd.className = 'label';
-            }
-
-            // Stats
-            const stats = doc.getElementById('dipStats');
-            if (captureStats) {
-                stats.textContent = `M:${captureStats.mouse} C:${captureStats.clicks} K:${captureStats.keys}`;
-            }
+            setIf(dotCmd, 'className', cmdActive ? 'led warn' : 'led');
+            setIf(statusCmd, 'className', cmdActive ? 'label active' : 'label');
 
             // Jiggler button
             const jigglerBtn = doc.getElementById('dipJigglerBtn');
-            if (jigglerActive) {
-                jigglerBtn.className = 'active';
-                jigglerBtn.textContent = 'Stop';
-            } else {
-                jigglerBtn.className = '';
-                jigglerBtn.textContent = 'Jig';
+            setIf(jigglerBtn, 'className', jigglerActive ? 'dip-jig danger' : 'dip-jig primary');
+            setIf(jigglerBtn, 'textContent', jigglerActive ? 'Stop' : 'Jig');
+
+            // Connect/Drop button
+            const connectBtn = doc.getElementById('dipConnectBtn');
+            setIf(connectBtn, 'className', connected ? 'dip-conn danger' : 'dip-conn primary');
+            setIf(connectBtn, 'textContent', connected ? 'Drop' : 'Conn');
+
+            // LCD status display (skip when in calc mode - calculator controls it)
+            if (!calcMode) {
+                const lcd = doc.getElementById('dipLcd');
+                let lcdText = 'READY';
+                if (connected) {
+                    if (cmdActive) {
+                        lcdText = 'CMD MODE';
+                    } else if (jigglerActive) {
+                        lcdText = 'JIGGLING';
+                    } else if (isCapturing) {
+                        lcdText = 'JACKED IN';
+                    } else {
+                        const mods = dipWindow.numpadMods;
+                        const modParts = [];
+                        if (mods && mods.ctrl) modParts.push('C');
+                        if (mods && mods.shift) modParts.push('S');
+                        if (mods && mods.alt) modParts.push('A');
+                        if (mods && mods.gui) modParts.push('W');
+                        lcdText = modParts.length > 0 ? 'MOD: ' + modParts.join('+') : 'CONNECTED';
+                    }
+                }
+                setIf(lcd, 'textContent', lcdText);
             }
         }
 
@@ -6635,6 +8474,116 @@
                 syncPendantState();
             }
         }, 200);
+
+        // Update pendant theme when main theme changes (both DIP and docked)
+        function updatePendantTheme() {
+            const cs = getComputedStyle(document.documentElement);
+            const themeVars = {
+                bg: cs.getPropertyValue('--surface-base').trim() || '#0d0f12',
+                moduleBg: cs.getPropertyValue('--panel-bg').trim() || '#1a1d21',
+                panelInset: cs.getPropertyValue('--panel-inset').trim() || '#13161a',
+                displayBg: cs.getPropertyValue('--display-bg').trim() || '#0a0c0e',
+                text: cs.getPropertyValue('--text-normal').trim() || '#9aa0a6',
+                textDim: cs.getPropertyValue('--text-dim').trim() || '#5f6368',
+                border: cs.getPropertyValue('--panel-border').trim() || '#2a2d31',
+                accent: cs.getPropertyValue('--accent-primary').trim() || '#00b894',
+                accent2: cs.getPropertyValue('--accent-secondary').trim() || '#e17055',
+                pendantBtnBg: cs.getPropertyValue('--pendant-btn-bg').trim() || '#2a2d31',
+                pendantBtnText: cs.getPropertyValue('--pendant-btn-text').trim() || '#9aa0a6',
+                ledGreen: cs.getPropertyValue('--led-green').trim() || '#00ff66',
+                ledGreenDim: cs.getPropertyValue('--led-green-dim').trim() || '#004d1f',
+                ledAmber: cs.getPropertyValue('--led-amber').trim() || '#ffaa00',
+                ledAmberDim: cs.getPropertyValue('--led-amber-dim').trim() || '#4d3300',
+                ledBlue: cs.getPropertyValue('--led-blue').trim() || '#0099ff',
+                ledBlueDim: cs.getPropertyValue('--led-blue-dim').trim() || '#003366'
+            };
+
+            // Calculate trackpad colors (85% light gray + 15% accent)
+            const accentHex = themeVars.accent;
+            const r = parseInt(accentHex.slice(1,3), 16);
+            const g = parseInt(accentHex.slice(3,5), 16);
+            const b = parseInt(accentHex.slice(5,7), 16);
+            const tr = Math.round(200 * 0.85 + r * 0.15);
+            const tg = Math.round(200 * 0.85 + g * 0.15);
+            const tb = Math.round(200 * 0.85 + b * 0.15);
+            themeVars.trackpad = `rgb(${tr}, ${tg}, ${tb})`;
+            themeVars.trackpadDark = `rgb(${Math.round(tr*0.5)}, ${Math.round(tg*0.5)}, ${Math.round(tb*0.5)})`;
+
+            // Update docked pendant
+            const dpTrackpad = document.getElementById('dpTrackpad');
+            const dpCrosshair = document.querySelector('.dp-crosshair');
+            const dpNumpad = document.querySelector('.dp-numpad');
+            const dpLcd = document.getElementById('dpLcd');
+
+            if (dpTrackpad) {
+                dpTrackpad.style.background = themeVars.trackpad;
+                dpTrackpad.style.borderColor = themeVars.border;
+            }
+            if (dpCrosshair) {
+                dpCrosshair.style.borderColor = themeVars.trackpadDark;
+                dpCrosshair.style.color = themeVars.trackpadDark;
+            }
+            if (dpNumpad) {
+                dpNumpad.style.background = themeVars.panelInset;
+            }
+            if (dpLcd) {
+                dpLcd.style.background = themeVars.trackpad;
+                dpLcd.style.color = themeVars.trackpadDark;
+            }
+
+            // Update DIP pendant if open
+            if (!dipWindow || dipWindow.closed) return;
+
+            const body = dipWindow.document.body;
+            body.style.background = themeVars.bg;
+            body.style.color = themeVars.text;
+
+            const doc = dipWindow.document;
+            doc.querySelector('.header').style.borderColor = themeVars.border;
+            doc.querySelector('.mini-trackpad').style.background = themeVars.trackpad;
+            doc.querySelector('.mini-trackpad').style.borderColor = themeVars.border;
+            doc.querySelector('.trackpad-crosshair').style.borderColor = themeVars.trackpadDark;
+            doc.querySelector('.trackpad-crosshair').style.color = themeVars.trackpadDark;
+            doc.querySelector('.numpad').style.background = themeVars.panelInset;
+
+            // Update logo colors
+            const logoRects = doc.querySelectorAll('.logo rect');
+            if (logoRects.length >= 2) {
+                logoRects[0].setAttribute('fill', themeVars.accent);
+                logoRects[1].setAttribute('fill', themeVars.accent2);
+            }
+
+            // Update LCD
+            const lcd = doc.querySelector('.lcd-display');
+            if (lcd) {
+                lcd.style.background = themeVars.trackpad;
+                lcd.style.color = themeVars.trackpadDark;
+            }
+
+            // Update buttons
+            doc.querySelectorAll('button').forEach(btn => {
+                if (!btn.classList.contains('primary') && !btn.classList.contains('danger') && !btn.classList.contains('danger-action')) {
+                    btn.style.background = themeVars.pendantBtnBg;
+                    btn.style.color = themeVars.pendantBtnText;
+                }
+            });
+
+            // Update LED colors via CSS custom properties
+            const dipStyle = doc.getElementById('pendant-theme');
+            if (dipStyle) {
+                dipStyle.textContent = dipStyle.textContent.replace(
+                    /:root\s*\{[^}]*\}/,
+                    `:root {
+                        --led-green: ${themeVars.ledGreen};
+                        --led-green-dim: ${themeVars.ledGreenDim};
+                        --led-amber: ${themeVars.ledAmber};
+                        --led-amber-dim: ${themeVars.ledAmberDim};
+                        --led-blue: ${themeVars.ledBlue};
+                        --led-blue-dim: ${themeVars.ledBlueDim};
+                    }`
+                );
+            }
+        }
 
         // ===== Cursed Gesture Detection (disabled by default) =====
         // Detects yank up/down and shake gestures on the DIP pendant
