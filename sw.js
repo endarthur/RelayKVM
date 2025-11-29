@@ -1,5 +1,5 @@
 // RelayKVM Service Worker
-const CACHE_NAME = 'relaykvm-1.2.66';
+const CACHE_NAME = 'relaykvm-1.2.67';
 const ASSETS = [
   './',
   './index.html',

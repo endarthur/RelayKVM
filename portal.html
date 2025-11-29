@@ -637,9 +637,12 @@
             var seamlessActive = false;
             var positionInterval = null;
             var lastMouseX = 0, lastMouseY = 0;
+            var waitingForMouseMove = false; // Flag to wait for first mouse move after fullscreen
 
             function sendAbsolutePosition() {
                 if (!seamlessActive || !seamlessMode || !opener || !opener.kvm || !opener.kvm.connected) return;
+                // Wait for first mouse move after fullscreen to get valid coordinates
+                if (waitingForMouseMove) return;
                 if (!opener.kvm.moveMouseAbsolute) {
                     console.error('moveMouseAbsolute not available!');
                     return;
@@ -710,6 +713,8 @@
             // Activate seamless mode when fullscreen becomes ready
             document.addEventListener('fullscreen-ready', function() {
                 if (seamlessMode && isReady) {
+                    // Wait for first mouse move to get valid fullscreen coordinates
+                    waitingForMouseMove = true;
                     activateSeamless();
                 }
             });
@@ -785,6 +790,11 @@
                 // Track actual cursor position for seamless mode
                 lastMouseX = e.clientX;
                 lastMouseY = e.clientY;
+
+                // Clear the waiting flag on first mouse move after fullscreen
+                if (waitingForMouseMove) {
+                    waitingForMouseMove = false;
+                }
 
                 // In seamless mode, position is sent via interval
                 // In non-seamless mode with pointer lock, use relative movement
