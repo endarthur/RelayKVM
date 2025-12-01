@@ -2734,11 +2734,15 @@
             bottom: 40px;
             right: 12px;
             width: 320px;
+            min-width: 100px;
             z-index: 100;
             border-radius: 8px;
             overflow: hidden;
             box-shadow: 0 4px 20px rgba(0,0,0,0.3);
             border: 1px solid var(--panel-border);
+            resize: both;
+            container-type: inline-size;
+            container-name: pendant;
         }
 
         .docked-titlebar {
@@ -2969,6 +2973,19 @@
             justify-content: center;
             font-size: 12px;
             color: var(--text-dim);
+            transition: all 0.15s;
+        }
+
+        .dp-trackpad.captured {
+            border-color: var(--accent-primary);
+            cursor: none;
+        }
+
+        .dp-trackpad.captured .dp-crosshair {
+            opacity: 0.8;
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+            transform: scale(1.2);
         }
 
         .dp-numpad {
@@ -3052,6 +3069,107 @@
         .dp-danger-btn {
             border-color: var(--accent-secondary) !important;
             color: var(--accent-secondary) !important;
+        }
+
+        /* ============================================
+           Pendant Container Query Breakpoints
+           ============================================ */
+
+        /* Medium: 180-280px - Hide trackpad/numpad, show buttons */
+        @container pendant (max-width: 280px) {
+            .dp-trackpad,
+            .dp-numpad {
+                display: none !important;
+            }
+
+            .dp-grid {
+                grid-template-columns: repeat(4, 1fr);
+                grid-template-rows: auto auto auto;
+                grid-template-areas:
+                    "idl cmd cad esc"
+                    "lck slp wke ptl"
+                    "dock jig calc conn";
+            }
+
+            .dp-popout { grid-area: dock; }
+        }
+
+        /* Compact: 120-180px - Essential buttons only */
+        @container pendant (max-width: 180px) {
+            .dp-trackpad,
+            .dp-numpad,
+            .dp-lck,
+            .dp-slp,
+            .dp-wke,
+            .dp-ptl,
+            .dp-calc {
+                display: none !important;
+            }
+
+            .dp-grid {
+                grid-template-columns: repeat(3, 1fr);
+                grid-template-rows: auto auto;
+                grid-template-areas:
+                    "idl cad esc"
+                    "dock jig conn";
+            }
+
+            .dp-cmd { display: none !important; }
+            .dp-popout { grid-area: dock; }
+        }
+
+        /* Minimal: <120px - Just connect */
+        @container pendant (max-width: 120px) {
+            .dp-trackpad,
+            .dp-numpad,
+            .dp-lck,
+            .dp-slp,
+            .dp-wke,
+            .dp-ptl,
+            .dp-calc,
+            .dp-idl,
+            .dp-cmd,
+            .dp-cad,
+            .dp-esc,
+            .dp-popout,
+            .dp-jig {
+                display: none !important;
+            }
+
+            .dp-grid {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto;
+                grid-template-areas: "conn";
+            }
+
+            .dp-header-left { display: none; }
+            .dp-lcd { font-size: 9px; }
+        }
+
+        /* Header adjustments for medium sizes */
+        @container pendant (max-width: 200px) {
+            .dp-header-left .dp-logo { display: none; }
+            .dp-lcd { font-size: 10px; padding: 3px 6px; }
+        }
+
+        @container pendant (max-width: 150px) {
+            .dp-header-left { display: none; }
+            .dp-leds { gap: 2px; }
+            .dp-led { width: 6px; height: 12px; }
+        }
+
+        /* Titlebar adjustments */
+        @container pendant (max-width: 200px) {
+            .docked-origin { font-size: 10px; }
+        }
+
+        @container pendant (max-width: 150px) {
+            .docked-origin::before { display: none; }
+            .docked-titlebar { padding: 4px 8px; }
+        }
+
+        @container pendant (max-width: 120px) {
+            .docked-origin { display: none; }
         }
 
         /* Responsive */
@@ -4725,10 +4843,9 @@
         let trackpadButton = 0; // Which button was pressed
 
         trackpad.addEventListener('mousedown', (e) => {
-            if (!kvm.connected) return;
             e.preventDefault();
 
-            // Request pointer lock for unlimited movement
+            // Request pointer lock for unlimited movement (even if disconnected for discoverability)
             if (!trackpadLocked) {
                 trackpad.requestPointerLock();
             }
@@ -4769,17 +4886,15 @@
         });
 
         trackpad.addEventListener('mouseup', (e) => {
-            if (!kvm.connected) return;
-
-            // If barely moved, treat as a click
-            if (trackpadMoved < 5) {
+            // If barely moved and connected, treat as a click
+            if (trackpadMoved < 5 && kvm.connected) {
                 const btnName = { 1: 'left', 2: 'right', 4: 'middle' };
                 kvm.click(btnName[trackpadButton] || 'left');
                 flashLed('ledTx');
                 log('TX: Click ' + (btnName[trackpadButton] || 'left'), 'send');
             }
 
-            // Exit pointer lock
+            // Exit pointer lock (even if disconnected)
             if (trackpadLocked) {
                 document.exitPointerLock();
             }
@@ -7010,6 +7125,11 @@
                         flex-direction: column;
                         gap: 6px;
                         user-select: none;
+                        overflow: hidden;
+                    }
+                    body.minimal-dip {
+                        padding: 6px;
+                        gap: 4px;
                     }
                     .header {
                         display: flex;
@@ -7223,6 +7343,16 @@
                         border-color: ${themeVars.accent};
                         color: ${themeVars.accent};
                     }
+                    .mini-trackpad.captured {
+                        border-color: ${themeVars.accent};
+                        cursor: none;
+                    }
+                    .mini-trackpad.captured .trackpad-crosshair {
+                        opacity: 0.9;
+                        transform: translate(-50%, -50%) scale(1.2);
+                        border-color: ${themeVars.accent};
+                        color: ${themeVars.accent};
+                    }
                     .trackpad-crosshair {
                         position: absolute;
                         top: 50%;
@@ -7284,13 +7414,147 @@
                     }
 
                     /* Responsive adjustments via body classes */
-                    body.compact-width .numpad,
+
+                    /* Medium: Hide trackpad/numpad, reorganize to 4 columns */
+                    body.medium-width .mini-trackpad,
+                    body.medium-width .numpad {
+                        display: none !important;
+                    }
+                    body.medium-width .content-grid {
+                        grid-template-columns: repeat(4, 1fr);
+                        grid-template-rows: auto auto auto;
+                        grid-template-areas:
+                            "idl cmd cad esc"
+                            "lck slp wke ptl"
+                            "dock jig calc conn";
+                    }
+
+                    /* Compact: Essential buttons only, 3 columns */
                     body.compact-width .mini-trackpad,
-                    body.compact-width .lcd-display { display: none; }
+                    body.compact-width .numpad,
+                    body.compact-width .dip-lck,
+                    body.compact-width .dip-slp,
+                    body.compact-width .dip-wke,
+                    body.compact-width .dip-ptl,
+                    body.compact-width .dip-calc,
+                    body.compact-width .dip-cmd {
+                        display: none !important;
+                    }
+                    body.compact-width .content-grid {
+                        grid-template-columns: repeat(3, 1fr);
+                        grid-template-rows: auto auto;
+                        grid-template-areas:
+                            "idl cad esc"
+                            "dock jig conn";
+                    }
+
+                    /* Minimal: Just connect button */
+                    body.minimal .mini-trackpad,
+                    body.minimal .numpad,
+                    body.minimal .dip-lck,
+                    body.minimal .dip-slp,
+                    body.minimal .dip-wke,
+                    body.minimal .dip-ptl,
+                    body.minimal .dip-calc,
+                    body.minimal .dip-idl,
+                    body.minimal .dip-cmd,
+                    body.minimal .dip-cad,
+                    body.minimal .dip-esc,
+                    body.minimal .dip-dock,
+                    body.minimal .dip-jig {
+                        display: none !important;
+                    }
+                    body.minimal .content-grid {
+                        grid-template-columns: 1fr;
+                        grid-template-rows: auto;
+                        grid-template-areas: "conn";
+                    }
+                    body.minimal .header-left { display: none; }
+                    body.minimal .lcd-display { font-size: 9px; }
+
+                    /* Height-based hiding */
                     body.compact-height .numpad,
-                    body.compact-height .mini-trackpad { display: none; }
-                    body.compact-height .quick-actions { display: none; }
-                    body.minimal .content-grid { display: none; }
+                    body.compact-height .mini-trackpad { display: none !important; }
+
+                    /* Minimal DIP: Trackpad left, 2x2 grid right - fits ~240x54 */
+                    body.minimal-dip {
+                        flex-direction: row;
+                        align-items: stretch;
+                        padding: 4px;
+                        gap: 4px;
+                    }
+                    body.minimal-dip .header {
+                        display: flex;
+                        position: absolute;
+                        top: 6px;
+                        left: 6px;
+                        padding: 0;
+                        border: none;
+                        margin: 0;
+                        z-index: 10;
+                    }
+                    body.minimal-dip .header-left,
+                    body.minimal-dip .lcd-display { display: none; }
+                    body.minimal-dip .led-group {
+                        gap: 2px;
+                    }
+                    body.minimal-dip .led-group .led {
+                        width: 4px;
+                        height: 8px;
+                    }
+                    body.minimal-dip .content-grid {
+                        display: grid;
+                        grid-template-columns: 1fr auto auto;
+                        grid-template-rows: 1fr 1fr;
+                        grid-template-areas:
+                            "track wke slp"
+                            "track conn conn";
+                        gap: 3px;
+                        flex: 1;
+                    }
+                    body.minimal-dip .mini-trackpad {
+                        grid-area: track;
+                        min-height: 0;
+                        display: flex !important;
+                    }
+                    body.minimal-dip .mini-trackpad .trackpad-crosshair {
+                        font-size: 10px;
+                        width: 14px;
+                        height: 14px;
+                    }
+                    body.minimal-dip .dip-wke {
+                        grid-area: wke;
+                        display: flex !important;
+                        align-items: center;
+                        justify-content: center;
+                        padding: 2px 8px;
+                        font-size: 8px;
+                    }
+                    body.minimal-dip .dip-slp {
+                        grid-area: slp;
+                        display: flex !important;
+                        align-items: center;
+                        justify-content: center;
+                        padding: 2px 8px;
+                        font-size: 8px;
+                    }
+                    body.minimal-dip .dip-conn {
+                        grid-area: conn;
+                        padding: 2px 8px;
+                        font-size: 8px;
+                    }
+                    body.minimal-dip .numpad,
+                    body.minimal-dip .dip-idl,
+                    body.minimal-dip .dip-cmd,
+                    body.minimal-dip .dip-cad,
+                    body.minimal-dip .dip-esc,
+                    body.minimal-dip .dip-lck,
+                    body.minimal-dip .dip-ptl,
+                    body.minimal-dip .dip-calc,
+                    body.minimal-dip .dip-dock,
+                    body.minimal-dip .dip-jig {
+                        display: none !important;
+                    }
                 `;
                 dipWindow.document.head.appendChild(style);
                 dipWindow.document.title = 'RelayKVM';
@@ -7443,44 +7707,68 @@
                     dipWindow.main.flashLed('ledTx');
                 };
 
-                // Mini trackpad functionality
+                // Mini trackpad functionality with pointer lock (like main trackpad)
                 const miniTrackpad = dipWindow.document.getElementById('dipTrackpad');
+                let miniCaptured = false;
                 let miniDragging = false;
-                let miniLastX = 0, miniLastY = 0;
+                let miniMoved = 0;
+                let miniButton = 0;
 
                 miniTrackpad.addEventListener('mousedown', (e) => {
                     e.preventDefault();
+
+                    // Request pointer lock for unlimited movement (even if disconnected for discoverability)
+                    if (!miniCaptured) {
+                        miniTrackpad.requestPointerLock();
+                    }
+
+                    const btnMap = { 0: 1, 1: 4, 2: 2 };
+                    miniButton = btnMap[e.button] || 1;
+                    miniMoved = 0;
                     miniDragging = true;
-                    miniLastX = e.clientX;
-                    miniLastY = e.clientY;
+                });
+
+                dipWindow.document.addEventListener('pointerlockchange', () => {
+                    const wasCaptured = miniCaptured;
+                    miniCaptured = dipWindow.document.pointerLockElement === miniTrackpad;
+                    miniTrackpad.classList.toggle('captured', miniCaptured);
+                    if (wasCaptured && !miniCaptured) {
+                        miniDragging = false;
+                    }
                 });
 
                 dipWindow.addEventListener('mousemove', (e) => {
-                    if (!miniDragging) return;
-                    const dx = e.clientX - miniLastX;
-                    const dy = e.clientY - miniLastY;
-                    miniLastX = e.clientX;
-                    miniLastY = e.clientY;
+                    if (!miniDragging || !miniCaptured) return;
+                    const dx = e.movementX;
+                    const dy = e.movementY;
 
                     const main = dipWindow.main;
                     if ((dx !== 0 || dy !== 0) && main.kvm && main.kvm.connected) {
                         main.kvm.moveMouse(Math.round(dx * 2), Math.round(dy * 2));
                         main.flashLed('ledTx');
+                        miniMoved += Math.abs(dx) + Math.abs(dy);
                     }
                 });
 
-                dipWindow.addEventListener('mouseup', () => {
-                    miniDragging = false;
-                });
-
-                // Click on trackpad = left click
-                miniTrackpad.addEventListener('click', () => {
+                miniTrackpad.addEventListener('mouseup', (e) => {
                     const main = dipWindow.main;
-                    if (main.kvm && main.kvm.connected) {
-                        main.kvm.click('left');
+
+                    // If barely moved and connected, treat as click
+                    if (miniMoved < 5 && main.kvm && main.kvm.connected) {
+                        const btnName = { 1: 'left', 2: 'right', 4: 'middle' };
+                        main.kvm.click(btnName[miniButton] || 'left');
                         main.flashLed('ledTx');
                     }
+
+                    // Exit pointer lock (even if disconnected)
+                    if (miniCaptured) {
+                        dipWindow.document.exitPointerLock();
+                    }
+                    miniDragging = false;
+                    miniButton = 0;
                 });
+
+                miniTrackpad.addEventListener('contextmenu', (e) => e.preventDefault());
 
                 // Initial state sync
                 syncPendantState();
@@ -7493,10 +7781,20 @@
                     const width = dipWindow.innerWidth;
                     const height = dipWindow.innerHeight;
 
-                    // Toggle classes based on size
-                    body.classList.toggle('compact-width', width < 200);
-                    body.classList.toggle('compact-height', height < 180);
-                    body.classList.toggle('minimal', height < 150);
+                    // Toggle classes based on size (matching docked pendant breakpoints)
+                    // Detect minimal DIP (at browser minimum PiP size ~240x54)
+                    const isMinimalDip = height < 80;
+                    body.classList.toggle('minimal-dip', isMinimalDip);
+
+                    // Only apply other classes if not minimal-dip
+                    if (!isMinimalDip) {
+                        body.classList.toggle('medium-width', width < 280 && width >= 180);
+                        body.classList.toggle('compact-width', width < 180 && width >= 120);
+                        body.classList.toggle('minimal', width < 120);
+                        body.classList.toggle('compact-height', height < 150);
+                    } else {
+                        body.classList.remove('medium-width', 'compact-width', 'minimal', 'compact-height');
+                    }
 
                     // Show trackpad resolution in corner during resize
                     const trackpad = doc.getElementById('dipTrackpad');
@@ -8278,51 +8576,68 @@
 
         // Docked pendant trackpad
         (function() {
+            let dpCaptured = false;
             let dpDragging = false;
-            let dpLastX = 0, dpLastY = 0;
+            let dpMoved = 0;
+            let dpButton = 0;
 
             document.addEventListener('DOMContentLoaded', () => {
                 const trackpad = document.getElementById('dpTrackpad');
                 if (!trackpad) return;
 
+                // Pointer lock on drag start (like main trackpad)
                 trackpad.addEventListener('mousedown', (e) => {
                     e.preventDefault();
+
+                    // Request pointer lock for unlimited movement (even if disconnected for discoverability)
+                    if (!dpCaptured) {
+                        trackpad.requestPointerLock();
+                    }
+
+                    const btnMap = { 0: 1, 1: 4, 2: 2 };
+                    dpButton = btnMap[e.button] || 1;
+                    dpMoved = 0;
                     dpDragging = true;
-                    dpLastX = e.clientX;
-                    dpLastY = e.clientY;
+                });
+
+                document.addEventListener('pointerlockchange', () => {
+                    const wasCapture = dpCaptured;
+                    dpCaptured = document.pointerLockElement === trackpad;
+                    trackpad.classList.toggle('captured', dpCaptured);
+                    if (wasCapture && !dpCaptured) {
+                        dpDragging = false;
+                    }
                 });
 
                 document.addEventListener('mousemove', (e) => {
-                    if (!dpDragging) return;
-                    const dx = e.clientX - dpLastX;
-                    const dy = e.clientY - dpLastY;
-                    dpLastX = e.clientX;
-                    dpLastY = e.clientY;
+                    if (!dpDragging || !dpCaptured) return;
+                    const dx = e.movementX;
+                    const dy = e.movementY;
 
                     if ((dx !== 0 || dy !== 0) && kvm && kvm.connected) {
                         kvm.moveMouse(Math.round(dx * 2), Math.round(dy * 2));
                         flashLed('ledTx');
+                        dpMoved += Math.abs(dx) + Math.abs(dy);
                     }
                 });
 
-                document.addEventListener('mouseup', () => {
+                trackpad.addEventListener('mouseup', (e) => {
+                    // If barely moved and connected, treat as click
+                    if (dpMoved < 5 && kvm && kvm.connected) {
+                        const btnName = { 1: 'left', 2: 'right', 4: 'middle' };
+                        kvm.click(btnName[dpButton] || 'left');
+                        flashLed('ledTx');
+                    }
+
+                    // Exit pointer lock (even if disconnected)
+                    if (dpCaptured) {
+                        document.exitPointerLock();
+                    }
                     dpDragging = false;
+                    dpButton = 0;
                 });
 
-                trackpad.addEventListener('click', () => {
-                    if (kvm && kvm.connected) {
-                        kvm.click('left');
-                        flashLed('ledTx');
-                    }
-                });
-
-                trackpad.addEventListener('contextmenu', (e) => {
-                    e.preventDefault();
-                    if (kvm && kvm.connected) {
-                        kvm.click('right');
-                        flashLed('ledTx');
-                    }
-                });
+                trackpad.addEventListener('contextmenu', (e) => e.preventDefault());
 
                 // Keyboard input for calculator when pendant is focused
                 const pendant = document.getElementById('dockedPendant');
