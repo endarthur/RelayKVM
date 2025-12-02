@@ -278,6 +278,7 @@
             <span class="key">D</span><span>Desktop (Win+D)</span>
             <span class="key">T</span><span>Alt+Tab</span>
             <span class="key">A</span><span>Ctrl+Alt+Del</span>
+            <span class="key">R</span><span>Smart right-click</span>
             <span class="key">M</span><span>Show sensitivity</span>
             <span class="key">+/-</span><span>Mouse sens</span>
             <span class="key">[ ]</span><span>Scroll sens</span>
@@ -388,6 +389,11 @@
             let heldModifiers = 0, heldKeys = [];
             let captureButtons = 0;
 
+            // Smart right-click: tap=Menu key, drag=Ctrl+Left (for apps that don't recognize digitizer barrel button)
+            let smartRightClick = localStorage.getItem('smartRightClick') === 'true'; // default false
+            let rightDragState = null; // null=not pressed, 'pending'=pressed but not moved, 'dragging'=ctrl+left active
+            let rightStartX = 0, rightStartY = 0;
+
             // Screen Wake Lock
             let wakeLock = null;
             let wakeLockEnabled = localStorage.getItem('wakeLockEnabled') === 'true'; // default false
@@ -453,6 +459,23 @@
                 cmdToastTimeout = setTimeout(function() {
                     cmdToast.classList.remove('visible');
                 }, 1500);
+            }
+
+            // Show feedback on both toast and main window LCD (for virtual screen users)
+            function showFeedback(msg) {
+                showCmdToast(msg, true);
+                // Update main window LCDs with hold to prevent sync overwrite
+                if (opener && opener.setLcdFeedback) {
+                    try {
+                        opener.setLcdFeedback(msg, 2000);
+                    } catch(e) {}
+                }
+            }
+
+            function toggleSmartRightClick() {
+                smartRightClick = !smartRightClick;
+                localStorage.setItem('smartRightClick', smartRightClick);
+                showFeedback(smartRightClick ? 'RClick: Smart' : 'RClick: Normal');
             }
 
             function toggleCmdHelp() {
@@ -602,6 +625,11 @@
                         }
                         break;
 
+                    case 'r':
+                        toggleSmartRightClick();
+                        result = null; // Feedback handled by toggleSmartRightClick
+                        break;
+
                     case 'h':
                     case '?':
                         toggleCmdHelp();
@@ -647,6 +675,21 @@
                     console.error('moveMouseAbsolute not available!');
                     return;
                 }
+
+                // Smart right-click: detect drag and switch to Ctrl+Left mode
+                if (smartRightClick && rightDragState === 'pending') {
+                    var dx = Math.abs(lastMouseX - rightStartX);
+                    var dy = Math.abs(lastMouseY - rightStartY);
+                    if (dx > 5 || dy > 5) {
+                        // Switched to dragging - send Ctrl+Left instead of right
+                        rightDragState = 'dragging';
+                        // Add Ctrl modifier and left button
+                        heldModifiers |= 0x01; // Left Ctrl
+                        captureButtons |= 1;   // Left button
+                        opener.kvm.sendKeyboardReport(heldModifiers, heldKeys);
+                    }
+                }
+
                 // Map portal window coordinates to target screen coordinates
                 // Portal window represents the full target screen
                 var absX = Math.round((lastMouseX / window.innerWidth) * 32767);
@@ -809,13 +852,16 @@
                     vCursorY += e.movementY * sensitivity;
                     // Clamp Y
                     vCursorY = Math.max(0, Math.min(targetHeight, vCursorY));
-                    // Check exit edge - exit towards primary monitor
+                    // Check exit edge - exit towards primary monitor (if edge release enabled)
                     // Portal on LEFT = exit by going RIGHT (back to primary)
                     // Portal on RIGHT = exit by going LEFT (back to primary)
-                    if (seamlessEdge === 'left' && vCursorX > targetWidth + 20) {
-                        document.exitPointerLock();
-                    } else if (seamlessEdge === 'right' && vCursorX < -20) {
-                        document.exitPointerLock();
+                    var edgeReleaseEnabled = opener && opener.edgeRelease !== false;
+                    if (edgeReleaseEnabled) {
+                        if (seamlessEdge === 'left' && vCursorX > targetWidth + 20) {
+                            document.exitPointerLock();
+                        } else if (seamlessEdge === 'right' && vCursorX < -20) {
+                            document.exitPointerLock();
+                        }
                     }
                     // Clamp X within bounds (with small overflow for exit detection)
                     vCursorX = Math.max(-50, Math.min(targetWidth + 50, vCursorX));
@@ -826,6 +872,15 @@
                 // Work with either seamless mode (seamlessActive) or pointer lock (captured)
                 if ((!seamlessActive && !captured) || !opener || !opener.kvm) return;
                 e.preventDefault();
+
+                // Smart right-click handling in seamless mode
+                if (seamlessActive && smartRightClick && e.button === 2) {
+                    rightDragState = 'pending';
+                    rightStartX = lastMouseX;
+                    rightStartY = lastMouseY;
+                    return; // Don't send anything yet
+                }
+
                 var btnMap = { 0: 1, 1: 4, 2: 2 };
                 captureButtons |= btnMap[e.button] || 0;
 
@@ -845,6 +900,29 @@
                 // Work with either seamless mode (seamlessActive) or pointer lock (captured)
                 if ((!seamlessActive && !captured) || !opener || !opener.kvm) return;
                 e.preventDefault();
+
+                // Smart right-click handling in seamless mode
+                if (seamlessActive && smartRightClick && e.button === 2 && rightDragState) {
+                    if (rightDragState === 'pending') {
+                        // Didn't drag - send Application/Menu key
+                        var menuKeyCode = opener.RelayKVMAdapter && opener.RelayKVMAdapter.KEYCODE['app'];
+                        if (menuKeyCode) {
+                            opener.kvm.sendKeyboardReport(0, [menuKeyCode]);
+                            opener.kvm.sendKeyboardReport(0, []);
+                        }
+                    } else if (rightDragState === 'dragging') {
+                        // Was dragging with Ctrl+Left - release them
+                        heldModifiers &= ~0x01; // Release Left Ctrl
+                        captureButtons &= ~1;   // Release left button
+                        opener.kvm.sendKeyboardReport(heldModifiers, heldKeys);
+                        var absX = Math.round((lastMouseX / window.innerWidth) * 32767);
+                        var absY = Math.round((lastMouseY / window.innerHeight) * 32767);
+                        opener.kvm.moveMouseAbsolute(absX, absY, 0, captureButtons);
+                    }
+                    rightDragState = null;
+                    return;
+                }
+
                 var btnMap = { 0: 1, 1: 4, 2: 2 };
                 captureButtons &= ~(btnMap[e.button] || 0);
 

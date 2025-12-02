@@ -3389,6 +3389,33 @@
                             </div>
                         </div>
                         <div class="settings-row">
+                            <span class="settings-label">Keyboard Lock (Fullscreen)</span>
+                            <div class="settings-value">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="modalKeyboardLock" onchange="updateKeyboardLockFromModal(this.checked)">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="settings-row">
+                            <span class="settings-label">Fullscreen on Jack-In</span>
+                            <div class="settings-value">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="modalFullscreenOnJackIn" onchange="updateFullscreenOnJackInFromModal(this.checked)">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="settings-row">
+                            <span class="settings-label">Edge Release (Jack-In)</span>
+                            <div class="settings-value">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="modalEdgeRelease" onchange="updateEdgeReleaseFromModal(this.checked)">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="settings-row">
                             <span class="settings-label">Show Log (no video)</span>
                             <div class="settings-value">
                                 <label class="toggle-switch">
@@ -4343,6 +4370,9 @@
             const savedScroll = parseInt(localStorage.getItem('scrollSensitivity')) || 3;
             const savedExitKey = localStorage.getItem('exitKey') || 'Escape';
             const savedCapsLock = localStorage.getItem('capsLockCmdMode') === 'true';
+            const savedKeyboardLock = localStorage.getItem('keyboardLockEnabled') !== 'false'; // default true
+            const savedFullscreenOnJackIn = localStorage.getItem('fullscreenOnJackIn') === 'true'; // default false
+            const savedEdgeRelease = localStorage.getItem('edgeRelease') !== 'false'; // default true
             const savedAutoShowLog = localStorage.getItem('autoShowLogNoVideo') !== 'false'; // default true
             const savedClipboardBridge = localStorage.getItem('clipboardBridgeEnabled') === 'true'; // default false
 
@@ -4352,6 +4382,9 @@
             document.getElementById('modalScrollSpeedVal').textContent = savedScroll;
             document.getElementById('modalExitKey').value = savedExitKey;
             document.getElementById('modalCapsLockMode').checked = savedCapsLock;
+            document.getElementById('modalKeyboardLock').checked = savedKeyboardLock;
+            document.getElementById('modalFullscreenOnJackIn').checked = savedFullscreenOnJackIn;
+            document.getElementById('modalEdgeRelease').checked = savedEdgeRelease;
             document.getElementById('modalAutoShowLog').checked = savedAutoShowLog;
             document.getElementById('modalClipboardBridge').checked = savedClipboardBridge;
         }
@@ -4416,6 +4449,32 @@
             localStorage.setItem('clipboardBridgeEnabled', checked);
             clipboardBridgeEnabled = checked;
             log('Clipboard bridge: ' + (checked ? 'ON' : 'OFF'), 'info');
+        }
+
+        function updateEdgeReleaseFromModal(checked) {
+            localStorage.setItem('edgeRelease', checked);
+            edgeRelease = checked;
+            log('Edge release (jack-in): ' + (checked ? 'ON' : 'OFF'), 'info');
+        }
+
+        function updateKeyboardLockFromModal(checked) {
+            localStorage.setItem('keyboardLockEnabled', checked);
+            keyboardLockEnabled = checked;
+            log('Keyboard lock (fullscreen): ' + (checked ? 'ON' : 'OFF'), 'info');
+            // If disabling while locked, unlock immediately
+            if (!checked && keyboardLocked) {
+                releaseKeyboardLock();
+            }
+            // If enabling while already fullscreen and capturing, lock now
+            if (checked && document.fullscreenElement && isCapturing) {
+                requestKeyboardLock();
+            }
+        }
+
+        function updateFullscreenOnJackInFromModal(checked) {
+            localStorage.setItem('fullscreenOnJackIn', checked);
+            fullscreenOnJackIn = checked;
+            log('Fullscreen on jack-in: ' + (checked ? 'ON' : 'OFF'), 'info');
         }
 
         // Screen Wake Lock
@@ -4488,6 +4547,9 @@
                 'scrollSensitivity',
                 'autoShowLogNoVideo',
                 'capsLockCmdMode',
+                'keyboardLockEnabled',
+                'fullscreenOnJackIn',
+                'edgeRelease',
                 'clipboardBridgeEnabled',
                 'wakeLockEnabled',
                 'exitKey',
@@ -5187,6 +5249,7 @@
             targetHeight: { get: () => targetHeight },
             mouseSensitivity: { get: () => mouseSensitivity },
             scrollSensitivity: { get: () => scrollSensitivity },
+            edgeRelease: { get: () => edgeRelease },
             CODE_TO_KEY: { get: () => CODE_TO_KEY },
             RelayKVMAdapter: { get: () => RelayKVMAdapter }
         });
@@ -5208,11 +5271,6 @@
         };
 
         function openSeamlessWindow() {
-            if (!kvm.connected) {
-                log('Connect to device first', 'error');
-                return;
-            }
-
             // Close existing portal if open
             if (portalWindow && !portalWindow.closed) {
                 portalWindow.focus();
@@ -5234,6 +5292,11 @@
                 portalWindow = null;
                 log('Portal closed', 'info');
             }
+        }
+
+        // Alias for pendant/DIP buttons
+        function openPortal() {
+            openSeamlessWindow();
         }
 
         // Configurable exit key
@@ -5259,6 +5322,13 @@
         // CapsLock command mode
         let capsLockCmdMode = localStorage.getItem('capsLockCmdMode') === 'true';
         let clipboardBridgeEnabled = localStorage.getItem('clipboardBridgeEnabled') === 'true'; // default false
+        let edgeRelease = localStorage.getItem('edgeRelease') !== 'false'; // default true
+
+        // Keyboard Lock API - capture system keys in fullscreen
+        let keyboardLockEnabled = localStorage.getItem('keyboardLockEnabled') !== 'false'; // default true
+        let fullscreenOnJackIn = localStorage.getItem('fullscreenOnJackIn') === 'true'; // default false
+        let keyboardLocked = false; // true when keyboard.lock() is active
+        let capsLockHeld = false; // track CapsLock as modifier when locked
         const cmdModeBanner = document.getElementById('cmdModeBanner');
         const captureSubtitle = document.getElementById('captureSubtitle');
 
@@ -5407,19 +5477,19 @@
                 `;
                 helpOverlay.innerHTML = `
                     <div style="color: var(--accent-primary); font-weight: bold; margin-bottom: 12px; font-size: 14px;">
-                        CapsLock Command Mode
+                        CapsLock Command Mode ${keyboardLocked ? '(HOLD)' : '(TOGGLE)'}
                     </div>
                     <div style="display: grid; grid-template-columns: auto auto; gap: 4px 16px;">
                         <span style="color: var(--accent-secondary);">C</span><span>Connect/Disconnect</span>
                         <span style="color: var(--accent-secondary);">J</span><span>Toggle Jiggler</span>
-                        <span style="color: var(--accent-secondary);">Q</span><span>Jack Out</span>
+                        <span style="color: var(--accent-secondary);">Q / Esc</span><span>Jack Out</span>
                         <span style="color: var(--accent-secondary);">R</span><span>Reset Device</span>
                         <span style="color: var(--accent-secondary);">W</span><span>Wake</span>
                         <span style="color: var(--accent-secondary);">S</span><span>Sleep</span>
                         <span style="color: var(--accent-secondary);">L</span><span>Lock (Win+L)</span>
                         <span style="color: var(--accent-secondary);">D</span><span>Desktop (Win+D)</span>
-                        <span style="color: var(--accent-secondary);">T</span><span>Alt+Tab</span>
-                        <span style="color: var(--accent-secondary);">A</span><span>Ctrl+Alt+Del</span>
+                        <span style="color: var(--accent-secondary);">T / Tab</span><span>Alt+Tab</span>
+                        <span style="color: var(--accent-secondary);">A / Del</span><span>Ctrl+Alt+Del</span>
                         <span style="color: var(--accent-secondary);">V</span><span>Toggle Video</span>
                         <span style="color: var(--accent-secondary);">F</span><span>Fullscreen</span>
                         <span style="color: var(--accent-secondary);">O</span><span>Toggle Log</span>
@@ -5430,7 +5500,7 @@
                         <span style="color: var(--accent-secondary);">[ / ]</span><span>Scroll Speed</span>
                     </div>
                     <div style="color: var(--text-dim); margin-top: 12px; font-size: 10px; text-align: center;">
-                        Press any key to close
+                        ${keyboardLocked ? 'Fullscreen: CapsLock = hold modifier, system keys captured' : 'Toggle CapsLock to enter/exit command mode'}
                     </div>
                 `;
                 document.body.appendChild(helpOverlay);
@@ -5458,7 +5528,27 @@
             }
         }
 
-        function handleCmdModeKey(key) {
+        function handleCmdModeKey(key, code) {
+            // Special key codes (when keyboard locked, these keys are captured)
+            if (code === 'Delete') {
+                sendCombo(['ctrl', 'alt', 'delete']);
+                showCmdToast('Ctrl+Alt+Del');
+                log('CMD: Ctrl+Alt+Del', 'info');
+                return true;
+            }
+            if (code === 'Tab') {
+                sendCombo(['alt', 'tab']);
+                showCmdToast('Alt+Tab');
+                log('CMD: Alt+Tab', 'info');
+                return true;
+            }
+            if (code === 'Escape') {
+                stopCapture();
+                showCmdToast('Jack Out');
+                log('CMD: Jack Out', 'info');
+                return true;
+            }
+
             const cmd = CMD_MODE_COMMANDS[key.toLowerCase()];
             if (cmd) {
                 const desc = cmd();
@@ -5569,6 +5659,21 @@
 
         function startCapture() {
             if (!kvm.connected) return;
+
+            // Request fullscreen first if enabled (keyboard lock requires fullscreen)
+            if (fullscreenOnJackIn && !document.fullscreenElement) {
+                document.documentElement.requestFullscreen().then(() => {
+                    doStartCapture();
+                }).catch(() => {
+                    // Fullscreen denied, continue without it
+                    doStartCapture();
+                });
+            } else {
+                doStartCapture();
+            }
+        }
+
+        function doStartCapture() {
             overlay.classList.add('active');
             document.getElementById('capturePanel').classList.add('captured');
             // If video is streaming, make overlay transparent
@@ -5602,6 +5707,10 @@
             if (document.pointerLockElement === overlay) document.exitPointerLock();
             resetCaptureKeyboardState();
             captureButtons = 0;
+            // Exit fullscreen if we auto-entered it
+            if (fullscreenOnJackIn && document.fullscreenElement) {
+                document.exitFullscreen().catch(() => {});
+            }
             // PWA badge - clear when jacked out
             if ('clearAppBadge' in navigator) {
                 navigator.clearAppBadge().catch(() => {});
@@ -5648,6 +5757,11 @@
                 document.addEventListener('wheel', onCaptureWheel);
                 document.addEventListener('keydown', onCaptureKeyDown);
                 document.addEventListener('keyup', onCaptureKeyUp);
+
+                // Request keyboard lock if already fullscreen
+                if (document.fullscreenElement) {
+                    requestKeyboardLock();
+                }
             } else if (document.pointerLockElement === null && isCapturing) {
                 // Pointer lock released while in capture mode - stop capture
                 document.removeEventListener('mousemove', onCaptureMouseMove);
@@ -5661,6 +5775,47 @@
                 stopCapture();
             }
             // If pointerLockElement is trackpad, do nothing here (trackpad handler handles it)
+        });
+
+        // Keyboard Lock API - capture system keys when fullscreen
+        async function requestKeyboardLock() {
+            if (!keyboardLockEnabled || !navigator.keyboard || !navigator.keyboard.lock) return;
+            if (!document.fullscreenElement) return;
+
+            try {
+                // Lock CapsLock and system keys
+                await navigator.keyboard.lock([
+                    'CapsLock',
+                    'AltLeft', 'AltRight',
+                    'Tab',
+                    'MetaLeft', 'MetaRight',
+                    'Escape',
+                    'ControlLeft', 'ControlRight'
+                ]);
+                keyboardLocked = true;
+                capsLockHeld = false;
+                log('Keyboard locked - CapsLock is now hold-modifier', 'info');
+            } catch (err) {
+                log('Keyboard lock failed: ' + err.message, 'warn');
+            }
+        }
+
+        function releaseKeyboardLock() {
+            if (!navigator.keyboard || !navigator.keyboard.unlock) return;
+            if (!keyboardLocked) return;
+
+            navigator.keyboard.unlock();
+            keyboardLocked = false;
+            capsLockHeld = false;
+            log('Keyboard unlocked', 'info');
+        }
+
+        document.addEventListener('fullscreenchange', () => {
+            if (document.fullscreenElement && isCapturing) {
+                requestKeyboardLock();
+            } else {
+                releaseKeyboardLock();
+            }
         });
 
         function onCaptureMouseMove(e) {
@@ -5790,25 +5945,39 @@
         function onCaptureKeyDown(e) {
             if (!isCapturing || !kvm.connected) return;
             // Check for configurable exit key (use e.key for this since user expects character)
-            if (e.key === exitKey) {
+            // When keyboard locked, Escape is captured - only exit if not locked
+            if (e.key === exitKey && !keyboardLocked) {
                 stopCapture();
                 return;
             }
             e.preventDefault();
 
-            // Check CapsLock command mode
-            const capsLockOn = e.getModifierState('CapsLock');
-            if (capsLockCmdMode && capsLockOn) {
-                // Update display on first key in command mode
-                updateCmdModeDisplay(true);
-
-                // Handle command - use e.key for the actual character
-                if (e.code !== 'CapsLock') {
-                    handleCmdModeKey(e.key);
+            // CapsLock command mode handling
+            if (capsLockCmdMode) {
+                // When keyboard locked, CapsLock is a hold-modifier
+                if (keyboardLocked) {
+                    if (e.code === 'CapsLock') {
+                        capsLockHeld = true;
+                        updateCmdModeDisplay(true);
+                        return;
+                    }
+                    if (capsLockHeld) {
+                        handleCmdModeKey(e.key, e.code);
+                        return;
+                    }
+                } else {
+                    // Original toggle behavior when not locked
+                    const capsLockOn = e.getModifierState('CapsLock');
+                    if (capsLockOn) {
+                        updateCmdModeDisplay(true);
+                        if (e.code !== 'CapsLock') {
+                            handleCmdModeKey(e.key, e.code);
+                        }
+                        return;
+                    } else {
+                        updateCmdModeDisplay(false);
+                    }
                 }
-                return;
-            } else if (capsLockCmdMode) {
-                updateCmdModeDisplay(false);
             }
 
             // Use e.code for physical key mapping
@@ -5831,11 +6000,22 @@
             if (!isCapturing || !kvm.connected) return;
             e.preventDefault();
 
-            // Update command mode display when CapsLock changes
+            // CapsLock command mode handling
             if (capsLockCmdMode) {
-                const capsLockOn = e.getModifierState('CapsLock');
-                updateCmdModeDisplay(capsLockOn);
-                if (capsLockOn) return; // Don't process key releases in command mode
+                if (keyboardLocked) {
+                    // When keyboard locked, CapsLock release exits command mode
+                    if (e.code === 'CapsLock') {
+                        capsLockHeld = false;
+                        updateCmdModeDisplay(false);
+                        return;
+                    }
+                    if (capsLockHeld) return; // Don't process key releases in command mode
+                } else {
+                    // Original toggle behavior
+                    const capsLockOn = e.getModifierState('CapsLock');
+                    updateCmdModeDisplay(capsLockOn);
+                    if (capsLockOn) return; // Don't process key releases in command mode
+                }
             }
 
             const key = CODE_TO_KEY[e.code];
@@ -8662,6 +8842,18 @@
             if (el.style[prop] !== value) el.style[prop] = value;
         }
 
+        // LCD feedback hold - prevents sync from overwriting feedback messages
+        let lcdFeedbackUntil = 0;
+        window.setLcdFeedback = function(msg, holdMs = 2000) {
+            lcdFeedbackUntil = Date.now() + holdMs;
+            const dpLcd = document.getElementById('dpLcd');
+            if (dpLcd) dpLcd.textContent = msg;
+            if (dipWindow && !dipWindow.closed) {
+                const dipLcd = dipWindow.document.getElementById('dipLcd');
+                if (dipLcd) dipLcd.textContent = msg;
+            }
+        };
+
         function syncDockedPendant() {
             const dp = document.getElementById('dockedPendant');
             if (!dp || dp.style.display === 'none') return;
@@ -8697,8 +8889,8 @@
             setStyleIf(connectBtn, 'color', connected ? '#fff' : '');
             setIf(connectBtn, 'textContent', connected ? 'Drop' : 'Conn');
 
-            // LCD (skip when in calc mode - calculator controls it)
-            if (!calcMode) {
+            // LCD (skip when in calc mode or feedback hold active)
+            if (!calcMode && Date.now() >= lcdFeedbackUntil) {
                 const lcd = document.getElementById('dpLcd');
                 let lcdText = 'READY';
                 if (connected) {
@@ -8758,8 +8950,8 @@
             setIf(connectBtn, 'className', connected ? 'dip-conn danger' : 'dip-conn primary');
             setIf(connectBtn, 'textContent', connected ? 'Drop' : 'Conn');
 
-            // LCD status display (skip when in calc mode - calculator controls it)
-            if (!calcMode) {
+            // LCD status display (skip when in calc mode or feedback hold active)
+            if (!calcMode && Date.now() >= lcdFeedbackUntil) {
                 const lcd = doc.getElementById('dipLcd');
                 let lcdText = 'READY';
                 if (connected) {

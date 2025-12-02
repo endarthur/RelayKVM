@@ -110,6 +110,9 @@ class RelayKVMAdapter {
         'num6': 0x5E, 'num7': 0x5F, 'num8': 0x60, 'num9': 0x61, 'num0': 0x62,
         'num.': 0x63,
 
+        // Special keys
+        'app': 0x65, 'menu': 0x65, // Application/Menu key (context menu)
+
         // Modifiers (for reference, usually handled separately)
         'ctrl': 0xE0, 'lctrl': 0xE0,
         'shift': 0xE1, 'lshift': 0xE1,
