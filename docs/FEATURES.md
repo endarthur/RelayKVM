@@ -53,7 +53,7 @@
 ### High Priority
 - [x] **Raspberry Pi Pico 2W support** - MicroPython BLE dongle ([firmware](../firmware/pico2w/)) ✅
 - [x] **Document DIP control pendant** - Floating mini control panel using Document Picture-in-Picture API (always-on-top status, command feedback, quick actions - solves seamless mode feedback problem!) ✅
-- [ ] **Window Management API for portal** - Screen picker, auto-position portal on target monitor, one-click fullscreen on specific screen, remember choice, handle hotplug
+- [x] **Window Management API for portal** - Screen Manager with visual map, auto-position portal on target monitor, auto-fullscreen option, remember config, handle hotplug ✅ *(needs multi-monitor testing)*
 - [ ] **Web firmware updater** - WebSerial-based MicroPython file upload from browser (no mpremote/Thonny needed)
 - [ ] **Anbernic RG34XX SP support** - Stock firmware BT HID relay, Python daemon ([docs](RG34XX.md)) ✨ *Proof of concept working!*
 - [ ] **Wired mode (RP2040-PiZero)** - Dual USB-C, WebSerial, no pairing needed ([docs](WIRED.md))
@@ -171,6 +171,8 @@ Ideas that are wildly out of scope but too fun to forget. For when it's raining 
 - Document DIP pendant (always-on-top status display)
 - Clipboard bridge (CapsLock+P to type controller clipboard on target)
 - Screen Wake Lock API
+- Keyboard Lock API (fullscreen) - Capture system keys (Alt+Tab, Escape, Win key)
+- Screen Manager (Window Management API) - Configure portal screen position with visual map
 
 ### v1.1.0 (2025)
 - Raspberry Pi Pico 2W support (MicroPython)

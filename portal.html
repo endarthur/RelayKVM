@@ -1052,6 +1052,17 @@
             document.addEventListener('selectstart', function(e) {
                 if (seamlessActive || captured) e.preventDefault();
             }, { passive: false });
+
+            // Handle messages from parent window (Screen Manager integration)
+            window.addEventListener('message', function(e) {
+                if (e.data?.type === 'requestFullscreen') {
+                    // Auto-fullscreen request from Screen Manager
+                    const btn = document.getElementById('jackInBtn');
+                    if (btn && document.documentElement.requestFullscreen) {
+                        document.documentElement.requestFullscreen().catch(() => {});
+                    }
+                }
+            });
         }
     </script>
 </body>

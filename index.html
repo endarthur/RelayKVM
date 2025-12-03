@@ -1601,6 +1601,198 @@
             color: var(--text-bright);
         }
 
+        /* Screen Manager */
+        .screen-manager-modal {
+            max-width: 550px;
+        }
+
+        .screen-map {
+            background: var(--display-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 4px;
+            padding: 16px;
+            margin-bottom: 16px;
+            position: relative;
+            min-height: 150px;
+        }
+
+        .screen-map-inner {
+            position: relative;
+            margin: 0 auto;
+        }
+
+        .screen-box {
+            position: absolute;
+            background: var(--panel-surface);
+            border: 2px solid var(--panel-border);
+            border-radius: 3px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            color: var(--text-dim);
+            transition: all 0.15s;
+            overflow: hidden;
+        }
+
+        .screen-box:hover {
+            border-color: var(--text-dim);
+        }
+
+        .screen-box.selected {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 8px var(--accent-primary);
+        }
+
+        .screen-box.role-controller {
+            border-color: var(--accent-secondary);
+            background: rgba(0, 184, 148, 0.1);
+        }
+
+        .screen-box.role-portal {
+            border-color: var(--accent-primary);
+            background: rgba(0, 210, 211, 0.1);
+        }
+
+        .screen-box.current::after {
+            content: '●';
+            position: absolute;
+            top: 2px;
+            right: 4px;
+            color: var(--accent-tertiary);
+            font-size: 8px;
+        }
+
+        .screen-box .screen-label {
+            font-size: 8px;
+            font-weight: 600;
+            color: var(--text-normal);
+            text-align: center;
+            padding: 2px 4px;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .screen-box .screen-size {
+            font-size: 7px;
+            color: var(--text-dim);
+        }
+
+        .screen-box .screen-role {
+            font-size: 7px;
+            font-weight: 600;
+            text-transform: uppercase;
+            padding: 1px 4px;
+            border-radius: 2px;
+            margin-top: 2px;
+        }
+
+        .screen-box .screen-role.controller {
+            background: var(--accent-secondary);
+            color: #fff;
+        }
+
+        .screen-box .screen-role.portal {
+            background: var(--accent-primary);
+            color: #fff;
+        }
+
+        .screen-config {
+            background: var(--panel-surface);
+            border: 1px solid var(--panel-border);
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .screen-config-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-bright);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .screen-config-title .screen-badge {
+            font-size: 8px;
+            padding: 2px 6px;
+            border-radius: 2px;
+            background: var(--panel-border);
+            color: var(--text-dim);
+        }
+
+        .screen-config-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .screen-config-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .screen-config-label {
+            font-size: 10px;
+            color: var(--text-dim);
+            min-width: 60px;
+        }
+
+        .screen-config-input {
+            flex: 1;
+        }
+
+        .role-selector {
+            display: flex;
+            gap: 4px;
+        }
+
+        .role-btn {
+            padding: 4px 10px;
+            font-size: 9px;
+            border: 1px solid var(--panel-border);
+            background: var(--btn-neutral-bg);
+            color: var(--text-dim);
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .role-btn:hover {
+            border-color: var(--text-dim);
+            color: var(--text-normal);
+        }
+
+        .role-btn.active {
+            border-color: var(--accent-primary);
+            background: var(--accent-primary);
+            color: #fff;
+        }
+
+        .role-btn.active.controller {
+            border-color: var(--accent-secondary);
+            background: var(--accent-secondary);
+        }
+
+        .screen-unavailable {
+            padding: 40px 20px;
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 11px;
+        }
+
+        .screen-unavailable-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
         .hw-btn.danger {
             background: var(--btn-danger-bg);
             border-color: rgba(255, 255, 255, 0.25);
@@ -3469,6 +3661,21 @@
             </div>
         </div>
 
+        <!-- Screen Manager Modal -->
+        <div class="modal-overlay" id="screenManagerModal" onclick="closeScreenManager(event)">
+            <div class="modal screen-manager-modal" onclick="event.stopPropagation()">
+                <div class="modal-header">
+                    <h3>Screen Manager</h3>
+                    <button class="modal-close" onclick="closeScreenManager()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div id="screenManagerContent">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Theme Editor Modal -->
         <div class="theme-editor-overlay" id="themeEditorModal" onclick="closeThemeEditor(event)">
             <div class="theme-editor" onclick="event.stopPropagation()">
@@ -3632,6 +3839,7 @@
                                 <span style="font-size: 7px; color: var(--text-dim); margin-top: 2px;">PICO ONLY</span>
                             </div>
                             <button class="fn-key blue" onclick="openSeamlessWindow()" style="padding: 4px 8px; font-size: 9px;" title="Open capture window for dummy monitor">Portal</button>
+                            <button class="fn-key" id="screensBtn" onclick="openScreenManager()" style="padding: 4px 8px; font-size: 9px;" title="Manage screens for portal">Screens</button>
                             <button class="fn-key red" onclick="closePortal()" style="padding: 4px 8px; font-size: 9px;" title="Close portal window">✕</button>
                             <select id="seamlessEdgeSelect" class="text-input" style="flex: 1; padding: 3px; font-size: 9px;" onchange="setSeamlessEdge(this.value)" title="Where is the portal window?">
                                 <option value="left">Portal ← Left</option>
@@ -4477,6 +4685,358 @@
             log('Fullscreen on jack-in: ' + (checked ? 'ON' : 'OFF'), 'info');
         }
 
+        // Screen Manager
+        let screenManagerData = JSON.parse(localStorage.getItem('screenManager') || '{"screens":{},"globalSettings":{"autoPortalOnConnect":false}}');
+        let currentScreenDetails = null;
+        let selectedScreenIndex = -1;
+
+        function hasScreenManagementAPI() {
+            return 'getScreenDetails' in window && typeof window.getScreenDetails === 'function';
+        }
+
+        async function openScreenManager() {
+            const modal = document.getElementById('screenManagerModal');
+            modal.classList.add('active');
+
+            if (!hasScreenManagementAPI()) {
+                renderScreenManagerUnavailable();
+                return;
+            }
+
+            try {
+                currentScreenDetails = await window.getScreenDetails();
+                selectedScreenIndex = -1;
+                renderScreenManager();
+
+                // Listen for screen changes
+                currentScreenDetails.addEventListener('screenschange', () => {
+                    renderScreenManager();
+                });
+            } catch (err) {
+                if (err.name === 'NotAllowedError') {
+                    renderScreenManagerPermissionDenied();
+                } else {
+                    renderScreenManagerError(err.message);
+                }
+            }
+        }
+
+        function closeScreenManager(event) {
+            if (event && event.target !== event.currentTarget) return;
+            document.getElementById('screenManagerModal').classList.remove('active');
+            currentScreenDetails = null;
+        }
+
+        function renderScreenManagerUnavailable() {
+            document.getElementById('screenManagerContent').innerHTML = `
+                <div class="screen-unavailable">
+                    <div class="screen-unavailable-icon">🖥️</div>
+                    <div style="margin-bottom: 8px; color: var(--text-normal);">Screen Management API not available</div>
+                    <div>This feature requires Chrome or Edge browser.</div>
+                    <div style="margin-top: 12px;">You can still use the portal manually with the edge selector.</div>
+                </div>
+            `;
+        }
+
+        function renderScreenManagerPermissionDenied() {
+            document.getElementById('screenManagerContent').innerHTML = `
+                <div class="screen-unavailable">
+                    <div class="screen-unavailable-icon">🔒</div>
+                    <div style="margin-bottom: 8px; color: var(--text-normal);">Permission Required</div>
+                    <div>Allow window management permission to configure screens.</div>
+                    <button class="btn-secondary" onclick="openScreenManager()" style="margin-top: 12px;">Try Again</button>
+                </div>
+            `;
+        }
+
+        function renderScreenManagerError(message) {
+            document.getElementById('screenManagerContent').innerHTML = `
+                <div class="screen-unavailable">
+                    <div class="screen-unavailable-icon">⚠️</div>
+                    <div style="margin-bottom: 8px; color: var(--text-normal);">Error</div>
+                    <div>${message}</div>
+                    <button class="btn-secondary" onclick="openScreenManager()" style="margin-top: 12px;">Try Again</button>
+                </div>
+            `;
+        }
+
+        function renderScreenManager() {
+            if (!currentScreenDetails) return;
+
+            const screens = currentScreenDetails.screens;
+            const currentScreen = currentScreenDetails.currentScreen;
+
+            // Calculate bounds for scaling
+            let minLeft = Infinity, minTop = Infinity, maxRight = -Infinity, maxBottom = -Infinity;
+            screens.forEach(s => {
+                minLeft = Math.min(minLeft, s.left);
+                minTop = Math.min(minTop, s.top);
+                maxRight = Math.max(maxRight, s.left + s.width);
+                maxBottom = Math.max(maxBottom, s.top + s.height);
+            });
+
+            const totalWidth = maxRight - minLeft;
+            const totalHeight = maxBottom - minTop;
+            const mapWidth = 500;
+            const scale = Math.min(mapWidth / totalWidth, 130 / totalHeight);
+            const mapHeight = totalHeight * scale;
+
+            // Build screen boxes
+            let screenBoxesHtml = '';
+            screens.forEach((screen, index) => {
+                const config = getScreenConfig(screen);
+                const isSelected = index === selectedScreenIndex;
+                const isCurrent = screen === currentScreen;
+
+                const left = (screen.left - minLeft) * scale;
+                const top = (screen.top - minTop) * scale;
+                const width = screen.width * scale;
+                const height = screen.height * scale;
+
+                let roleClass = '';
+                let roleLabel = '';
+                if (config.role === 'controller') {
+                    roleClass = 'role-controller';
+                    roleLabel = '<span class="screen-role controller">Ctrl</span>';
+                } else if (config.role === 'portal') {
+                    roleClass = 'role-portal';
+                    roleLabel = '<span class="screen-role portal">Portal</span>';
+                }
+
+                screenBoxesHtml += `
+                    <div class="screen-box ${roleClass} ${isSelected ? 'selected' : ''} ${isCurrent ? 'current' : ''}"
+                         style="left: ${left}px; top: ${top}px; width: ${width}px; height: ${height}px;"
+                         onclick="selectScreen(${index})"
+                         title="${screen.label}">
+                        <span class="screen-label">${config.alias || screen.label || 'Screen ' + (index + 1)}</span>
+                        <span class="screen-size">${screen.width}×${screen.height}</span>
+                        ${roleLabel}
+                    </div>
+                `;
+            });
+
+            // Build config panel
+            let configHtml = '';
+            if (selectedScreenIndex >= 0 && selectedScreenIndex < screens.length) {
+                const screen = screens[selectedScreenIndex];
+                const config = getScreenConfig(screen);
+
+                configHtml = `
+                    <div class="screen-config">
+                        <div class="screen-config-title">
+                            ${screen.label || 'Screen ' + (selectedScreenIndex + 1)}
+                            <span class="screen-badge">${screen.width}×${screen.height}</span>
+                            ${screen.isPrimary ? '<span class="screen-badge">Primary</span>' : ''}
+                        </div>
+                        <div class="screen-config-row">
+                            <span class="screen-config-label">Alias</span>
+                            <input type="text" class="text-input screen-config-input"
+                                   value="${config.alias || ''}"
+                                   placeholder="${screen.label || 'Screen name'}"
+                                   onchange="updateScreenAlias(${selectedScreenIndex}, this.value)"
+                                   style="font-size: 10px; padding: 4px 8px;">
+                        </div>
+                        <div class="screen-config-row">
+                            <span class="screen-config-label">Role</span>
+                            <div class="role-selector">
+                                <button class="role-btn ${config.role === 'controller' ? 'active controller' : ''}"
+                                        onclick="setScreenRole(${selectedScreenIndex}, 'controller')">Controller</button>
+                                <button class="role-btn ${config.role === 'portal' ? 'active' : ''}"
+                                        onclick="setScreenRole(${selectedScreenIndex}, 'portal')">Portal</button>
+                                <button class="role-btn ${!config.role || config.role === 'none' ? 'active' : ''}"
+                                        onclick="setScreenRole(${selectedScreenIndex}, 'none')">None</button>
+                            </div>
+                        </div>
+                        ${config.role === 'portal' ? `
+                        <div class="screen-config-row">
+                            <span class="screen-config-label">Options</span>
+                            <label style="display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--text-normal); cursor: pointer;">
+                                <input type="checkbox" ${config.autoFullscreen ? 'checked' : ''}
+                                       onchange="updateScreenOption(${selectedScreenIndex}, 'autoFullscreen', this.checked)">
+                                Auto-fullscreen portal
+                            </label>
+                        </div>
+                        <div class="screen-config-row">
+                            <span class="screen-config-label"></span>
+                            <label style="display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--text-normal); cursor: pointer;">
+                                <input type="checkbox" ${config.isVirtual ? 'checked' : ''}
+                                       onchange="updateScreenOption(${selectedScreenIndex}, 'isVirtual', this.checked)">
+                                Mark as virtual/dummy
+                            </label>
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
+            } else {
+                configHtml = `
+                    <div class="screen-config" style="text-align: center; padding: 20px;">
+                        <div style="color: var(--text-dim); font-size: 10px;">Click a screen above to configure</div>
+                    </div>
+                `;
+            }
+
+            // Global settings
+            const globalHtml = `
+                <div class="settings-section" style="margin-top: 8px;">
+                    <div class="settings-section-title">Portal Settings</div>
+                    <div class="screen-config-row">
+                        <label style="display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--text-normal); cursor: pointer;">
+                            <input type="checkbox" ${screenManagerData.globalSettings.autoPortalOnConnect ? 'checked' : ''}
+                                   onchange="updateGlobalScreenSetting('autoPortalOnConnect', this.checked)">
+                            Auto-open portal on device connect
+                        </label>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 12px;">
+                    <button class="btn-secondary" onclick="refreshScreens()" style="flex: 1;">Refresh</button>
+                    <button class="btn-secondary" onclick="closeScreenManager()" style="flex: 1; background: var(--accent-primary); border-color: var(--accent-primary); color: #fff;">Done</button>
+                </div>
+            `;
+
+            document.getElementById('screenManagerContent').innerHTML = `
+                <div class="screen-map">
+                    <div class="screen-map-inner" style="width: ${totalWidth * scale}px; height: ${mapHeight}px;">
+                        ${screenBoxesHtml}
+                    </div>
+                </div>
+                ${configHtml}
+                ${globalHtml}
+            `;
+        }
+
+        function getScreenConfig(screen) {
+            // Try to match by label first, then by position
+            const byLabel = Object.values(screenManagerData.screens).find(s => s.label === screen.label);
+            if (byLabel) return byLabel;
+
+            // Position match (within tolerance)
+            const tolerance = 100;
+            const byPosition = Object.values(screenManagerData.screens).find(s =>
+                Math.abs(s.position.left - screen.left) < tolerance &&
+                Math.abs(s.position.top - screen.top) < tolerance
+            );
+            if (byPosition) return byPosition;
+
+            return { role: 'none' };
+        }
+
+        function getScreenId(screen) {
+            return `screen-${screen.label || ''}-${screen.left}-${screen.top}`.replace(/\s+/g, '_');
+        }
+
+        function selectScreen(index) {
+            selectedScreenIndex = index;
+            renderScreenManager();
+        }
+
+        function setScreenRole(index, role) {
+            if (!currentScreenDetails) return;
+            const screen = currentScreenDetails.screens[index];
+            const id = getScreenId(screen);
+
+            // Clear role from other screens if setting controller or portal
+            if (role === 'controller' || role === 'portal') {
+                Object.keys(screenManagerData.screens).forEach(key => {
+                    if (screenManagerData.screens[key].role === role) {
+                        screenManagerData.screens[key].role = 'none';
+                    }
+                });
+            }
+
+            // Set or create config
+            if (!screenManagerData.screens[id]) {
+                screenManagerData.screens[id] = {
+                    label: screen.label,
+                    position: { left: screen.left, top: screen.top },
+                    size: { width: screen.width, height: screen.height }
+                };
+            }
+            screenManagerData.screens[id].role = role;
+
+            saveScreenManagerData();
+            renderScreenManager();
+            updateSeamlessEdgeFromScreens();
+        }
+
+        function updateScreenAlias(index, alias) {
+            if (!currentScreenDetails) return;
+            const screen = currentScreenDetails.screens[index];
+            const id = getScreenId(screen);
+
+            if (!screenManagerData.screens[id]) {
+                screenManagerData.screens[id] = {
+                    label: screen.label,
+                    position: { left: screen.left, top: screen.top },
+                    size: { width: screen.width, height: screen.height },
+                    role: 'none'
+                };
+            }
+            screenManagerData.screens[id].alias = alias;
+
+            saveScreenManagerData();
+            renderScreenManager();
+        }
+
+        function updateScreenOption(index, option, value) {
+            if (!currentScreenDetails) return;
+            const screen = currentScreenDetails.screens[index];
+            const id = getScreenId(screen);
+
+            if (screenManagerData.screens[id]) {
+                screenManagerData.screens[id][option] = value;
+                saveScreenManagerData();
+            }
+        }
+
+        function updateGlobalScreenSetting(key, value) {
+            screenManagerData.globalSettings[key] = value;
+            saveScreenManagerData();
+        }
+
+        function saveScreenManagerData() {
+            localStorage.setItem('screenManager', JSON.stringify(screenManagerData));
+        }
+
+        function refreshScreens() {
+            openScreenManager();
+        }
+
+        function updateSeamlessEdgeFromScreens() {
+            // Find controller and portal screens
+            const controllerConfig = Object.values(screenManagerData.screens).find(s => s.role === 'controller');
+            const portalConfig = Object.values(screenManagerData.screens).find(s => s.role === 'portal');
+
+            if (!controllerConfig || !portalConfig) return;
+
+            // Calculate edge based on positions
+            const controllerRight = controllerConfig.position.left + controllerConfig.size.width;
+            const portalRight = portalConfig.position.left + portalConfig.size.width;
+
+            if (portalConfig.position.left >= controllerRight - 100) {
+                // Portal is to the right
+                setSeamlessEdge('right');
+            } else if (portalRight <= controllerConfig.position.left + 100) {
+                // Portal is to the left
+                setSeamlessEdge('left');
+            }
+        }
+
+        function getPortalScreen() {
+            // Returns the configured portal screen from current screens, or null
+            if (!currentScreenDetails) return null;
+
+            const portalConfig = Object.values(screenManagerData.screens).find(s => s.role === 'portal');
+            if (!portalConfig) return null;
+
+            // Find matching screen
+            return currentScreenDetails.screens.find(screen => {
+                if (portalConfig.label && screen.label === portalConfig.label) return true;
+                const tolerance = 100;
+                return Math.abs(portalConfig.position.left - screen.left) < tolerance &&
+                       Math.abs(portalConfig.position.top - screen.top) < tolerance;
+            });
+        }
+
         // Screen Wake Lock
         let wakeLock = null;
         let wakeLockEnabled = localStorage.getItem('wakeLockEnabled') === 'true'; // default false
@@ -4559,7 +5119,8 @@
                 'customTheme2',
                 'customTheme3',
                 'customTheme4',
-                'customTheme5'
+                'customTheme5',
+                'screenManager'
             ];
 
             keys.forEach(key => {
@@ -5270,17 +5831,65 @@
             }
         };
 
-        function openSeamlessWindow() {
+        async function openSeamlessWindow() {
             // Close existing portal if open
             if (portalWindow && !portalWindow.closed) {
                 portalWindow.focus();
                 return;
             }
 
+            // Try to get configured portal screen
+            let portalScreen = null;
+            let portalConfig = null;
+
+            if (hasScreenManagementAPI()) {
+                try {
+                    // Get fresh screen details if we don't have them
+                    if (!currentScreenDetails) {
+                        currentScreenDetails = await window.getScreenDetails();
+                    }
+                    portalScreen = getPortalScreen();
+                    if (portalScreen) {
+                        // Get the config for this screen
+                        portalConfig = Object.values(screenManagerData.screens).find(s => s.role === 'portal');
+                    }
+                } catch (e) {
+                    // Permission denied or API failed, continue without positioning
+                    console.log('Screen details not available:', e.message);
+                }
+            }
+
+            // Calculate window size and position
+            let windowFeatures = 'width=1200,height=700,menubar=no,toolbar=no,location=no,status=no';
+
+            if (portalScreen) {
+                // Position on portal screen, slightly inset from edges
+                const w = Math.min(portalScreen.width - 40, 1200);
+                const h = Math.min(portalScreen.height - 80, 700);
+                const x = portalScreen.left + Math.round((portalScreen.width - w) / 2);
+                const y = portalScreen.top + Math.round((portalScreen.height - h) / 2);
+                windowFeatures = `width=${w},height=${h},left=${x},top=${y},menubar=no,toolbar=no,location=no,status=no`;
+            }
+
             // Open portal.html in popup window
-            portalWindow = window.open('portal.html', 'RelayKVM_Portal', 'width=1200,height=700,menubar=no,toolbar=no,location=no,status=no');
+            portalWindow = window.open('portal.html', 'RelayKVM_Portal', windowFeatures);
+
             if (portalWindow) {
-                log('Portal window opened - drag to dummy monitor', 'info');
+                if (portalScreen) {
+                    log(`Portal opened on ${portalConfig?.alias || portalScreen.label || 'configured screen'}`, 'info');
+
+                    // If auto-fullscreen is configured, request it after portal loads
+                    if (portalConfig?.autoFullscreen) {
+                        portalWindow.addEventListener('load', () => {
+                            // Send message to portal to enter fullscreen
+                            setTimeout(() => {
+                                portalWindow.postMessage({ type: 'requestFullscreen' }, '*');
+                            }, 100);
+                        });
+                    }
+                } else {
+                    log('Portal window opened - drag to dummy monitor', 'info');
+                }
             } else {
                 log('Popup blocked - allow popups for this site', 'error');
             }

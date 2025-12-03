@@ -275,7 +275,10 @@ class RelayKVMAdapter {
         try {
             console.log('Requesting Bluetooth device...');
             this.device = await navigator.bluetooth.requestDevice({
-                filters: [{ namePrefix: 'Relay' }],
+                filters: [
+                    { namePrefix: 'Relay' },           // Pico 2W, Cardputer
+                    { services: [RelayKVMAdapter.SERVICE_UUID] }  // Any device with NUS
+                ],
                 optionalServices: [RelayKVMAdapter.SERVICE_UUID]
             });
 
