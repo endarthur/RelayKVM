@@ -115,13 +115,32 @@ The Pico 2W has many unused GPIO pins. Future firmware could support user-config
 
 **Vision:** A "RelayKVM Control Box" - 3D printed enclosure with physical buttons, knobs, and status LEDs wired to the Pico. Firmware reports GPIO config via BLE, web UI allows function assignment. True Software Defined KVM where hardware is just a configurable I/O bridge.
 
-**Bidirectional HID (future exploration):**
-The Pico 2W's CYW43439 supports BLE HOGP (HID over GATT), enabling it to send HID events back to the *controller* PC - things web APIs can't do:
-- Media keys (play/pause, volume) that work globally regardless of browser focus
-- System commands (Win+L to lock, sleep, shutdown shortcuts)
-- Arbitrary hotkeys to trigger local scripts/apps on the controller
+**Dual-Target HID (SDKMM concept):**
+The Pico 2W's CYW43439 supports both USB HID and BLE HOGP simultaneously, enabling a "Software Defined Keyboard, Mouse & Macropad" that sends to TWO targets:
 
-Architecture: Controller PC pairs to Pico via Bluetooth, Pico sends HID notifications. Web UI would have "Target: Host (USB)" vs "Target: Self (BLE)" toggle. Keep it simple for the Pico - this is better suited for a dedicated macropad project with proper buttons and screen, where the complexity is justified. One Pico per host remains the reliable approach for multi-host setups.
+```
+                    ┌─────────────────────┐
+                    │   SDKMM Device      │
+                    │  (Pico + buttons +  │
+                    │   knobs + screen)   │
+                    └─────────────────────┘
+                           │    │
+          USB HID ─────────┘    └───────── BLE HOGP
+          (to Host)                       (to Controller)
+              ↓                                ↓
+         Target PC                        Main PC
+      (being controlled)              (running browser)
+```
+
+Per-button/knob routing - each physical control chooses its target:
+- **Button 1: "Ctrl+Alt+Del"** → Host (USB) - emergency unlock
+- **Button 2: "Media Play/Pause"** → Controller (BLE) - control your music
+- **Button 3: "Win+L"** → Controller (BLE) - lock your workstation
+- **Rotary encoder** → Host (USB) - volume on target, or Controller (BLE) - local volume
+
+The "KVM" functions target the host, the "Macropad" functions target the controller. Same device, configurable routing. Web UI assigns targets per-control.
+
+This is a separate project from basic RelayKVM - keep the Pico dongle firmware simple (one host via USB). SDKMM is for when you want a dedicated control surface with physical buttons.
 
 ### Android Host Management Design
 
