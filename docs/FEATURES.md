@@ -115,6 +115,14 @@ The Pico 2W has many unused GPIO pins. Future firmware could support user-config
 
 **Vision:** A "RelayKVM Control Box" - 3D printed enclosure with physical buttons, knobs, and status LEDs wired to the Pico. Firmware reports GPIO config via BLE, web UI allows function assignment. True Software Defined KVM where hardware is just a configurable I/O bridge.
 
+**Bidirectional HID (future exploration):**
+The Pico 2W's CYW43439 supports BLE HOGP (HID over GATT), enabling it to send HID events back to the *controller* PC - things web APIs can't do:
+- Media keys (play/pause, volume) that work globally regardless of browser focus
+- System commands (Win+L to lock, sleep, shutdown shortcuts)
+- Arbitrary hotkeys to trigger local scripts/apps on the controller
+
+Architecture: Controller PC pairs to Pico via Bluetooth, Pico sends HID notifications. Web UI would have "Target: Host (USB)" vs "Target: Self (BLE)" toggle. Keep it simple for the Pico - this is better suited for a dedicated macropad project with proper buttons and screen, where the complexity is justified. One Pico per host remains the reliable approach for multi-host setups.
+
 ### Android Host Management Design
 
 **Problem:** Current UI shows all paired Bluetooth devices (earbuds, watches, etc.) - cluttered and confusing.
