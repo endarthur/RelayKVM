@@ -661,6 +661,14 @@
                 }
             });
 
+            // F key to go fullscreen when ready (before jacking in)
+            document.addEventListener('keydown', function(e) {
+                if (e.code === 'KeyF' && !captured && !seamlessActive && isReady && !document.fullscreenElement) {
+                    e.preventDefault();
+                    goFullscreen();
+                }
+            });
+
             // Seamless mode: track if mouse is active on portal (no pointer lock needed!)
             var seamlessActive = false;
             var positionInterval = null;
@@ -1056,13 +1064,15 @@
             // Handle messages from parent window (Screen Manager integration)
             window.addEventListener('message', function(e) {
                 if (e.data?.type === 'requestFullscreen') {
-                    // Auto-fullscreen request from Screen Manager
-                    const btn = document.getElementById('jackInBtn');
-                    if (btn && document.documentElement.requestFullscreen) {
-                        document.documentElement.requestFullscreen().catch(() => {});
-                    }
+                    // Can't truly auto-fullscreen (needs user gesture), just focus window
+                    window.focus();
                 }
             });
+
+            // Signal to opener that we're ready (for Screen Manager auto-focus)
+            if (window.opener) {
+                window.opener.postMessage({ type: 'portalReady' }, '*');
+            }
         }
     </script>
 </body>

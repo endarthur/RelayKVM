@@ -4694,6 +4694,21 @@
             return 'getScreenDetails' in window && typeof window.getScreenDetails === 'function';
         }
 
+        // Detect virtual/dummy display adapters by name patterns
+        function looksLikeVirtualDisplay(label) {
+            if (!label) return false;
+            const l = label.toLowerCase();
+            // Common virtual display patterns
+            const virtualPatterns = [
+                'virtual', 'dummy', 'headless', 'ghost', 'indirect',
+                'parsec', 'sunshine', 'moonlight', 'iddsample', 'idd sample',
+                'vdd', 'display adapter', 'generic pnp', 'generic monitor',
+                'fit-headless', 'fitheadless', 'fueran',
+                'hdp-', 'edid emulator', 'display emulator'
+            ];
+            return virtualPatterns.some(p => l.includes(p));
+        }
+
         async function openScreenManager() {
             const modal = document.getElementById('screenManagerModal');
             modal.classList.add('active');
@@ -4765,6 +4780,62 @@
 
             const screens = currentScreenDetails.screens;
             const currentScreen = currentScreenDetails.currentScreen;
+
+            // Auto-setup: mark current screen as controller if no controller exists
+            const existingConfigs = Object.values(screenManagerData.screens);
+            const hasController = existingConfigs.some(c => c.role === 'controller');
+            const hasPortal = existingConfigs.some(c => c.role === 'portal');
+            const autoDetect = screenManagerData.globalSettings?.autoDetectScreens !== false;
+
+            if (autoDetect && !hasController && currentScreen) {
+                // Find or create config for current screen
+                const currentIndex = screens.indexOf(currentScreen);
+                if (currentIndex >= 0) {
+                    if (!screenManagerData.screens[currentIndex]) {
+                        screenManagerData.screens[currentIndex] = {};
+                    }
+                    screenManagerData.screens[currentIndex].role = 'controller';
+                    screenManagerData.screens[currentIndex].label = currentScreen.label;
+                    screenManagerData.screens[currentIndex].position = { left: currentScreen.left, top: currentScreen.top };
+                    localStorage.setItem('screenManager', JSON.stringify(screenManagerData));
+                }
+            }
+
+            // Auto-setup portal screen
+            if (autoDetect && !hasPortal) {
+                const updatedConfigs = Object.values(screenManagerData.screens);
+                const controllerSet = updatedConfigs.some(c => c.role === 'controller');
+                if (controllerSet) {
+                    // First priority: find a screen that looks like a virtual/dummy display
+                    let portalIndex = screens.findIndex((s, i) =>
+                        screenManagerData.screens[i]?.role !== 'controller' &&
+                        looksLikeVirtualDisplay(s.label)
+                    );
+
+                    // Second priority: if only 2 screens, use the non-controller one
+                    if (portalIndex < 0 && screens.length === 2) {
+                        portalIndex = screens.findIndex((s, i) =>
+                            screenManagerData.screens[i]?.role !== 'controller'
+                        );
+                    }
+
+                    if (portalIndex >= 0) {
+                        if (!screenManagerData.screens[portalIndex]) {
+                            screenManagerData.screens[portalIndex] = {};
+                        }
+                        screenManagerData.screens[portalIndex].role = 'portal';
+                        screenManagerData.screens[portalIndex].label = screens[portalIndex].label;
+                        screenManagerData.screens[portalIndex].position = { left: screens[portalIndex].left, top: screens[portalIndex].top };
+
+                        // Auto-detect virtual displays by name
+                        if (looksLikeVirtualDisplay(screens[portalIndex].label)) {
+                            screenManagerData.screens[portalIndex].isVirtual = true;
+                        }
+
+                        localStorage.setItem('screenManager', JSON.stringify(screenManagerData));
+                    }
+                }
+            }
 
             // Calculate bounds for scaling
             let minLeft = Infinity, minTop = Infinity, maxRight = -Infinity, maxBottom = -Infinity;
@@ -4850,10 +4921,10 @@
                         ${config.role === 'portal' ? `
                         <div class="screen-config-row">
                             <span class="screen-config-label">Options</span>
-                            <label style="display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--text-normal); cursor: pointer;">
+                            <label style="display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--text-normal); cursor: pointer;" title="Focus portal window on open (still requires click for fullscreen)">
                                 <input type="checkbox" ${config.autoFullscreen ? 'checked' : ''}
                                        onchange="updateScreenOption(${selectedScreenIndex}, 'autoFullscreen', this.checked)">
-                                Auto-fullscreen portal
+                                Auto-focus portal
                             </label>
                         </div>
                         <div class="screen-config-row">
@@ -4884,6 +4955,13 @@
                             <input type="checkbox" ${screenManagerData.globalSettings.autoPortalOnConnect ? 'checked' : ''}
                                    onchange="updateGlobalScreenSetting('autoPortalOnConnect', this.checked)">
                             Auto-open portal on device connect
+                        </label>
+                    </div>
+                    <div class="screen-config-row">
+                        <label style="display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--text-normal); cursor: pointer;" title="Automatically detect controller/portal screens and virtual displays">
+                            <input type="checkbox" ${screenManagerData.globalSettings.autoDetectScreens !== false ? 'checked' : ''}
+                                   onchange="updateGlobalScreenSetting('autoDetectScreens', this.checked)">
+                            Auto-detect screen roles
                         </label>
                     </div>
                 </div>
@@ -5238,6 +5316,19 @@
             setTimeout(handleUrlHash, 500); // Delay to ensure everything is initialized
         });
 
+        // Handle messages from portal window (Screen Manager integration)
+        window.addEventListener('message', (e) => {
+            if (e.data?.type === 'portalReady' && portalWindow && !portalWindow.closed) {
+                // Portal is loaded, check if we should auto-focus
+                const config = JSON.parse(localStorage.getItem('screenManager') || '{}');
+                const screens = config.screens ? Object.values(config.screens) : [];
+                const portalConfig = screens.find(s => s.role === 'portal');
+                if (portalConfig?.autoFullscreen) {
+                    portalWindow.postMessage({ type: 'requestFullscreen' }, '*');
+                }
+            }
+        });
+
         // Sensitivity settings
         let mouseSensitivity = parseFloat(localStorage.getItem('mouseSensitivity')) || 2;
         let scrollSensitivity = parseInt(localStorage.getItem('scrollSensitivity')) || 3;
@@ -5271,6 +5362,19 @@
         kvm.onConnectionChange = (connected) => {
             updateUI(connected);
             log(connected ? 'Link established' : 'Link down', 'info');
+
+            // Auto-open portal on connect (Screen Manager setting)
+            if (connected) {
+                const smConfig = JSON.parse(localStorage.getItem('screenManager') || '{}');
+                if (smConfig.globalSettings?.autoPortalOnConnect) {
+                    // Small delay to let connection stabilize
+                    setTimeout(() => {
+                        if (!portalWindow || portalWindow.closed) {
+                            openSeamlessWindow();
+                        }
+                    }, 300);
+                }
+            }
         };
 
         kvm.onDataReceived = (data) => {
@@ -5852,6 +5956,25 @@
                     if (portalScreen) {
                         // Get the config for this screen
                         portalConfig = Object.values(screenManagerData.screens).find(s => s.role === 'portal');
+
+                        // If marked as virtual, auto-set edge direction but don't position there
+                        if (portalConfig?.isVirtual) {
+                            // Determine direction: is virtual screen left or right of controller?
+                            const controllerScreen = currentScreenDetails.currentScreen;
+                            if (controllerScreen) {
+                                const controllerCenter = controllerScreen.left + controllerScreen.width / 2;
+                                const portalCenter = portalScreen.left + portalScreen.width / 2;
+                                const newEdge = portalCenter < controllerCenter ? 'left' : 'right';
+                                if (seamlessEdge !== newEdge) {
+                                    seamlessEdge = newEdge;
+                                    localStorage.setItem('seamlessEdge', seamlessEdge);
+                                    updateSeamlessUI(); // Update the dropdown
+                                    log(`Auto-set portal edge to ${seamlessEdge} (virtual screen)`, 'info');
+                                }
+                            }
+                            // Don't position on virtual screen - user can't see it
+                            portalScreen = null;
+                        }
                     }
                 } catch (e) {
                     // Permission denied or API failed, continue without positioning
@@ -5877,16 +6000,8 @@
             if (portalWindow) {
                 if (portalScreen) {
                     log(`Portal opened on ${portalConfig?.alias || portalScreen.label || 'configured screen'}`, 'info');
-
-                    // If auto-fullscreen is configured, request it after portal loads
-                    if (portalConfig?.autoFullscreen) {
-                        portalWindow.addEventListener('load', () => {
-                            // Send message to portal to enter fullscreen
-                            setTimeout(() => {
-                                portalWindow.postMessage({ type: 'requestFullscreen' }, '*');
-                            }, 100);
-                        });
-                    }
+                } else if (portalConfig?.isVirtual) {
+                    log(`Portal ready - drag ${seamlessEdge} to virtual screen`, 'info');
                 } else {
                     log('Portal window opened - drag to dummy monitor', 'info');
                 }

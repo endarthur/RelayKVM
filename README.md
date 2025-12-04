@@ -40,7 +40,7 @@ Wireless KVM solution using a tiny BLE-to-USB HID bridge. Control any computer's
 Seamless mode allows your mouse to flow naturally between your controller PC and the target PC, similar to how multi-monitor setups work. This requires:
 
 1. **Pico 2W device** - Cardputer does not support absolute mouse positioning
-2. **Dummy HDMI plug** - Creates a virtual monitor on your controller PC
+2. **Virtual display** - Creates a virtual monitor on your controller PC (hardware dummy plug or software driver)
 3. **Portal window** - Drag to the virtual monitor, click to activate
 
 **How it works:**
@@ -69,7 +69,13 @@ Seamless mode allows your mouse to flow naturally between your controller PC and
 
 **Optional:**
 - USB HDMI capture card (~$15) - For video feedback from target
-- Dummy HDMI plug (~$5) - Required for seamless mode
+- Virtual display for seamless mode - one of:
+  - HDMI/DP dummy plug (~$5) - Hardware, no drivers needed
+  - [Virtual Display Driver](https://mikethetech.itch.io/virtual-display-driver) - Software, free, Windows
+  - [ParsecVDD](https://github.com/nomi-san/parsec-vdd) - Software, up to 4K@240Hz, Windows
+  - macOS has built-in virtual display support
+
+> **Note:** Screen Manager auto-detects common dummy plugs by name. If yours isn't detected as virtual, please [open an issue](https://github.com/endarthur/RelayKVM/issues) with the display name shown in Screen Manager so we can add it!
 
 ## Quick Start
 

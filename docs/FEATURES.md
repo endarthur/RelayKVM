@@ -57,7 +57,8 @@
 - [ ] **Web firmware updater** - WebSerial-based MicroPython file upload from browser (no mpremote/Thonny needed)
 - [ ] **Anbernic RG34XX SP support** - Stock firmware BT HID relay, Python daemon ([docs](RG34XX.md)) ✨ *Proof of concept working!*
 - [ ] **Wired mode (RP2040-PiZero)** - Dual USB-C, WebSerial, no pairing needed ([docs](WIRED.md))
-- [ ] **Android app** - Phone as BLE-to-BT HID bridge
+- [ ] **Android app** - Phone as BLE-to-BT HID bridge (WIP in `android/`)
+- [ ] **Android deck mode** - Phone as wireless control deck (see [Deck Mode Architecture](#deck-mode-architecture))
 - [ ] **Mobile/responsive design** - Use from phone/tablet
 
 ### Medium Priority
@@ -109,10 +110,79 @@ The Pico 2W has many unused GPIO pins. Future firmware could support user-config
 
 **Vision:** A "RelayKVM Control Box" - 3D printed enclosure with physical buttons, knobs, and status LEDs wired to the Pico. Firmware reports GPIO config via BLE, web UI allows function assignment. True Software Defined KVM where hardware is just a configurable I/O bridge.
 
+### Deck Mode Architecture
+
+The Android app can operate in two modes:
+
+**Standalone Mode (current):**
+```
+Browser ──BLE──► Phone ──BT HID──► Target PC
+```
+Phone acts as the relay. No Pico needed. Simple but requires BT pairing on target.
+
+**Deck Mode (planned):**
+```
+                    ┌──────────────┐
+                    │   Browser    │
+Phone ──BLE──►      │    (hub)     │ ──BLE──► Pico ──USB HID──► Target PC
+  deck commands     └──────────────┘
+                          │
+                          ▼
+                    Local actions
+                    (Win+R, macros)
+```
+
+Phone becomes a wireless "Stream Deck" - trackpad, button grid, quick actions. Browser connects to BOTH phone and Pico simultaneously (Web Bluetooth supports multiple connections). Phone sends gestures/buttons over BLE, browser routes them:
+- Forward to Pico as HID commands
+- Execute locally on controller (open apps, trigger scripts)
+
+**Why this topology?**
+- Phone stays simple - just a BLE GATT server, same as standalone mode
+- No BLE client code needed on phone (Pico doesn't need to accept connections from phone)
+- Browser already handles all the routing logic
+- Phone is useful even if you have a Pico
+
+**Implementation notes:**
+- Nordic UART Service (NUS) is bidirectional - phone can send notifications to browser
+- Phone app adds deck UI: trackpad view, button grid (assignable macros)
+- Deck mode toggle: gestures go over BLE instead of local BT HID
+- Browser listens for NUS RX notifications from phone
+- New message types for deck commands (gestures, button IDs, etc.)
+
+**Alternative topology (not pursuing):**
+```
+Browser ──BLE──► Pico ◄──BLE──── Phone
+```
+Phone connects directly to Pico. Rejected because:
+- Pico would need to handle two BLE connections (central + peripheral)
+- More complex firmware
+- Phone needs BLE client mode (more code)
+- Less flexible routing
+
 ### Long Term
 - [ ] **Multi-host switching** - Control multiple PCs
 - [ ] **Session recording** - Record/replay input sessions
 - [ ] **Plugin system** - User-defined modules
+- [ ] **ReadTheDocs site** - Proper documentation site (setup guides, API reference, troubleshooting)
+
+### Virtual Display Setup
+
+For seamless mode, the target PC needs a display (real or virtual) that the controller can "extend into". Options:
+
+**Hardware (HDMI/DP Dummy Plugs)**
+- Cheap (~$5-10), no drivers, just plug in
+- Common brands: Headless Ghost, FUERAN, generic "HDP-V104" style
+- Screen Manager auto-detects these by name patterns
+
+**Software (Windows)**
+- [Virtual Display Driver by MikeTheTech](https://mikethetech.itch.io/virtual-display-driver) - easiest, GUI toggle, free
+- [VirtualDrivers/Virtual-Display-Driver](https://github.com/VirtualDrivers/Virtual-Display-Driver) - HDR support, active development
+- [ParsecVDD](https://github.com/nomi-san/parsec-vdd) - up to 4K@240Hz, tray app
+
+**Software (macOS)**
+- Built-in support, no extra drivers needed
+
+All software options are free/open-source and based on Windows Indirect Display Driver (IddCx) API.
 
 ### Technical Notes & Discoveries 🔬
 
