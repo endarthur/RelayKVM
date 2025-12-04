@@ -8412,7 +8412,7 @@
                         grid-template-rows: 1fr 1fr;
                         grid-template-areas:
                             "track wke slp"
-                            "track conn conn";
+                            "track dock conn";
                         gap: 3px;
                         flex: 1;
                     }
@@ -8455,9 +8455,16 @@
                     body.minimal-dip .dip-lck,
                     body.minimal-dip .dip-ptl,
                     body.minimal-dip .dip-calc,
-                    body.minimal-dip .dip-dock,
                     body.minimal-dip .dip-jig {
                         display: none !important;
+                    }
+                    body.minimal-dip .dip-dock {
+                        grid-area: dock;
+                        display: flex !important;
+                        align-items: center;
+                        justify-content: center;
+                        padding: 2px 8px;
+                        font-size: 8px;
                     }
                 `;
                 dipWindow.document.head.appendChild(style);
@@ -8512,7 +8519,7 @@
                             <button onclick="numpadKey('enter')">↵</button>
                             <button class="mod" id="modGui" onclick="toggleMod('gui')">Win</button>
                         </div>
-                        <button class="dip-dock" onclick="main.dockPendant()">Dock</button>
+                        <button class="dip-dock" onclick="main.focus()" title="Raise main controller window">Main</button>
                         <button class="dip-jig primary" id="dipJigglerBtn" onclick="main.toggleJiggler()">Jig</button>
                         <button class="dip-conn primary" id="dipConnectBtn" onclick="main.toggleConnection()">Conn</button>
                     </div>

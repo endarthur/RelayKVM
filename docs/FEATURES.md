@@ -59,6 +59,11 @@
 - [ ] **Wired mode (RP2040-PiZero)** - Dual USB-C, WebSerial, no pairing needed ([docs](WIRED.md))
 - [ ] **Android app** - Phone as BLE-to-BT HID bridge (WIP in `android/`)
 - [ ] **Android deck mode** - Phone as wireless control deck (see [Deck Mode Architecture](#deck-mode-architecture))
+- [ ] **Android PiP mode** - Floating status window like the DIP pendant
+- [ ] **Android Companion Device Manager** - Streamlined Bluetooth pairing flow
+- [ ] **Android Quick Settings tile** - One-tap start/stop from notification shade
+- [ ] **Android multi-host switching** - Pair with multiple PCs, tap/swipe to switch target (software KVM switch)
+- [ ] **Android local input modes** - Trackpad mode (touch→mouse), gamepad mode (virtual buttons/sticks), air mouse (gyroscope)
 - [ ] **Mobile/responsive design** - Use from phone/tablet
 
 ### Medium Priority
@@ -109,6 +114,98 @@ The Pico 2W has many unused GPIO pins. Future firmware could support user-config
 - [ ] **Buzzer/speaker** - Audio feedback on events
 
 **Vision:** A "RelayKVM Control Box" - 3D printed enclosure with physical buttons, knobs, and status LEDs wired to the Pico. Firmware reports GPIO config via BLE, web UI allows function assignment. True Software Defined KVM where hardware is just a configurable I/O bridge.
+
+### Android Host Management Design
+
+**Problem:** Current UI shows all paired Bluetooth devices (earbuds, watches, etc.) - cluttered and confusing.
+
+**Solution:** Explicit "My Hosts" list with per-host settings.
+
+**Add Host Flow:**
+1. Tap "Add Host" → Companion Device Manager dialog (filtered to computers?)
+2. User selects PC → System handles pairing
+3. Host added to "My Hosts" with default settings
+4. Stored in local database (Room or SharedPreferences)
+
+**Per-Host Settings:**
+```kotlin
+data class SavedHost(
+    val address: String,           // BT MAC address (immutable)
+    val name: String,              // Original BT device name
+    val alias: String?,            // User-defined nickname
+    val icon: HostIcon,            // 🖥️💻🖱️🎮 etc.
+    val allowAutoConnect: Boolean, // Accept passive connections from this host
+    val autoConnectOnLaunch: Boolean, // Connect immediately when app opens
+    val priority: Int,             // If multiple hosts try to connect, pick highest
+    val defaultInputMode: InputMode, // RELAY, TRACKPAD, GAMEPAD, AIR_MOUSE
+    val mouseSensitivity: Float,   // Per-host sensitivity adjustment
+    val lastConnected: Long,       // Timestamp for sorting
+    val notes: String?             // User notes ("bedroom PC", "needs passive mode", etc.)
+)
+
+enum class InputMode { RELAY, TRACKPAD, GAMEPAD, AIR_MOUSE }
+enum class HostIcon { DESKTOP, LAPTOP, SERVER, TV, QUEST, TABLET, CUSTOM }
+```
+
+**UI Flow:**
+```
+┌─────────────────────────────────┐
+│ RelayKVM              ⚙️ [Theme]│
+├─────────────────────────────────┤
+│ My Hosts                        │
+│ ┌─────────────────────────────┐ │
+│ │ 🖥️ Work PC           ●  ⋮  │ │ ← connected (green dot)
+│ │ 💻 Gaming Rig            ⋮  │ │
+│ │ 📺 Living Room TV        ⋮  │ │
+│ │ ➕ Add Host...               │ │
+│ └─────────────────────────────┘ │
+│                                 │
+│ ☑️ Accept incoming connections  │
+│                                 │
+│ [Disconnect]     Mode: [Relay▾] │
+├─────────────────────────────────┤
+│ Log                             │
+│ [22:30] Connected to Work PC    │
+└─────────────────────────────────┘
+```
+
+**Host Settings Sheet (tap ⋮):**
+```
+┌─────────────────────────────────┐
+│ Work PC                    Edit │
+├─────────────────────────────────┤
+│ Alias: Work PC                  │
+│ Icon: 🖥️ ▾                      │
+│                                 │
+│ ○ Connect on app launch         │
+│ ○ Accept incoming (passive)     │
+│ Priority: [1] (highest first)   │
+│                                 │
+│ Default mode: [Relay ▾]         │
+│ Mouse sensitivity: [====●===]   │
+│                                 │
+│ Notes:                          │
+│ ┌─────────────────────────────┐ │
+│ │ Office desktop, USB-C dock  │ │
+│ └─────────────────────────────┘ │
+│                                 │
+│ [Forget Host]      [Connect]    │
+└─────────────────────────────────┘
+```
+
+**Passive Mode Behavior:**
+- On app start (or service start), register HID profile
+- Incoming connection from known host with `allowAutoConnect=true` → accept
+- Incoming from unknown device → reject (or prompt "Add as new host?")
+- Multiple hosts with auto-connect: use `priority` to decide, or just first-come-first-served
+- Show notification when passively connected
+
+**Future Ideas:**
+- Per-host macros/quick actions
+- Per-host theme (work = professional, gaming = RGB)
+- Sync settings via BLE from web UI
+- QR code to quickly add host (encode BT address + name)
+- NFC tap to connect (if host has NFC tag on desk)
 
 ### Deck Mode Architecture
 
@@ -185,6 +282,13 @@ For seamless mode, the target PC needs a display (real or virtual) that the cont
 All software options are free/open-source and based on Windows Indirect Display Driver (IddCx) API.
 
 ### Technical Notes & Discoveries 🔬
+
+**Android Bluetooth HID Notes:**
+- **Active vs Passive mode**: Active = phone calls `connect()` to reach PC. Passive = phone registers HID profile and waits for PC to initiate. Passive is often more reliable when active fails - tell user "go to PC Bluetooth settings, click the phone."
+- **Android-to-Android HID**: Should work! Android devices are HID hosts (accept BT keyboards/mice). Untested targets: tablets, Android TV, Chromebooks, Quest headsets, car head units.
+- **Companion Device Manager API**: Streamlines BT pairing - app shows system dialog listing nearby devices, user picks, system handles pairing AND grants per-device permissions. Fewer permission prompts, better UX. Worth implementing.
+- **Gyroscope air mouse**: Accelerometer/gyroscope APIs could enable tilt-to-move-cursor like a Wii remote. Fun experiment.
+- **Re-pairing issues**: Usually caused by changed HID descriptors (host caches old info). Clean pair from both sides fixes it. Normal users shouldn't hit this often.
 
 **Digitizer + Relative Mouse Coexistence:**
 - When a digitizer (absolute mouse) is active and sending "In Range", the OS ignores button state from relative mouse

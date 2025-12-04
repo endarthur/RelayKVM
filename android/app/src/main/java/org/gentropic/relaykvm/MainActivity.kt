@@ -9,60 +9,72 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.ScrollView
-import android.widget.Spinner
-import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.runtime.*
 import androidx.core.content.ContextCompat
+import org.gentropic.relaykvm.ui.screens.MainScreen
+import org.gentropic.relaykvm.ui.screens.MainScreenState
+import org.gentropic.relaykvm.ui.theme.RelayKVMTheme
+import org.gentropic.relaykvm.ui.theme.RelayKVMThemes
+import java.text.SimpleDateFormat
+import java.util.*
 
-class MainActivity : AppCompatActivity(), BleServer.Listener, HidController.Listener {
+class MainActivity : ComponentActivity(), BleServer.Listener, HidController.Listener {
 
-    private lateinit var statusText: TextView
-    private lateinit var bleStatusText: TextView
-    private lateinit var hidStatusText: TextView
-    private lateinit var logText: TextView
-    private lateinit var logScroll: ScrollView
-    private lateinit var startButton: Button
-    private lateinit var hostSpinner: Spinner
-    private lateinit var connectHostButton: Button
+    // State
+    private var screenState by mutableStateOf(MainScreenState())
+    private var currentTheme by mutableStateOf("Default")
 
+    // Business logic
     private var bleServer: BleServer? = null
     private var hidController: HidController? = null
     private var hidBridge: HidBridge? = null
-    private var isRunning = false
+    private var pairedDevicesList: List<BluetoothDevice> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
 
-        statusText = findViewById(R.id.statusText)
-        bleStatusText = findViewById(R.id.bleStatusText)
-        hidStatusText = findViewById(R.id.hidStatusText)
-        logText = findViewById(R.id.logText)
-        logScroll = findViewById(R.id.logScroll)
-        startButton = findViewById(R.id.startButton)
-        hostSpinner = findViewById(R.id.hostSpinner)
-        connectHostButton = findViewById(R.id.connectHostButton)
+        // Load saved theme
+        val prefs = getSharedPreferences("relaykvm", MODE_PRIVATE)
+        currentTheme = prefs.getString("theme", "Default") ?: "Default"
 
-        startButton.setOnClickListener {
-            if (isRunning) {
-                stopAll()
-            } else {
-                checkPermissionsAndStart()
+        // Initial logs
+        addLog("RelayKVM Android ready")
+        addLog("1. Start server to receive from browser")
+        addLog("2. Select paired host PC and connect")
+
+        setContent {
+            RelayKVMTheme(colors = RelayKVMThemes.byName(currentTheme)) {
+                MainScreen(
+                    state = screenState,
+                    currentTheme = currentTheme,
+                    onThemeSelected = { themeName ->
+                        currentTheme = themeName
+                        // Save theme preference
+                        getSharedPreferences("relaykvm", MODE_PRIVATE)
+                            .edit()
+                            .putString("theme", themeName)
+                            .apply()
+                    },
+                    onStartStop = {
+                        if (screenState.isRunning) {
+                            stopAll()
+                        } else {
+                            checkPermissionsAndStart()
+                        }
+                    },
+                    onDeviceSelected = { index ->
+                        screenState = screenState.copy(selectedDeviceIndex = index)
+                    },
+                    onConnectHost = {
+                        connectToSelectedHost()
+                    }
+                )
             }
         }
-
-        connectHostButton.setOnClickListener {
-            connectToSelectedHost()
-        }
-
-        log("RelayKVM Android ready")
-        log("1. Start server to receive from browser")
-        log("2. Select paired host PC and connect")
     }
 
     private fun checkPermissionsAndStart() {
@@ -90,7 +102,7 @@ class MainActivity : AppCompatActivity(), BleServer.Listener, HidController.List
         if (needed.isEmpty()) {
             startAll()
         } else {
-            log("Requesting permissions...")
+            addLog("Requesting permissions...")
             requestPermissions.launch(needed.toTypedArray())
         }
     }
@@ -102,7 +114,7 @@ class MainActivity : AppCompatActivity(), BleServer.Listener, HidController.List
             startAll()
         } else {
             Toast.makeText(this, "Bluetooth permissions required", Toast.LENGTH_SHORT).show()
-            log("Permissions denied")
+            addLog("Permissions denied")
         }
     }
 
@@ -111,12 +123,12 @@ class MainActivity : AppCompatActivity(), BleServer.Listener, HidController.List
         val adapter = bluetoothManager.adapter
 
         if (adapter == null) {
-            log("ERROR: No Bluetooth adapter")
+            addLog("ERROR: No Bluetooth adapter")
             return
         }
 
         if (!adapter.isEnabled) {
-            log("Bluetooth disabled, requesting enable...")
+            addLog("Bluetooth disabled, requesting enable...")
             enableBluetooth.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
             return
         }
@@ -127,14 +139,22 @@ class MainActivity : AppCompatActivity(), BleServer.Listener, HidController.List
         }
 
         if (!hidController!!.start()) {
-            log("ERROR: Failed to start HID controller")
+            addLog("ERROR: Failed to start HID controller")
             return
         }
 
         // Create bridge
         hidBridge = HidBridge(hidController!!).apply {
             onPacketProcessed = { msg ->
-                runOnUiThread { log(msg) }
+                runOnUiThread {
+                    addLog(msg)
+                    // Flash activity indicator
+                    screenState = screenState.copy(isActive = true)
+                    // Reset after brief delay
+                    window.decorView.postDelayed({
+                        screenState = screenState.copy(isActive = false)
+                    }, 100)
+                }
             }
         }
 
@@ -144,7 +164,7 @@ class MainActivity : AppCompatActivity(), BleServer.Listener, HidController.List
         }
 
         if (!bleServer!!.start()) {
-            log("ERROR: Failed to start BLE server")
+            addLog("ERROR: Failed to start BLE server")
             return
         }
 
@@ -152,10 +172,8 @@ class MainActivity : AppCompatActivity(), BleServer.Listener, HidController.List
         val serviceIntent = Intent(this, RelayService::class.java)
         ContextCompat.startForegroundService(this, serviceIntent)
 
-        isRunning = true
-        statusText.text = "Running"
-        startButton.text = "Stop"
-        log("Services started (foreground)")
+        screenState = screenState.copy(isRunning = true)
+        addLog("Services started (foreground)")
 
         // Populate paired devices
         populatePairedDevices()
@@ -167,43 +185,43 @@ class MainActivity : AppCompatActivity(), BleServer.Listener, HidController.List
         if (result.resultCode == RESULT_OK) {
             startAll()
         } else {
-            log("Bluetooth enable denied")
+            addLog("Bluetooth enable denied")
         }
     }
 
     @SuppressLint("MissingPermission")
     private fun populatePairedDevices() {
-        val devices = hidController?.getPairedDevices() ?: emptyList()
-        val names = devices.map { it.name ?: it.address }
+        pairedDevicesList = hidController?.getPairedDevices() ?: emptyList()
+        val names = pairedDevicesList.map { it.name ?: it.address }
 
         if (names.isEmpty()) {
-            log("No paired devices. Pair your target PC first!")
+            addLog("No paired devices. Pair your target PC first!")
         }
 
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, names)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        hostSpinner.adapter = adapter
+        screenState = screenState.copy(
+            pairedDevices = names,
+            selectedDeviceIndex = if (names.isNotEmpty()) 0 else -1
+        )
     }
 
-    @Suppress("MissingPermission")
+    @SuppressLint("MissingPermission")
     private fun connectToSelectedHost() {
-        val position = hostSpinner.selectedItemPosition
+        val position = screenState.selectedDeviceIndex
         if (position < 0) {
-            log("No host selected")
+            addLog("No host selected")
             return
         }
 
-        val devices = hidController?.getPairedDevices() ?: return
-        if (position >= devices.size) return
+        if (position >= pairedDevicesList.size) return
 
-        val device = devices[position]
-        log("Connecting to ${device.name}...")
-        log("(If fails, try connecting FROM PC's Bluetooth settings)")
+        val device = pairedDevicesList[position]
+        addLog("Connecting to ${device.name}...")
+        addLog("(If fails, try connecting FROM PC's Bluetooth settings)")
 
         if (hidController?.connectToHost(device) == true) {
-            log("Connection initiated - waiting...")
+            addLog("Connection initiated - waiting...")
         } else {
-            log("Failed. Try: PC Settings > Bluetooth > click phone")
+            addLog("Failed. Try: PC Settings > Bluetooth > click phone")
         }
     }
 
@@ -217,23 +235,27 @@ class MainActivity : AppCompatActivity(), BleServer.Listener, HidController.List
         hidController = null
         hidBridge = null
 
-        isRunning = false
-        statusText.text = "Stopped"
-        bleStatusText.text = "BLE: -"
-        hidStatusText.text = "HID: -"
-        startButton.text = "Start"
-        log("Services stopped")
+        screenState = MainScreenState(
+            logs = screenState.logs  // Keep logs
+        )
+        addLog("Services stopped")
     }
 
     // BleServer.Listener
     override fun onConnectionStateChanged(connected: Boolean, deviceName: String?) {
         runOnUiThread {
             if (connected) {
-                bleStatusText.text = "BLE: $deviceName"
-                log("Browser connected: $deviceName")
+                screenState = screenState.copy(
+                    bleConnected = true,
+                    bleDeviceName = deviceName
+                )
+                addLog("Browser connected: $deviceName")
             } else {
-                bleStatusText.text = "BLE: Advertising..."
-                log("Browser disconnected")
+                screenState = screenState.copy(
+                    bleConnected = false,
+                    bleDeviceName = null
+                )
+                addLog("Browser disconnected")
             }
         }
     }
@@ -244,38 +266,41 @@ class MainActivity : AppCompatActivity(), BleServer.Listener, HidController.List
     }
 
     // HidController.Listener
+    @SuppressLint("MissingPermission")
     override fun onHostConnected(device: BluetoothDevice) {
         runOnUiThread {
-            hidStatusText.text = "HID: ${device.name}"
-            log("Host connected: ${device.name}")
-            log("Ready! Browser -> Phone -> ${device.name}")
+            screenState = screenState.copy(
+                hidConnected = true,
+                hidDeviceName = device.name
+            )
+            addLog("Host connected: ${device.name}")
+            addLog("Ready! Browser -> Phone -> ${device.name}")
         }
     }
 
     override fun onHostDisconnected() {
         runOnUiThread {
-            hidStatusText.text = "HID: Disconnected"
-            log("Host disconnected")
+            screenState = screenState.copy(
+                hidConnected = false,
+                hidDeviceName = null
+            )
+            addLog("Host disconnected")
         }
     }
 
     override fun onWaitingForHost() {
         runOnUiThread {
-            hidStatusText.text = "HID: Ready"
-            log("HID profile registered, ready for host")
+            addLog("HID profile registered, ready for host")
         }
     }
 
-    private fun log(message: String) {
-        val timestamp = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.US)
-            .format(java.util.Date())
+    private fun addLog(message: String) {
+        val timestamp = SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())
         val line = "[$timestamp] $message"
 
-        val current = logText.text.toString()
-        val lines = current.lines().takeLast(100)
-        logText.text = (lines + line).joinToString("\n")
-
-        logScroll.post { logScroll.fullScroll(ScrollView.FOCUS_DOWN) }
+        // Keep last 100 logs
+        val newLogs = (screenState.logs + line).takeLast(100)
+        screenState = screenState.copy(logs = newLogs)
     }
 
     override fun onDestroy() {
