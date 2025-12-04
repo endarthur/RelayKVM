@@ -184,81 +184,168 @@ Attacker within BLE range (~10m) can:
 Traditional solutions require:
 - Display for PIN (Pico has none)
 - Pre-shared passkey (annoying to enter)
-- Physical button confirmation (Pico has no button)
+- Physical button confirmation ← **Pico has BOOTSEL!**
 
-### The Solution: USB as Trusted Channel
+### The Solution: Mode Switching + BOOTSEL Confirmation
+
+The Pico operates in two mutually exclusive USB modes:
+- **Normal mode:** BLE UART + USB HID (keyboard/mouse) - OS claims HID, WebHID blocked
+- **Pairing mode:** BLE UART + USB CDC (serial) - WebSerial can access
+
+BOOTSEL button (normally used only at power-on for UF2 flashing) is readable as GPIO once MicroPython is running. We use it for physical presence confirmation.
 
 ```
-┌─────────────┐                      ┌─────────────┐
-│  Browser    │◄────── USB ─────────►│   Pico 2W   │
-│ (Controller)│   Physical = Trusted │             │
+ENTERING PAIRING MODE:
+
+┌─────────────┐         BLE          ┌─────────────┐
+│  Browser    │─────────────────────►│   Pico 2W   │
 └─────────────┘                      └─────────────┘
        │                                    │
-       │  1. Generate 256-bit secret        │
-       │  2. Send secret over USB ─────────►│
-       │  3. Both save secret               │
+       │  1. "REQUEST_PAIRING" ────────────►│
        │                                    │
+       │  2. "PRESS_BOOTSEL" ◄──────────────│
+       │     (LED blinks, 10s timeout)      │
+       │                                    │
+       │         [User presses BOOTSEL]     │
+       │                                    │
+       │  3. Pico saves flag, reboots ──────│
+       │     into CDC-only mode             │
        └────────────────────────────────────┘
 
-Later (wireless):
+KEY EXCHANGE (after reboot, now in CDC mode):
 
-┌─────────────┐                      ┌─────────────┐
-│  Browser    │◄────── BLE ─────────►│   Pico 2W   │
+┌─────────────┐         USB          ┌─────────────┐
+│  Browser    │◄────────────────────►│   Pico 2W   │
+│             │   WebSerial access   │ (CDC mode)  │
 └─────────────┘                      └─────────────┘
        │                                    │
-       │  4. Pico sends challenge ◄─────────│
-       │  5. Browser: HMAC(challenge, secret)│
-       │  6. Send response ────────────────►│
-       │  7. Pico verifies, enables HID     │
+       │  4. Connect via WebSerial          │
+       │  5. Generate 256-bit secret        │
+       │  6. Send secret + browser ID ─────►│
+       │  7. Pico saves, clears flag        │
+       │  8. Pico reboots to normal mode    │
+       └────────────────────────────────────┘
+
+AUTHENTICATED CONNECTION (normal mode):
+
+┌─────────────┐         BLE          ┌─────────────┐
+│  Browser    │◄────────────────────►│   Pico 2W   │
+└─────────────┘                      └─────────────┘
+       │                                    │
+       │  9. Pico sends challenge ◄─────────│
+       │ 10. Browser: HMAC(challenge, secret)
+       │ 11. Send response ────────────────►│
+       │ 12. Pico verifies, enables HID     │
        └────────────────────────────────────┘
 ```
 
 ### Pairing Flow (User Experience)
 
 **First time setup:**
-1. Plug Pico into **Controller PC** via USB
-2. Open RelayKVM web page
-3. Click "Pair Device" → WebSerial connects to Pico
-4. Page shows: "Pairing... ✓ Success!"
-5. Unplug Pico
-6. Plug Pico into **Host PC** (target)
-7. Connect via BLE as normal - now authenticated
+1. Plug Pico into **Host PC** (target) - normal position
+2. Open RelayKVM web page, connect via BLE
+3. Click "Pair Device"
+4. Pico LED blinks - **press BOOTSEL button within 10 seconds**
+5. Pico reboots (brief disconnect)
+6. Page auto-connects via WebSerial, exchanges key
+7. Pico reboots again (back to normal mode)
+8. BLE reconnects - now authenticated!
+
+**Why two reboots?**
+- MicroPython can't switch USB modes without reboot
+- First reboot: HID → CDC (for WebSerial access)
+- Second reboot: CDC → HID (back to normal)
+- One-time setup cost, ~5 seconds total
 
 **Reconnecting:**
 - Browser remembers paired devices (by Pico's unique ID)
 - Pico remembers paired browsers (by browser's public key or ID)
-- Challenge-response happens automatically
+- Challenge-response happens automatically on BLE connect
 - User sees: "✓ Authenticated" vs "⚠️ Unknown device"
 
 ### Technical Specification
 
-**Key Generation (during USB pairing):**
+**BOOTSEL button reading:**
+```python
+import rp2
+
+def check_bootsel():
+    """Returns True if BOOTSEL is currently pressed"""
+    return rp2.bootsel_button()
+
+def wait_for_bootsel(timeout_ms=10000):
+    """Wait for BOOTSEL press with timeout"""
+    start = time.ticks_ms()
+    while time.ticks_diff(time.ticks_ms(), start) < timeout_ms:
+        if rp2.bootsel_button():
+            return True
+        time.sleep_ms(50)
+    return False
+```
+
+**Mode switching (config flag in flash):**
+```python
+# Config file: /config.json
+{
+    "pairing_mode": false,
+    "paired_browsers": {
+        "browser-id-abc123": "hexencodedkey..."
+    }
+}
+
+def enter_pairing_mode():
+    """Set flag and reboot into CDC mode"""
+    config = load_config()
+    config['pairing_mode'] = True
+    save_config(config)
+    machine.reset()
+
+def boot_usb():
+    """Called at startup - choose USB mode based on flag"""
+    config = load_config()
+    if config.get('pairing_mode', False):
+        init_cdc_only()  # WebSerial accessible
+    else:
+        init_hid_only()  # Normal keyboard/mouse
+```
+
+**Key Generation (during USB/WebSerial pairing):**
 ```javascript
 // Browser side
 const secret = crypto.getRandomValues(new Uint8Array(32)); // 256 bits
-const picoId = await getPicoUniqueId(); // From Pico's flash ID
+const browserId = await getOrCreateBrowserId(); // UUID stored in localStorage
+
+// Connect via WebSerial (Pico is in CDC mode)
+const port = await navigator.serial.requestPort();
+await port.open({ baudRate: 115200 });
+
+// Exchange: send secret + browser ID, receive Pico ID
+await sendCommand(port, CMD_SET_PAIRING_KEY, { browserId, secret });
+const picoId = await receiveResponse(port);
 
 // Store in localStorage
 localStorage.setItem(`relaykvm-key-${picoId}`, btoa(secret));
-
-// Send to Pico over USB
-await serialPort.write(CMD_SET_PAIRING_KEY + secret);
 ```
 
 ```python
-# Pico side (MicroPython)
+# Pico side (MicroPython) - in CDC/pairing mode
 import machine
 import json
+import os
 
-def save_pairing_key(browser_id, key):
-    """Save key to flash"""
+def handle_pairing_command(browser_id, key):
+    """Save key and exit pairing mode"""
     config = load_config()
     config['paired_browsers'][browser_id] = key.hex()
+    config['pairing_mode'] = False  # Clear flag
     save_config(config)
 
-def get_unique_id():
-    """Get Pico's unique flash ID"""
-    return machine.unique_id().hex()
+    # Send our ID back
+    send_response(machine.unique_id().hex())
+
+    # Reboot to normal mode
+    time.sleep_ms(100)
+    machine.reset()
 ```
 
 **Challenge-Response (during BLE connection):**
@@ -271,6 +358,7 @@ send_ble(CMD_CHALLENGE + challenge)
 # response = HMAC-SHA256(challenge, shared_secret)
 
 # Pico verifies
+import hmac
 expected = hmac.new(shared_secret, challenge, 'sha256').digest()
 if response == expected:
     enable_hid_relay()
@@ -282,11 +370,13 @@ else:
 
 | Command | Direction | Payload | Description |
 |---------|-----------|---------|-------------|
-| `0xA0` | USB: Browser→Pico | 32 bytes | Set pairing key |
-| `0xA1` | USB: Pico→Browser | 16 bytes | Pico unique ID |
-| `0xA2` | BLE: Pico→Browser | 32 bytes | Challenge |
-| `0xA3` | BLE: Browser→Pico | 32 bytes | HMAC response |
-| `0xA4` | BLE: Pico→Browser | 1 byte | Auth result (0=fail, 1=success) |
+| `0xA0` | BLE: Browser→Pico | - | Request pairing mode |
+| `0xA1` | BLE: Pico→Browser | 1 byte | Status (0=press BOOTSEL, 1=entering pairing mode, 2=timeout) |
+| `0xA2` | USB: Browser→Pico | 32+16 bytes | Set pairing key + browser ID |
+| `0xA3` | USB: Pico→Browser | 8 bytes | Pico unique ID |
+| `0xA4` | BLE: Pico→Browser | 32 bytes | Challenge |
+| `0xA5` | BLE: Browser→Pico | 32 bytes | HMAC response |
+| `0xA6` | BLE: Pico→Browser | 1 byte | Auth result (0=fail, 1=success) |
 
 ### Security Properties
 
@@ -295,16 +385,19 @@ else:
 - ✅ Unauthorized connections (challenge-response required)
 - ✅ Replay attacks (challenge is random each time)
 - ✅ Impersonation (both sides verify identity)
+- ✅ Remote pairing attacks (BOOTSEL requires physical presence)
 
 **What this does NOT protect against:**
 - ❌ Physical access to Pico (can extract key from flash)
 - ❌ Compromised browser (attacker has localStorage access)
 - ❌ USB-based attacks during pairing (trust the physical connection)
+- ❌ Attacker with physical access to BOOTSEL button
 
 **Assumptions:**
 - Physical USB connection is trusted (you plugged it in yourself)
 - Browser environment is secure (no malicious extensions)
 - Pico firmware is authentic (not tampered with)
+- Only authorized users have physical access to press BOOTSEL
 
 ### Optional Enhancements
 
@@ -332,12 +425,17 @@ else:
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| USB serial on Pico | ✅ Ready | WebSerial works with MicroPython |
+| BOOTSEL reading | ✅ Ready | `rp2.bootsel_button()` built-in |
+| USB CDC mode | ✅ Ready | MicroPython supports CDC-only |
+| USB HID mode | ✅ Ready | Current firmware |
+| Mode switching | 🚧 TODO | Config flag + reboot logic |
+| Config file system | 🚧 TODO | JSON in flash (`/config.json`) |
 | Browser WebSerial | ✅ Ready | Already used for wired mode |
-| Key storage (Pico) | 🚧 TODO | Need flash config system |
 | Key storage (Browser) | ✅ Ready | localStorage |
-| Challenge-response | 🚧 TODO | Need HMAC in MicroPython |
-| Web UI for pairing | 🚧 TODO | New "Pair Device" flow |
+| HMAC in MicroPython | ✅ Ready | `hmac` module built-in |
+| Challenge-response | 🚧 TODO | Add to BLE connect handler |
+| Web UI for pairing | 🚧 TODO | "Pair Device" button + flow |
+| Auto-reconnect after reboot | 🚧 TODO | Browser detects CDC mode |
 
 ### Migration Path
 
