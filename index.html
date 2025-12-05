@@ -3543,6 +3543,21 @@
                         </div>
                     </div>
 
+                    <!-- Device Section -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">Device</div>
+                        <div class="settings-row">
+                            <span class="settings-label">Device Name</span>
+                            <div class="settings-value" style="gap: 6px;">
+                                <input type="text" id="deviceNameInput" class="text-input" style="width: 120px; padding: 4px 8px; font-size: 11px;" maxlength="20" placeholder="e.g. Office">
+                                <button class="action-btn" style="padding: 4px 8px; font-size: 10px;" onclick="renameDevice()">Rename</button>
+                            </div>
+                        </div>
+                        <div style="font-size: 8px; color: var(--text-dim); margin-top: 2px;">
+                            Pico 2W only. Will advertise as "RelayKVM-{name}". Leave empty to reset to device ID.
+                        </div>
+                    </div>
+
                     <!-- Input Section -->
                     <div class="settings-section">
                         <div class="settings-section-title">Input</div>
@@ -4597,6 +4612,26 @@
             document.getElementById('modalClipboardBridge').checked = savedClipboardBridge;
         }
 
+        async function renameDevice() {
+            if (!kvm || !kvm.connected) {
+                log('Not connected - connect to device first', 'error');
+                return;
+            }
+            const nameInput = document.getElementById('deviceNameInput');
+            const newName = nameInput.value.trim();
+            try {
+                await kvm.setDeviceName(newName);
+                if (newName) {
+                    log(`Device renamed to: RelayKVM-${newName}`, 'info');
+                } else {
+                    log('Device name reset to default (device ID)', 'info');
+                }
+                nameInput.value = '';  // Clear input after success
+            } catch (e) {
+                log(`Rename failed: ${e.message}`, 'error');
+            }
+        }
+
         function updateMouseSpeedFromModal(value) {
             const val = parseFloat(value);
             localStorage.setItem('mouseSensitivity', val);
@@ -5363,8 +5398,8 @@
             updateUI(connected);
             log(connected ? 'Link established' : 'Link down', 'info');
 
-            // Auto-open portal on connect (Screen Manager setting)
             if (connected) {
+                // Auto-open portal on connect (Screen Manager setting)
                 const smConfig = JSON.parse(localStorage.getItem('screenManager') || '{}');
                 if (smConfig.globalSettings?.autoPortalOnConnect) {
                     // Small delay to let connection stabilize
@@ -5380,14 +5415,18 @@
         kvm.onDataReceived = (data) => {
             flashLed('ledRx');
 
-            // Check for jack out command from device (G key)
-            // Format: [0x57, 0xAB, 0x00, 0x80, 0x00, 0x00]
-            if (data.length >= 4 && data[0] === 0x57 && data[1] === 0xAB && data[3] === 0x80) {
-                log('Device: Jack out (G)', 'info');
-                if (isCapturing) {
-                    stopCapture();
+            // Check for valid NanoKVM packet header
+            if (data.length >= 5 && data[0] === 0x57 && data[1] === 0xAB) {
+                const cmd = data[3];
+
+                // Jack out command from device (G key)
+                if (cmd === 0x80) {
+                    log('Device: Jack out (G)', 'info');
+                    if (isCapturing) {
+                        stopCapture();
+                    }
+                    return;
                 }
-                return;
             }
 
             log('RX: ' + data.length + ' bytes', 'receive');

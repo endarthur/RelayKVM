@@ -55,7 +55,7 @@
 - [x] **Document DIP control pendant** - Floating mini control panel using Document Picture-in-Picture API (always-on-top status, command feedback, quick actions - solves seamless mode feedback problem!) ✅
 - [x] **Window Management API for portal** - Screen Manager with visual map, auto-position portal on target monitor, auto-fullscreen option, remember config, handle hotplug ✅ *(needs multi-monitor testing)*
 - [ ] **Web firmware updater** - WebSerial-based MicroPython file upload from browser (no mpremote/Thonny needed)
-- [ ] **USB bootstrap pairing** - Secure pairing via physical USB connection. Plug Pico into controller, exchange shared secret, BLE connections require challenge-response. No passkeys, just plug-and-pair. ([spec](SECURITY.md#usb-bootstrap-pairing-planned))
+- [ ] **USB bootstrap pairing** - Secure pairing via physical USB connection (future enhancement, see [SECURITY.md](SECURITY.md#application-layer-security-future))
 - [ ] **Anbernic RG34XX SP support** - Stock firmware BT HID relay, Python daemon ([docs](RG34XX.md)) ✨ *Proof of concept working!*
 - [ ] **Wired mode (RP2040-PiZero)** - Dual USB-C, WebSerial, no pairing needed ([docs](WIRED.md))
 - [ ] **Android app** - Phone as BLE-to-BT HID bridge (WIP in `android/`)
@@ -358,7 +358,7 @@ Ideas that are wildly out of scope but too fun to forget. For when it's raining 
 - [ ] **Dual-host wired KVM** - RP2040-PiZero with USB HID to BOTH computers simultaneously. Software selects which host receives input. Hardware macropad buttons can target either host. True Software Defined KVM switch.
 - [ ] **LED backchannel** - Use LED Output Report bits (ScrollLock) as host→device data channel. Helper app on host toggles ScrollLock, Pico reads state changes. Enables host→device communication without serial/BLE on host side. Could send screen resolution, PeerJS ID for WebRTC, simple state sync. ~200 bps with 1 bit.
 - [ ] **WebHID host helper** - Add 4th HID interface (vendor-specific raw data). Host helper page uses WebHID API to communicate with Pico directly. No serial, no drivers, just browser permission. Could send screen resolution, clipboard text (for bridge), window info, WebRTC signaling. Like QMK's Raw HID / VIA protocol.
-- [x] **SECURITY.md** - Document the security model: threat model, Pico 2W vs Cardputer comparison, web interface risks, USB bootstrap pairing spec. ✅
+- [x] **SECURITY.md** - Document the security model: threat model, Pico 2W vs Cardputer comparison, web interface risks. ✅
 
 ---
 

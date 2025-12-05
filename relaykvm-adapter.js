@@ -37,6 +37,7 @@ class RelayKVMAdapter {
     static CMD_USB_WAKE = 0x83;
     static CMD_USB_RECONNECT = 0x84;
     static CMD_DEVICE_RESET = 0x85;
+    static CMD_SET_NAME = 0x86;      // Set device name (Pico 2W)
     static CMD_LED_CTRL = 0xE0;  // LED control (Pico 2W)
 
     // LED modes (Pico 2W)
@@ -44,7 +45,7 @@ class RelayKVMAdapter {
     static LED_ON = 1;
     static LED_DOUBLE_BLINK = 2;      // Disconnected pattern
     static LED_DOUBLE_OFF_BLINK = 3;  // Connected pattern
-    static LED_SLOW_TOGGLE = 4;       // Command mode pattern
+    static LED_SLOW_TOGGLE = 4;       // Slow toggle (command mode)
 
     // Display brightness levels
     static DISPLAY_OFF = 0;
@@ -817,6 +818,19 @@ class RelayKVMAdapter {
 
         const data = new Uint8Array([mode & 0xFF]);
         const packet = this.buildPacket(RelayKVMAdapter.CMD_LED_CTRL, data);
+        await this.sendPacket(packet);
+    }
+
+    /**
+     * Set device name (Pico 2W only)
+     * @param {string} name - Custom name (max 20 chars), or empty to reset to default
+     * Name will be advertised as "RelayKVM-{name}" or "RelayKVM-{deviceId}" if empty
+     */
+    async setDeviceName(name) {
+        // Encode name as UTF-8, max 20 chars
+        const encoder = new TextEncoder();
+        const nameBytes = encoder.encode(name.slice(0, 20));
+        const packet = this.buildPacket(RelayKVMAdapter.CMD_SET_NAME, nameBytes);
         await this.sendPacket(packet);
     }
 }
